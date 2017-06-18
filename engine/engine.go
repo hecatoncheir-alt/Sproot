@@ -38,12 +38,10 @@ func (engine *Engine) DatabaseSetUp(user, host string, port int, ssl string, bas
 
 	engine.SQLDataBase = db
 
-	db.Query("drop database items")
 	createDbQuery := fmt.Sprintf("create database if not exists %v", baseName)
 
 	_, err = db.Query(createDbQuery)
 	if err != nil {
-		fmt.Println("daaa")
 		log.Fatal(err)
 		return db, nil, err
 	}
@@ -52,7 +50,7 @@ func (engine *Engine) DatabaseSetUp(user, host string, port int, ssl string, bas
 
 	err = graph.InitQuadStore("sql", tableAddr, graph.Options{"flavor": "cockroach"})
 	if err != nil {
-		// log.Println(err)
+		 log.Println(err)
 	}
 
 	store, err := cayley.NewGraph("sql", tableAddr, graph.Options{"flavor": "cockroach"})
