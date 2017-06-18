@@ -1,4 +1,3 @@
-// +build integration
 package engine
 
 import (
@@ -16,7 +15,8 @@ func TestSprootCanSaveGetAndDeleteData(test *testing.T) {
 	testCompany := Company{
 		Name:       "Test company",
 		IRI:        "http://www.test-company.ru/",
-		Categories: []string{"Cмартфоны"}, }
+		Categories: []string{"Cмартфоны"},
+	}
 
 	testPriceData := Price{
 		Value:    "100",
