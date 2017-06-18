@@ -62,3 +62,5 @@ fabric.properties
 .idea/Sproot.iml
 .idea/modules.xml
 .idea/workspace.xml
+/.idea/misc.xml
+/.idea/vcs.xml
