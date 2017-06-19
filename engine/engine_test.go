@@ -5,11 +5,53 @@ import (
 	"time"
 )
 
-func TestSprootCanSaveGetAndDeleteData(test *testing.T) {
+func TestSprootCanSaveAndGetCompany(test *testing.T) {
+	var err error
 	puffer := New()
-	_, _, err := puffer.DatabaseSetUp("root", "192.168.99.100", 26257, "disable", "Items")
+
+	_, _, err = puffer.DatabaseSetUp("root", "192.168.99.100", 26257, "disable", "Items")
 	if err != nil {
 		test.Error(err)
+	}
+
+	_, err = puffer.GetCompany("Test company")
+	if err != ErrCompanyNotExists {
+		test.Fail()
+	}
+
+	company := Company{
+		Name:       "Test company",
+		IRI:        "test/",
+		Categories: []string{"test company category"},
+	}
+
+	err = puffer.SaveCompany(&company)
+	if err != nil {
+		test.Error(err)
+	}
+
+	companyInStore, err := puffer.GetCompany("Test company")
+	if err != ErrCompanyNotExists {
+		test.Fail()
+	}
+
+	if companyInStore.Name != "Test company" {
+		test.Fail()
+	}
+}
+
+func TestSprootCanSaveGetAndDeleteData(test *testing.T) {
+	var err error
+
+	puffer := New()
+	_, _, err = puffer.DatabaseSetUp("root", "192.168.99.100", 26257, "disable", "Items")
+	if err != nil {
+		test.Error(err)
+	}
+
+	_, err = puffer.GetPricesOfProductsByName("test item name")
+	if err != nil {
+		test.Fail()
 	}
 
 	testCompany := Company{
@@ -38,6 +80,15 @@ func TestSprootCanSaveGetAndDeleteData(test *testing.T) {
 	}
 
 	if item.Name != "test item name" {
+		test.Fail()
+	}
+
+	items, err := puffer.GetPricesOfProductsByName("test item name")
+	if err != nil {
+		test.Fail()
+	}
+
+	if len(items) == 0 {
 		test.Fail()
 	}
 }

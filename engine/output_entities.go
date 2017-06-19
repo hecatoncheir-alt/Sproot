@@ -4,3 +4,11 @@ package engine
 type PriceOfProduct struct {
 	Name string
 }
+
+// Product if a struct of item of company
+type Product struct {
+	Name    string
+	Preview string
+	Link    string
+	Company string
+}

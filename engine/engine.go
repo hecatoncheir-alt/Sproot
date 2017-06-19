@@ -2,14 +2,23 @@ package engine
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/cayleygraph/cayley"
 	"github.com/cayleygraph/cayley/graph"
+	"github.com/cayleygraph/cayley/quad"
 	// sql driver
+	"regexp"
+
+	"github.com/cayleygraph/cayley/graph/path"
 	_ "github.com/cayleygraph/cayley/graph/sql"
 )
+
+// ErrCompanyNotExists means that the company is not in the database
+var ErrCompanyNotExists = errors.New("Company not exists")
 
 // Engine is a main object of engine pkg
 type Engine struct {
@@ -50,7 +59,7 @@ func (engine *Engine) DatabaseSetUp(user, host string, port int, ssl string, bas
 
 	err = graph.InitQuadStore("sql", tableAddr, graph.Options{"flavor": "cockroach"})
 	if err != nil {
-		 log.Println(err)
+		log.Println(err)
 	}
 
 	store, err := cayley.NewGraph("sql", tableAddr, graph.Options{"flavor": "cockroach"})
@@ -64,6 +73,45 @@ func (engine *Engine) DatabaseSetUp(user, host string, port int, ssl string, bas
 	engine.Store = store
 
 	return db, store, nil
+}
+
+// GetCompany return company object of company node in graph store
+func (engine *Engine) GetCompany(companyName string) (company *Company, err error) {
+	var path *path.Path
+
+	regCompanyName, err := regexp.Compile(strings.ToLower(companyName))
+	if err != nil {
+		return nil, err
+	}
+
+	path = cayley.StartPath(engine.Store).Regex(regCompanyName)
+
+	var companyInStore string
+	path.Iterate(nil).EachValue(nil, func(value quad.Value) {
+		companyInStore = value.String()
+	})
+
+	if companyInStore == "" {
+		return nil, ErrCompanyNotExists
+	}
+
+	// ---
+
+	return nil, ErrCompanyNotExists
+}
+
+func (engine *Engine) SaveCompany(company *Company) error {
+	return nil
+}
+
+func (engine *Engine) GetProductOfCompany(product *Product) {}
+
+func (engine *Engine) SaveProductOfCompany(product *Product) {
+	// Проверить наличие продукта по имени
+}
+
+func (engine *Engine) GetPricesOfProductsByName(productName string) ([]*PriceOfProduct, error) {
+	return []*PriceOfProduct{&PriceOfProduct{Name: productName}}, nil
 }
 
 // SavePriceForProductOfCompany method for save subject, predicate and object in graph database
