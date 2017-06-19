@@ -5,20 +5,23 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/cayleygraph/cayley"
 	"github.com/cayleygraph/cayley/graph"
-	"github.com/cayleygraph/cayley/quad"
-	// sql driver
-	"regexp"
-
 	"github.com/cayleygraph/cayley/graph/path"
+	"github.com/cayleygraph/cayley/quad"
+
+	// sql driver
 	_ "github.com/cayleygraph/cayley/graph/sql"
 )
 
 // ErrCompanyNotExists means that the company is not in the database
 var ErrCompanyNotExists = errors.New("Company not exists")
+
+// ErrCompanyAlreadyExists means that the company is in the database already
+var ErrCompanyAlreadyExists = errors.New("Company already exists")
 
 // Engine is a main object of engine pkg
 type Engine struct {
@@ -100,7 +103,15 @@ func (engine *Engine) GetCompany(companyName string) (company *Company, err erro
 	return nil, ErrCompanyNotExists
 }
 
+// SaveCompany method for add triplets to graph db
 func (engine *Engine) SaveCompany(company *Company) error {
+	_, err := engine.GetCompany(company.Name)
+	if err != nil {
+		return err
+	}
+
+	// companyName := strings.ToLower(company.Name)
+
 	return nil
 }
 
