@@ -25,12 +25,12 @@ func TestSprootCanSaveAndGetCompany(test *testing.T) {
 		Categories: []string{"test company category"},
 	}
 
-	err = puffer.SaveCompany(&company)
+	companyInStore, err := puffer.SaveCompany(&company)
 	if err != nil {
 		test.Error(err)
 	}
 
-	companyInStore, err := puffer.GetCompany("Test company")
+	companyInStore, err = puffer.GetCompany("Test company")
 	if err != ErrCompanyNotExists {
 		test.Fail()
 	}

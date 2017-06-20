@@ -104,29 +104,60 @@ func (engine *Engine) GetCompany(companyName string) (company *Company, err erro
 	return nil, ErrCompanyNotExists
 }
 
-// SaveCompany method for add triplets to graph db
-func (engine *Engine) SaveCompany(company *Company) error {
+// SaveCategoriesOfCompany method for add categories to company
+func (engine *Engine) SaveCategoriesOfCompany(categories []string, companyName string) error {
 	var err error
-	_, err = engine.GetCompany(company.Name)
+	companyName = strings.ToLower(companyName)
+
+	_, err = engine.GetCompany(companyName)
 	if err != ErrCompanyNotExists {
 		return err
+	}
+
+	// TODO: Нужно получить список категорий и добавлять только нужные
+	for category := range categories {
+		transaction := cayley.NewTransaction()
+		transaction.AddQuad(cayley.Quad(category, "is", "Category name", "Category"))
+		transaction.AddQuad(cayley.Quad(category, "belongs", "Categories", "Category"))
+		engine.Store.ApplyTransaction(transaction)
+	}
+
+	return nil
+}
+
+// SaveCompany method for add triplets to graph db
+func (engine *Engine) SaveCompany(company *Company) (companyInStore *Company, err error) {
+	_, err = engine.GetCompany(company.Name)
+	if err != ErrCompanyNotExists {
+		return nil, err
 	}
 
 	companyName := strings.ToLower(company.Name)
 	companyAddTime := time.Now().String()
 
 	transaction := cayley.NewTransaction()
-	transaction.AddQuad(cayley.Quad(companyName, "is", "Company", "Company name"))
+	transaction.AddQuad(cayley.Quad(companyName, "is", "Company name", "Company"))
 	transaction.AddQuad(cayley.Quad(companyName, "was added", companyAddTime, "Time of adding a company"))
 	transaction.AddQuad(cayley.Quad(companyName, "has", company.IRI, "Company link"))
 	transaction.AddQuad(cayley.Quad(companyName, "has", "Categories", "Company"))
+	transaction.AddQuad(cayley.Quad(companyName, "has", "Address", "Company"))
 	transaction.AddQuad(cayley.Quad(companyName, "has", "Products", "Company"))
 	err = engine.Store.ApplyTransaction(transaction)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	err = engine.SaveCategoriesOfCompany(company.Categories, company.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	companyInStore, err = engine.GetCompany(company.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return companyInStore, nil
 }
 
 func (engine *Engine) GetProductOfCompany(product *Product) {}
