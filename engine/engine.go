@@ -7,6 +7,7 @@ import (
 	"log"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/cayleygraph/cayley"
 	"github.com/cayleygraph/cayley/graph"
@@ -105,12 +106,25 @@ func (engine *Engine) GetCompany(companyName string) (company *Company, err erro
 
 // SaveCompany method for add triplets to graph db
 func (engine *Engine) SaveCompany(company *Company) error {
-	_, err := engine.GetCompany(company.Name)
-	if err != nil {
+	var err error
+	_, err = engine.GetCompany(company.Name)
+	if err != ErrCompanyNotExists {
 		return err
 	}
 
-	// companyName := strings.ToLower(company.Name)
+	companyName := strings.ToLower(company.Name)
+	companyAddTime := time.Now().String()
+
+	transaction := cayley.NewTransaction()
+	transaction.AddQuad(cayley.Quad(companyName, "is", "Company", "Company name"))
+	transaction.AddQuad(cayley.Quad(companyName, "was added", companyAddTime, "Time of adding a company"))
+	transaction.AddQuad(cayley.Quad(companyName, "has", company.IRI, "Company link"))
+	transaction.AddQuad(cayley.Quad(companyName, "has", "Categories", "Company"))
+	transaction.AddQuad(cayley.Quad(companyName, "has", "Products", "Company"))
+	err = engine.Store.ApplyTransaction(transaction)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
