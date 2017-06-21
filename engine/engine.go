@@ -131,6 +131,9 @@ func (engine *Engine) GetCompany(companyName string) (company *Company, err erro
 	return nil, ErrCompanyNotExists
 }
 
+// DeleteCategoriesOfCompany is method for delete categories from company
+func (engine *Engine) DeleteCategoriesOfCompany(categories []string, companyName string) error {}
+
 // SaveCategoriesOfCompany method for add categories to company
 func (engine *Engine) SaveCategoriesOfCompany(categories []string, companyName string) error {
 	var err error
@@ -186,12 +189,15 @@ func (engine *Engine) SaveCompany(company *Company) (companyInStore *Company, er
 	return companyInStore, nil
 }
 
+// GetProductOfCompany is method for get product from database
 func (engine *Engine) GetProductOfCompany(product *Product) {}
 
+// SaveProductOfCompany is method for add product to database
 func (engine *Engine) SaveProductOfCompany(product *Product) {
 	// Проверить наличие продукта по имени
 }
 
+// GetPricesOfProductsByName is method for get Price of product from database
 func (engine *Engine) GetPricesOfProductsByName(productName string) ([]*PriceOfProduct, error) {
 	return []*PriceOfProduct{&PriceOfProduct{Name: productName}}, nil
 }
