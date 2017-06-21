@@ -24,6 +24,9 @@ var ErrCompanyNotExists = errors.New("Company not exists")
 // ErrCompanyAlreadyExists means that the company is in the database already
 var ErrCompanyAlreadyExists = errors.New("Company already exists")
 
+// ErrCompanyCanNotBeDeleted delete all nodes with company predicates
+var ErrCompanyCanNotBeDeleted = errors.New("Company can not be deleted")
+
 // Engine is a main object of engine pkg
 type Engine struct {
 	Store       *cayley.Handle
@@ -77,6 +80,30 @@ func (engine *Engine) DatabaseSetUp(user, host string, port int, ssl string, bas
 	engine.Store = store
 
 	return db, store, nil
+}
+
+// DeleteCompany method for delete all nodes with company name
+func (engine *Engine) DeleteCompany(companyName string) error {
+	var path *path.Path
+
+	regCompanyName, err := regexp.Compile(strings.ToLower(companyName))
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("In")
+	path = cayley.StartPath(engine.Store).Regex(regCompanyName).InPredicates()
+	path.Iterate(nil).EachValue(nil, func(value quad.Value) {
+		fmt.Println(value.String())
+	})
+
+	fmt.Println("Out")
+	path = cayley.StartPath(engine.Store).Regex(regCompanyName).OutPredicates()
+	path.Iterate(nil).EachValue(nil, func(value quad.Value) {
+		fmt.Println(value.String())
+	})
+
+	return nil
 }
 
 // GetCompany return company object of company node in graph store
@@ -137,7 +164,7 @@ func (engine *Engine) SaveCompany(company *Company) (companyInStore *Company, er
 
 	transaction := cayley.NewTransaction()
 	transaction.AddQuad(cayley.Quad(companyName, "is", "Company name", "Company"))
-	transaction.AddQuad(cayley.Quad(companyName, "was added", companyAddTime, "Time of adding a company"))
+	transaction.AddQuad(cayley.Quad(companyName, "was added", companyAddTime, "Time"))
 	transaction.AddQuad(cayley.Quad(companyName, "has", company.IRI, "Company link"))
 	transaction.AddQuad(cayley.Quad(companyName, "has", "Address", "Company"))
 	transaction.AddQuad(cayley.Quad(companyName, "has many", "Product", "Company"))

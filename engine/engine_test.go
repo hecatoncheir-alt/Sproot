@@ -14,6 +14,11 @@ func TestSprootCanSaveAndGetCompany(test *testing.T) {
 		test.Error(err)
 	}
 
+	err = puffer.DeleteCompany("Test company")
+	if err != nil {
+		test.Fail()
+	}
+
 	_, err = puffer.GetCompany("Test company")
 	if err != ErrCompanyNotExists {
 		test.Fail()
