@@ -118,7 +118,7 @@ func (engine *Engine) SaveCategoriesOfCompany(categories []string, companyName s
 	for category := range categories {
 		transaction := cayley.NewTransaction()
 		transaction.AddQuad(cayley.Quad(category, "is", "Category name", "Category"))
-		transaction.AddQuad(cayley.Quad(category, "belongs", "Categories", "Category"))
+		transaction.AddQuad(cayley.Quad(category, "belongs", companyName, "Category"))
 		engine.Store.ApplyTransaction(transaction)
 	}
 
@@ -139,9 +139,8 @@ func (engine *Engine) SaveCompany(company *Company) (companyInStore *Company, er
 	transaction.AddQuad(cayley.Quad(companyName, "is", "Company name", "Company"))
 	transaction.AddQuad(cayley.Quad(companyName, "was added", companyAddTime, "Time of adding a company"))
 	transaction.AddQuad(cayley.Quad(companyName, "has", company.IRI, "Company link"))
-	transaction.AddQuad(cayley.Quad(companyName, "has", "Categories", "Company"))
 	transaction.AddQuad(cayley.Quad(companyName, "has", "Address", "Company"))
-	transaction.AddQuad(cayley.Quad(companyName, "has", "Products", "Company"))
+	transaction.AddQuad(cayley.Quad(companyName, "has many", "Product", "Company"))
 	err = engine.Store.ApplyTransaction(transaction)
 	if err != nil {
 		return nil, err
