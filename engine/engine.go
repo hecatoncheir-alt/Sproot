@@ -2,30 +2,15 @@ package engine
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
-	"regexp"
-	"strings"
-	"time"
 
 	"github.com/cayleygraph/cayley"
 	"github.com/cayleygraph/cayley/graph"
-	"github.com/cayleygraph/cayley/graph/path"
-	"github.com/cayleygraph/cayley/quad"
 
 	// sql driver
 	_ "github.com/cayleygraph/cayley/graph/sql"
 )
-
-// ErrCompanyNotExists means that the company is not in the database
-var ErrCompanyNotExists = errors.New("Company not exists")
-
-// ErrCompanyAlreadyExists means that the company is in the database already
-var ErrCompanyAlreadyExists = errors.New("Company already exists")
-
-// ErrCompanyCanNotBeDeleted delete all nodes with company predicates
-var ErrCompanyCanNotBeDeleted = errors.New("Company can not be deleted")
 
 // Engine is a main object of engine pkg
 type Engine struct {
@@ -80,130 +65,4 @@ func (engine *Engine) DatabaseSetUp(user, host string, port int, ssl string, bas
 	engine.Store = store
 
 	return db, store, nil
-}
-
-// DeleteCompany method for delete all nodes with company name
-func (engine *Engine) DeleteCompany(companyName string) error {
-	var path *path.Path
-
-	regCompanyName, err := regexp.Compile(strings.ToLower(companyName))
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("In")
-	path = cayley.StartPath(engine.Store).Regex(regCompanyName).InPredicates()
-	path.Iterate(nil).EachValue(nil, func(value quad.Value) {
-		fmt.Println(value.String())
-	})
-
-	fmt.Println("Out")
-	path = cayley.StartPath(engine.Store).Regex(regCompanyName).OutPredicates()
-	path.Iterate(nil).EachValue(nil, func(value quad.Value) {
-		fmt.Println(value.String())
-	})
-
-	return nil
-}
-
-// GetCompany return company object of company node in graph store
-func (engine *Engine) GetCompany(companyName string) (company *Company, err error) {
-	var path *path.Path
-
-	regCompanyName, err := regexp.Compile(strings.ToLower(companyName))
-	if err != nil {
-		return nil, err
-	}
-
-	path = cayley.StartPath(engine.Store).Regex(regCompanyName)
-
-	var companyInStore string
-	path.Iterate(nil).EachValue(nil, func(value quad.Value) {
-		companyInStore = value.String()
-	})
-
-	if companyInStore == "" {
-		return nil, ErrCompanyNotExists
-	}
-
-	// ---
-
-	return nil, ErrCompanyNotExists
-}
-
-// DeleteCategoriesOfCompany is method for delete categories from company
-func (engine *Engine) DeleteCategoriesOfCompany(categories []string, companyName string) error {}
-
-// SaveCategoriesOfCompany method for add categories to company
-func (engine *Engine) SaveCategoriesOfCompany(categories []string, companyName string) error {
-	var err error
-	companyName = strings.ToLower(companyName)
-
-	_, err = engine.GetCompany(companyName)
-	if err != ErrCompanyNotExists {
-		return err
-	}
-
-	// TODO: Нужно получить список категорий и добавлять только нужные
-	for category := range categories {
-		transaction := cayley.NewTransaction()
-		transaction.AddQuad(cayley.Quad(category, "is", "Category name", "Category"))
-		transaction.AddQuad(cayley.Quad(category, "belongs", companyName, "Category"))
-		engine.Store.ApplyTransaction(transaction)
-	}
-
-	return nil
-}
-
-// SaveCompany method for add triplets to graph db
-func (engine *Engine) SaveCompany(company *Company) (companyInStore *Company, err error) {
-	_, err = engine.GetCompany(company.Name)
-	if err != ErrCompanyNotExists {
-		return nil, err
-	}
-
-	companyName := strings.ToLower(company.Name)
-	companyAddTime := time.Now().String()
-
-	transaction := cayley.NewTransaction()
-	transaction.AddQuad(cayley.Quad(companyName, "is", "Company name", "Company"))
-	transaction.AddQuad(cayley.Quad(companyName, "was added", companyAddTime, "Time"))
-	transaction.AddQuad(cayley.Quad(companyName, "has", company.IRI, "Company link"))
-	transaction.AddQuad(cayley.Quad(companyName, "has", "Address", "Company"))
-	transaction.AddQuad(cayley.Quad(companyName, "has many", "Product", "Company"))
-	err = engine.Store.ApplyTransaction(transaction)
-	if err != nil {
-		return nil, err
-	}
-
-	err = engine.SaveCategoriesOfCompany(company.Categories, company.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	companyInStore, err = engine.GetCompany(company.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	return companyInStore, nil
-}
-
-// GetProductOfCompany is method for get product from database
-func (engine *Engine) GetProductOfCompany(product *Product) {}
-
-// SaveProductOfCompany is method for add product to database
-func (engine *Engine) SaveProductOfCompany(product *Product) {
-	// Проверить наличие продукта по имени
-}
-
-// GetPricesOfProductsByName is method for get Price of product from database
-func (engine *Engine) GetPricesOfProductsByName(productName string) ([]*PriceOfProduct, error) {
-	return []*PriceOfProduct{&PriceOfProduct{Name: productName}}, nil
-}
-
-// SavePriceForProductOfCompany method for save subject, predicate and object in graph database
-func (engine *Engine) SavePriceForProductOfCompany(item *Item) (*PriceOfProduct, error) {
-	price := PriceOfProduct{Name: item.Name}
-	return &price, nil
 }
