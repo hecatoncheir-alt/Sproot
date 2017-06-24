@@ -23,24 +23,32 @@ var ErrCompanyCanNotBeDeleted = errors.New("Company can not be deleted")
 
 // DeleteCompany method for delete all nodes with company name
 func (engine *Engine) DeleteCompany(companyName string) error {
-	var path *path.Path
+	// var path *path.Path
 
-	regCompanyName, err := regexp.Compile(strings.ToLower(companyName))
+	// regCompanyName, err := regexp.Compile(strings.ToLower(companyName))
+	// if err != nil {
+	// 	return err
+	// }
+
+	fmt.Println(companyName)
+	categories, err := engine.GetCategoriesOfCompany(companyName)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("In")
-	path = cayley.StartPath(engine.Store).Regex(regCompanyName).InPredicates()
-	path.Iterate(nil).EachValue(nil, func(value quad.Value) {
-		fmt.Println(value.String())
-	})
+	fmt.Println(categories)
 
-	fmt.Println("Out")
-	path = cayley.StartPath(engine.Store).Regex(regCompanyName).OutPredicates()
-	path.Iterate(nil).EachValue(nil, func(value quad.Value) {
-		fmt.Println(value.String())
-	})
+	// fmt.Println("In")
+	// path = cayley.StartPath(engine.Store).Regex(regCompanyName).In(quad.String("belongs")).Out()
+	// path.Iterate(nil).EachValue(nil, func(value quad.Value) {
+	// 	fmt.Println(value.String())
+	// })
+
+	// fmt.Println("Out")
+	// path = cayley.StartPath(engine.Store).Regex(regCompanyName).OutPredicates()
+	// path.Iterate(nil).EachValue(nil, func(value quad.Value) {
+	// 	fmt.Println(value.String())
+	// })
 
 	return nil
 }
@@ -78,11 +86,11 @@ func (engine *Engine) SaveCompany(company *Company) (companyInStore *Company, er
 	}
 
 	companyName := strings.ToLower(company.Name)
-	companyAddTime := time.Now().String()
+	lastChangeTime := time.Now().String()
 
 	transaction := cayley.NewTransaction()
 	transaction.AddQuad(cayley.Quad(companyName, "is", "Company name", "Company"))
-	transaction.AddQuad(cayley.Quad(companyName, "was added", companyAddTime, "Time"))
+	transaction.AddQuad(cayley.Quad(companyName, "was updated", lastChangeTime, "Time"))
 	transaction.AddQuad(cayley.Quad(companyName, "has", company.IRI, "Company link"))
 	transaction.AddQuad(cayley.Quad(companyName, "has", "Address", "Company"))
 	transaction.AddQuad(cayley.Quad(companyName, "has many", "Product", "Company"))
