@@ -2,7 +2,6 @@ package engine
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -23,6 +22,8 @@ var ErrCompanyCanNotBeDeleted = errors.New("Company can not be deleted")
 
 // DeleteCompany method for delete all nodes with company name
 func (engine *Engine) DeleteCompany(companyName string) error {
+	var err error
+	var categories []string
 	// var path *path.Path
 
 	// regCompanyName, err := regexp.Compile(strings.ToLower(companyName))
@@ -30,13 +31,18 @@ func (engine *Engine) DeleteCompany(companyName string) error {
 	// 	return err
 	// }
 
-	fmt.Println(companyName)
-	categories, err := engine.GetCategoriesOfCompany(companyName)
+	categories, err = engine.GetCategoriesOfCompany(companyName)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(categories)
+	err = engine.DeleteCategoriesOfCompany(categories, companyName)
+	if err != nil {
+		return err
+	}
+
+	// categories, _ = engine.GetCategoriesOfCompany(companyName)
+	// fmt.Println(categories)
 
 	// fmt.Println("In")
 	// path = cayley.StartPath(engine.Store).Regex(regCompanyName).In(quad.String("belongs")).Out()

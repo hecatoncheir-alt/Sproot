@@ -27,7 +27,7 @@ func TestSprootCanSaveAndGetCompany(test *testing.T) {
 	company := Company{
 		Name:       "Test company",
 		IRI:        "test/",
-		Categories: []string{"test company category"},
+		Categories: []string{"Cмартфоны", "Test category"},
 	}
 
 	companyInStore, err := puffer.SaveCompany(&company)
