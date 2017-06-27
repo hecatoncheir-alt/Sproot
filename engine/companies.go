@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,18 +19,35 @@ var ErrCompanyAlreadyExists = errors.New("Company already exists")
 // ErrCompanyCanNotBeDeleted delete all nodes with company predicates
 var ErrCompanyCanNotBeDeleted = errors.New("Company can not be deleted")
 
-// // DeleteCompany method for delete all nodes with company name
-func (engine *Engine) DeleteCompany(companyName string) error {
-	client := &http.Client{}
-	body := bytes.NewBufferString(`{
-		director(func:allofterms(name, "steven spielberg")) {
-			name@en
-			director.film (orderdesc: initial_release_date) {
-				name@en
-				initial_release_date
+// // SaveCompany method for add triplets to graph db
+func (engine *Engine) CreateCompany(company *Company) (recordID string, err error) {
+	request := fmt.Sprintf(`
+		mutation {
+			set {
+				_:company <name> <%v> .
 			}
 		}
-	}`)
+	`, company.Name)
+
+	body := bytes.NewBufferString(request)
+
+	return "", nil
+}
+
+// GetCompany return company object of company node in graph store
+func (engine *Engine) GetCompany(companyName string) (company *Company, err error) {
+	return nil, nil
+}
+
+// // DeleteCompany method for delete all nodes with company name
+func (engine *Engine) DeleteCompany(companyName string) error {
+	body := bytes.NewBufferString(`
+		mutation {
+			set {
+
+			}
+		}
+	`)
 
 	req, err := http.NewRequest("POST", engine.GraphAddress+"/query", body)
 	if err != nil {
@@ -37,6 +55,7 @@ func (engine *Engine) DeleteCompany(companyName string) error {
 		return err
 	}
 
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)
@@ -61,11 +80,6 @@ func (engine *Engine) DeleteCompany(companyName string) error {
 	}
 
 	return nil
-}
-
-// GetCompany return company object of company node in graph store
-func (engine *Engine) GetCompany(companyName string) (company *Company, err error) {
-	return nil, nil
 }
 
 // // DeleteCompany method for delete all nodes with company name
