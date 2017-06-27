@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/cayleygraph/cayley"
-	"github.com/cayleygraph/cayley/graph/iterator"
 	"github.com/cayleygraph/cayley/quad"
 )
 
@@ -36,39 +35,46 @@ func (engine *Engine) GetCategoriesOfCompany(companyName string) (categories []s
 // DeleteCategoriesOfCompany is method for delete categories from company
 func (engine *Engine) DeleteCategoriesOfCompany(categories []string, companyName string) error {
 	var err error
+	var store *cayley.Handle
+	store = engine.Store
 
 	companyName = strings.ToLower(companyName)
 	c, _ := engine.GetCategoriesOfCompany(companyName)
 	fmt.Println(c)
 
 	for _, category := range categories {
-		it := iterator.NewAnd(engine.Store,
-			// engine.Store.QuadIterator(quad.Predicate, engine.Store.ValueOf(quad.String("belongs"))),
-			engine.Store.QuadIterator(quad.Subject, engine.Store.ValueOf(quad.String(category))))
-
-		defer it.Close()
-		fmt.Println(it.Next())
-
-		for it.Next() {
-			f := engine.Store.Quad(it.Result()).String()
-			fmt.Println(f)
-			// store.RemoveQuad(store.Quad(it.Result()))
-			// fmt.Println("removed")
+		fmt.Println(category)
+		for _, direction := range []quad.Direction{quad.Subject, quad.Predicate} {
+			it := store.QuadIterator(direction, store.ValueOf(quad.String(companyName)))
+			for it.Next() {
+				store.RemoveQuad(store.Quad(it.Result()))
+			}
+			it.Close()
 		}
 
-		// path := cayley.StartPath(engine.Store, quad.String(companyName)).LabelContext("Category").In("belongs")
-
-		// path.Iterate(nil).EachValue(engine.Store, func(value quad.Value) {
-		// 	cat := value.String()
-		// 	if cat == category {
-		// 		value := engine.Store.ValueOf(value)
-		// 		da := engine.Store.Quad(value)
-		// 		fmt.Println("aaaaaaaa")
-		// 		fmt.Println(da)
-		// 		// err = engine.Store.RemoveQuad(engine.Store.Quad(engine.Store.ValueOf(value)))
-		// 	}
-		// })
 	}
+
+	// it := iterator.NewAnd(engine.Store,
+	// 	engine.Store.QuadIterator(quad.Predicate, engine.Store.ValueOf(quad.String("belongs"))),
+	// 	engine.Store.QuadIterator(quad.Object, engine.Store.ValueOf(quad.String(companyName))))
+
+	// defer it.Close()
+
+	// for it.Next() {
+	// 	res := engine.Store.Quad(it.Result()).String()
+	// 	subject := strings.Split(res, "--")[0]
+
+	// 	for _, category := range categories {
+	// 		da := strings.EqualFold(subject, category)
+	// 		fmt.Println(da)
+
+	// 		if category == subject {
+	// 			fmt.Println("da")
+	// 			engine.Store.RemoveQuad(engine.Store.Quad(it.Result()))
+	// 		}
+	// 	}
+	// }
+
 	c, _ = engine.GetCategoriesOfCompany(companyName)
 	fmt.Println(c)
 
