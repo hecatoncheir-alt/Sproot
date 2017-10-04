@@ -1,5 +1,9 @@
 package engine
 
+func (engine *Engine) CreateCategories(categories[]string) {
+
+}
+
 // import (
 // 	"fmt"
 // 	"strings"

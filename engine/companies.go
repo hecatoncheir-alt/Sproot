@@ -21,15 +21,27 @@ var ErrCompanyCanNotBeDeleted = errors.New("Company can not be deleted")
 
 // // SaveCompany method for add triplets to graph db
 func (engine *Engine) CreateCompany(company *Company) (recordID string, err error) {
+	if len(company.Categories) > 0 {
+		engine.CreateCategories(company.Categories)
+	}
+
 	request := fmt.Sprintf(`
 		mutation {
+			schema {
+				name: string @index(exact, term) .
+				iri: string @index(exact, term) .
+			}
+
 			set {
 				_:company <name> <%v> .
+				_:company <iri> <%v> .
 			}
 		}
-	`, company.Name)
+	`, company.Name, company.IRI)
 
 	body := bytes.NewBufferString(request)
+
+	fmt.Println(body)
 
 	return "", nil
 }

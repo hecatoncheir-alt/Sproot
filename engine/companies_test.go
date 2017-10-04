@@ -1,10 +1,8 @@
 package engine
 
-import (
-	"testing"
-)
+import "testing"
 
-func TestSprootCanCreateCompany(test *testing.T) {
+func TestCompanyCanBeCreated(test *testing.T) {
 	var err error
 	puffer := New()
 
@@ -27,5 +25,4 @@ func TestSprootCanCreateCompany(test *testing.T) {
 	if id == "" {
 		test.Fail()
 	}
-
 }
