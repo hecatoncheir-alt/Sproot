@@ -1,7 +1,81 @@
 package engine
 
-func (engine *Engine) CreateCategories(categories[]string) {
+import (
+	"bytes"
+	"strconv"
+	"log"
+	"io/ioutil"
+	"encoding/json"
+	"errors"
+	"net/http"
+)
 
+// ErrCategoriesAlreadyExists means that the categories is in the database already
+var ErrCategoriesAlreadyExists = errors.New("Categories already exists")
+
+// ErrCategoriesCanBeCreated means that the categories can't be added to database
+var ErrCategoriesCanBeCreated = errors.New("Categories can't be created")
+
+func (engine *Engine) CreateCategories(categories []string) ([]string, error) {
+	var ids []string
+
+	if len(categories) <= 0 {
+		return ids, ErrCategoriesAlreadyExists
+	}
+	buf := bytes.NewBufferString(`
+		mutation {
+			schema {
+				name: string @index(exact, term) .
+			}
+
+			set {
+		`)
+
+	for index, category := range categories {
+		buf.WriteString("_:category-" + strconv.Itoa(index) + " <name> ")
+		buf.WriteString("\"" + category + "\"" + " ." + "\n")
+	}
+
+	buf.WriteString("}" + " \n" + "}" + "\n")
+
+	req, err := http.NewRequest("POST", engine.GraphAddress+"/query", buf)
+	if err != nil {
+		log.Fatal(err)
+		return ids, err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+		return ids, err
+	}
+
+	defer resp.Body.Close()
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+		return ids, err
+	}
+
+	log.Printf("Response %+v\n", string(responseData))
+
+	var details GraphResponse
+	json.Unmarshal(responseData, &details)
+
+	if details.Data.Code == "ErrorInvalidRequest" {
+		return ids, ErrCategoriesCanBeCreated
+	}
+
+	if details.Data.Message == "Done" {
+		for index, category := range categories {
+			ids = append(ids, details.Data.Uids[category+"-"+strconv.Itoa(index)])
+			print(ids)
+		}
+	}
+
+	return ids, nil
 }
 
 // import (

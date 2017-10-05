@@ -31,3 +31,13 @@ type Item struct {
 	Price            Price
 	Company          Company
 }
+
+type GraphDataResponseField struct {
+	Code    string            `json:"code"`
+	Message string            `json:"message"`
+	Uids    map[string]string `json:"uids"`
+}
+type GraphResponse struct {
+	Data       GraphDataResponseField `json:"data"`
+	Extensions map[string]string      `json:"extensions"`
+}

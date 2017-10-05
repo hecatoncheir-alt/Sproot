@@ -33,15 +33,52 @@ func (engine *Engine) CreateCompany(company *Company) (recordID string, err erro
 			}
 
 			set {
-				_:company <name> <%v> .
-				_:company <iri> <%v> .
-			}
-		}
+				_:company <name> "%v" .
+				_:company <iri> "%v" .
 	`, company.Name, company.IRI)
 
 	body := bytes.NewBufferString(request)
 
-	fmt.Println(body)
+	if len(company.Categories) > 0 {
+		for _, category := range company.Categories {
+			body.WriteString("_:company <has_category> ")
+			body.WriteString(category + " ." + "\n")
+		}
+	}
+
+	body.WriteString("}" + " \n" + "}" + "\n")
+
+	var uid string
+
+	req, err := http.NewRequest("POST", engine.GraphAddress+"/query", body)
+	if err != nil {
+		log.Fatal(err)
+		return uid, err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+		return uid, err
+	}
+
+	defer resp.Body.Close()
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+		return uid, err
+	}
+
+	log.Printf("Response %+v\n", string(responseData))
+
+	var details map[string]interface{}
+	json.Unmarshal(responseData, &details)
+
+	if details["code"] == "ErrorInvalidRequest" {
+		return uid, ErrCompanyCanNotBeDeleted
+	}
 
 	return "", nil
 }

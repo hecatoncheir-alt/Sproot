@@ -2,7 +2,8 @@ package engine
 
 import "testing"
 
-func TestCompanyCanBeCreated(test *testing.T) {
+func TestIntegrationCompanyCanBeCreated(test *testing.T) {
+	test.Skip()
 	var err error
 	puffer := New()
 
@@ -11,10 +12,12 @@ func TestCompanyCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
+	testCategories := []string{"First test category", "Second test category"}
+
 	testCompany := Company{
 		Name:       "Test company",
 		IRI:        "http://www.test-company.ru/",
-		Categories: []string{"Cмартфоны", "Test category"},
+		Categories: testCategories,
 	}
 
 	id, err := puffer.CreateCompany(&testCompany)
