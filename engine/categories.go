@@ -2,20 +2,21 @@ package engine
 
 import (
 	"bytes"
-	"strconv"
-	"log"
-	"io/ioutil"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"strconv"
 )
 
 // ErrCategoriesAlreadyExists means that the categories is in the database already
-var ErrCategoriesAlreadyExists = errors.New("Categories already exists")
+var ErrCategoriesAlreadyExists = errors.New("categories already exists")
 
 // ErrCategoriesCanBeCreated means that the categories can't be added to database
-var ErrCategoriesCanBeCreated = errors.New("Categories can't be created")
+var ErrCategoriesCanBeCreated = errors.New("categories can't be created")
 
+// CreateCategories is a method for add node for each category in database
 func (engine *Engine) CreateCategories(categories []string) ([]string, error) {
 	var ids []string
 
@@ -69,9 +70,8 @@ func (engine *Engine) CreateCategories(categories []string) ([]string, error) {
 	}
 
 	if details.Data.Message == "Done" {
-		for index, category := range categories {
-			ids = append(ids, details.Data.Uids[category+"-"+strconv.Itoa(index)])
-			print(ids)
+		for index := range categories {
+			ids = append(ids, details.Data.Uids["category-"+strconv.Itoa(index)])
 		}
 	}
 
