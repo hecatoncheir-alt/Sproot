@@ -19,7 +19,7 @@ var ErrCompanyAlreadyExists = errors.New("Company already exists")
 // ErrCompanyCanNotBeDeleted delete all nodes with company predicates
 var ErrCompanyCanNotBeDeleted = errors.New("Company can not be deleted")
 
-// // SaveCompany method for add triplets to graph db
+// CreateCompany method for add triplets to graph db
 func (engine *Engine) CreateCompany(company *Company) (recordID string, err error) {
 	if len(company.Categories) > 0 {
 		engine.CreateCategories(company.Categories)
@@ -88,7 +88,7 @@ func (engine *Engine) GetCompany(companyName string) (company *Company, err erro
 	return nil, nil
 }
 
-// // DeleteCompany method for delete all nodes with company name
+// DeleteCompany method for delete all nodes with company name
 func (engine *Engine) DeleteCompany(companyName string) error {
 	body := bytes.NewBufferString(`
 		mutation {

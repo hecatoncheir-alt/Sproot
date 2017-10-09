@@ -32,11 +32,14 @@ type Item struct {
 	Company          Company
 }
 
+// GraphDataResponseField is a structure for field in response from DGraph database operation
 type GraphDataResponseField struct {
 	Code    string            `json:"code"`
 	Message string            `json:"message"`
 	Uids    map[string]string `json:"uids"`
 }
+
+// GraphResponse is a response structure from DGraph database operation
 type GraphResponse struct {
 	Data       GraphDataResponseField `json:"data"`
 	Extensions map[string]string      `json:"extensions"`
