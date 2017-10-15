@@ -8,6 +8,11 @@ type MessageEvent struct {
 	Data    interface{}
 }
 
+type Category struct {
+	ID   string
+	Name string
+}
+
 // Company type for parse
 type Company struct {
 	ID         string

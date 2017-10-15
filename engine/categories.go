@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sort"
 )
 
 // ErrCategoriesAlreadyExists means that the categories is in the database already
@@ -16,13 +17,33 @@ var ErrCategoriesAlreadyExists = errors.New("categories already exists")
 // ErrCategoriesCanBeCreated means that the categories can't be added to database
 var ErrCategoriesCanBeCreated = errors.New("categories can't be created")
 
-// CreateCategories is a method for add node for each category in database
-func (engine *Engine) CreateCategories(categories []string) ([]string, error) {
-	var ids []string
+// ReadCategories is a method for get all nodes by categories names
+func (engine *Engine) ReadCategories(categoriesNames []string) ([]Category, error) {
+	var categories []Category
 
-	if len(categories) <= 0 {
-		return ids, ErrCategoriesAlreadyExists
+	return categories, nil
+}
+
+// CreateCategories is a method for add node for each category in database
+func (engine *Engine) CreateCategories(categoriesNames []string) ([]Category, error) {
+
+	if !sort.StringsAreSorted(categoriesNames) {
+		sort.Strings(categoriesNames)
 	}
+
+	existCategories, err := engine.ReadCategories(categoriesNames)
+	var createdCategories []Category
+
+	if len(existCategories) > 0 {
+		for _, category := range existCategories {
+			createdCategories = append(createdCategories, category)
+			index := sort.SearchStrings(categoriesNames, category.Name)
+			categoriesNames = append(categoriesNames[:index], categoriesNames[index+1:]...)
+		}
+	}
+
+	//return createdCategories, ErrCategoriesAlreadyExists
+
 	buf := bytes.NewBufferString(`
 		mutation {
 			schema {
@@ -32,7 +53,7 @@ func (engine *Engine) CreateCategories(categories []string) ([]string, error) {
 			set {
 		`)
 
-	for index, category := range categories {
+	for index, category := range categoriesNames {
 		buf.WriteString("_:category-" + strconv.Itoa(index) + " <name> ")
 		buf.WriteString("\"" + category + "\"" + " ." + "\n")
 	}
@@ -42,14 +63,14 @@ func (engine *Engine) CreateCategories(categories []string) ([]string, error) {
 	req, err := http.NewRequest("POST", engine.GraphAddress+"/query", buf)
 	if err != nil {
 		log.Fatal(err)
-		return ids, err
+		return createdCategories, err
 	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)
-		return ids, err
+		return createdCategories, err
 	}
 
 	defer resp.Body.Close()
@@ -57,7 +78,7 @@ func (engine *Engine) CreateCategories(categories []string) ([]string, error) {
 	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
-		return ids, err
+		return createdCategories, err
 	}
 
 	log.Printf("Response %+v\n", string(responseData))
@@ -66,16 +87,21 @@ func (engine *Engine) CreateCategories(categories []string) ([]string, error) {
 	json.Unmarshal(responseData, &details)
 
 	if details.Data.Code == "ErrorInvalidRequest" {
-		return ids, ErrCategoriesCanBeCreated
+		return createdCategories, ErrCategoriesCanBeCreated
 	}
 
 	if details.Data.Message == "Done" {
-		for index := range categories {
-			ids = append(ids, details.Data.Uids["category-"+strconv.Itoa(index)])
+		for index, name := range categoriesNames {
+			idOfCreatedCategory := details.Data.Uids["category-"+strconv.Itoa(index)]
+			category := Category{
+				Name: name,
+				ID:   idOfCreatedCategory,
+			}
+			createdCategories = append(createdCategories, category)
 		}
 	}
 
-	return ids, nil
+	return createdCategories, nil
 }
 
 // import (
