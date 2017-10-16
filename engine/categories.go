@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"sort"
+	"fmt"
 )
 
 // ErrCategoriesAlreadyExists means that the categories is in the database already
@@ -18,10 +19,53 @@ var ErrCategoriesAlreadyExists = errors.New("categories already exists")
 var ErrCategoriesCanBeCreated = errors.New("categories can't be created")
 
 // ReadCategories is a method for get all nodes by categories names
-func (engine *Engine) ReadCategories(categoriesNames []string) ([]Category, error) {
-	var categories []Category
+func (engine *Engine) ReadCategories(categoriesNames []string) (map[string][]Category, error) {
+	categoriesByName := map[string][]Category{}
 
-	return categories, nil
+	for _, categoryName := range categoriesNames {
+
+		request := fmt.Sprintf(`{
+			categories(func:allofterms(name, "%v")) {
+				name
+				_uid_
+			}
+		}`, categoryName)
+
+		req, err := http.NewRequest("POST", engine.GraphAddress+"/query", bytes.NewBufferString(request))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		responseData, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp.Body.Close()
+
+		var details map[string]map[string][]map[string]interface{}
+		json.Unmarshal(responseData, &details)
+
+		categoriesInDatabase := make([]Category, len(details["data"]["categories"]))
+
+		for _, categoryInDatabase := range details["data"]["categories"] {
+			name := categoryInDatabase["name"].(string)
+			id := categoryInDatabase["_uid_"].(string)
+
+			category := Category{Name: name, ID: id}
+			categoriesInDatabase = append(categoriesInDatabase, category)
+		}
+
+		categoriesByName[categoryName] = append(categoriesByName[categoryName], categoriesInDatabase...)
+	}
+
+	return categoriesByName, nil
 }
 
 // CreateCategories is a method for add node for each category in database
@@ -36,8 +80,8 @@ func (engine *Engine) CreateCategories(categoriesNames []string) ([]Category, er
 
 	if len(existCategories) > 0 {
 		for _, category := range existCategories {
-			createdCategories = append(createdCategories, category)
-			index := sort.SearchStrings(categoriesNames, category.Name)
+			createdCategories = append(createdCategories, category[0])     // TODO not first only
+			index := sort.SearchStrings(categoriesNames, category[0].Name) // TODO
 			categoriesNames = append(categoriesNames[:index], categoriesNames[index+1:]...)
 		}
 	}
@@ -81,7 +125,7 @@ func (engine *Engine) CreateCategories(categoriesNames []string) ([]Category, er
 		return createdCategories, err
 	}
 
-	log.Printf("Response %+v\n", string(responseData))
+	//log.Printf("Response %+v\n", string(responseData))
 
 	var details GraphResponse
 	json.Unmarshal(responseData, &details)
