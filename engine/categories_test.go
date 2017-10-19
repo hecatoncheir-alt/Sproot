@@ -2,9 +2,39 @@ package engine
 
 import (
 	"testing"
-	"fmt"
 	"reflect"
 )
+
+func TestIntegrationCategoriesCanBeDeleted(test *testing.T) {
+	var err error
+	puffer := New()
+
+	err = puffer.DatabaseSetUp("http", "192.168.99.100", 8080)
+	if err != nil {
+		test.Error(err)
+	}
+
+	testCategories := []string{"First test category", "Second test category"}
+	createdCategories, err := puffer.CreateCategories(testCategories)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if len(createdCategories) <= 2 {
+		test.Fail()
+	}
+
+	deletedCategories, err := puffer.DeleteCategories(createdCategories)
+
+	if err != nil {
+		test.Error(err)
+	}
+
+	if len(deletedCategories) <= 2 {
+		test.Fail()
+	}
+
+}
 
 func TestIntegrationCategoriesCanBeCreated(test *testing.T) {
 	var err error
@@ -18,10 +48,12 @@ func TestIntegrationCategoriesCanBeCreated(test *testing.T) {
 	testCategories := []string{"First test category", "Second test category"}
 	categories, err := puffer.CreateCategories(testCategories)
 	if err != nil {
-		test.Error(err)
+		if err != ErrCategoriesAlreadyExists {
+			test.Error(err)
+		}
 	}
 
-	if len(categories) != 2 {
+	if len(categories) <= 2 {
 		test.Fail()
 	}
 
@@ -46,7 +78,9 @@ func TestIntegrationCategoriesCanBeRead(test *testing.T) {
 	testCategories := []string{"First test category", "Second test category"}
 	createdCategories, err := puffer.CreateCategories(testCategories)
 	if err != nil {
-		test.Error(err)
+		if err != ErrCategoriesAlreadyExists {
+			test.Error(err)
+		}
 	}
 
 	readCategories, err := puffer.ReadCategories(testCategories)
@@ -57,5 +91,4 @@ func TestIntegrationCategoriesCanBeRead(test *testing.T) {
 	if reflect.DeepEqual(createdCategories, readCategories) != true {
 		test.Fail()
 	}
-
 }

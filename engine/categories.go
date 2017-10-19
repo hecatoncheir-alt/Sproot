@@ -18,6 +18,16 @@ var ErrCategoriesAlreadyExists = errors.New("categories already exists")
 // ErrCategoriesCanBeCreated means that the categories can't be added to database
 var ErrCategoriesCanBeCreated = errors.New("categories can't be created")
 
+func (engine *Engine) DeleteCategories(categories []Category) ([]Category, error) {
+	deletedCategories := []Category{}
+
+	for _, category := range categories {
+		fmt.Println(category)
+	}
+
+	return deletedCategories, nil
+}
+
 // ReadCategories is a method for get all nodes by categories names
 func (engine *Engine) ReadCategories(categoriesNames []string) (map[string][]Category, error) {
 	categoriesByName := map[string][]Category{}
@@ -52,7 +62,7 @@ func (engine *Engine) ReadCategories(categoriesNames []string) (map[string][]Cat
 		var details map[string]map[string][]map[string]interface{}
 		json.Unmarshal(responseData, &details)
 
-		categoriesInDatabase := make([]Category, len(details["data"]["categories"]))
+		categoriesInDatabase := []Category{}
 
 		for _, categoryInDatabase := range details["data"]["categories"] {
 			name := categoryInDatabase["name"].(string)
@@ -75,18 +85,28 @@ func (engine *Engine) CreateCategories(categoriesNames []string) ([]Category, er
 		sort.Strings(categoriesNames)
 	}
 
-	existCategories, err := engine.ReadCategories(categoriesNames)
 	var createdCategories []Category
 
-	if len(existCategories) > 0 {
-		for _, category := range existCategories {
-			createdCategories = append(createdCategories, category[0])     // TODO not first only
-			index := sort.SearchStrings(categoriesNames, category[0].Name) // TODO
+	existCategoriesByName, err := engine.ReadCategories(categoriesNames)
+	if err != nil {
+		log.Fatal(err)
+		return createdCategories, err
+	}
+
+	if len(existCategoriesByName) > 0 {
+		for _, categoryName := range categoriesNames {
+			for _, existCategory := range existCategoriesByName[categoryName] {
+				createdCategories = append(createdCategories, existCategory)
+			}
+
+			index := sort.SearchStrings(categoriesNames, categoryName)
 			categoriesNames = append(categoriesNames[:index], categoriesNames[index+1:]...)
 		}
 	}
 
-	//return createdCategories, ErrCategoriesAlreadyExists
+	if len(categoriesNames) == 0 {
+		return createdCategories, ErrCategoriesAlreadyExists
+	}
 
 	buf := bytes.NewBufferString(`
 		mutation {
