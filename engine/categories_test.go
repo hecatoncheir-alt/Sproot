@@ -17,7 +17,9 @@ func TestIntegrationCategoriesCanBeDeleted(test *testing.T) {
 	testCategories := []string{"First test category", "Second test category"}
 	createdCategories, err := puffer.CreateCategories(testCategories)
 	if err != nil {
-		test.Error(err)
+		if err != ErrCategoriesAlreadyExists {
+			test.Error(err)
+		}
 	}
 
 	if len(createdCategories) <= 2 {
@@ -64,6 +66,8 @@ func TestIntegrationCategoriesCanBeCreated(test *testing.T) {
 	if categories[0].ID == "" {
 		test.Fail()
 	}
+
+	puffer.DeleteCategories(categories)
 }
 
 func TestIntegrationCategoriesCanBeRead(test *testing.T) {
@@ -83,7 +87,7 @@ func TestIntegrationCategoriesCanBeRead(test *testing.T) {
 		}
 	}
 
-	readCategories, err := puffer.ReadCategories(testCategories)
+	readCategories, err := puffer.ReadCategoriesByName(testCategories)
 	if err != nil {
 		test.Error(err)
 	}
@@ -91,4 +95,6 @@ func TestIntegrationCategoriesCanBeRead(test *testing.T) {
 	if reflect.DeepEqual(createdCategories, readCategories) != true {
 		test.Fail()
 	}
+
+	puffer.DeleteCategories(createdCategories)
 }

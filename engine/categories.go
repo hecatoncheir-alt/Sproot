@@ -18,18 +18,52 @@ var ErrCategoriesAlreadyExists = errors.New("categories already exists")
 // ErrCategoriesCanBeCreated means that the categories can't be added to database
 var ErrCategoriesCanBeCreated = errors.New("categories can't be created")
 
+// ErrCategoriesCantBeDeleted means that the categories is in the database already
+var ErrCategoriesCantBeDeleted = errors.New("categories can't be deleted")
+
 func (engine *Engine) DeleteCategories(categories []Category) ([]Category, error) {
-	deletedCategories := []Category{}
+	request := bytes.NewBufferString(`
+		mutation {
+			delete {
+	`)
 
 	for _, category := range categories {
-		fmt.Println(category)
+		request.WriteString("<" + category.ID + "> * * .\n")
 	}
 
-	return deletedCategories, nil
+	request.WriteString("}\n" + "}\n")
+	fmt.Println(request.String())
+
+	req, err := http.NewRequest("POST", engine.GraphAddress+"/query", request)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resp.Body.Close()
+
+	var details GraphResponse
+	json.Unmarshal(responseData, &details)
+
+	if details.Data.Code != "Success" {
+		return categories, ErrCategoriesCantBeDeleted
+	}
+
+	return categories, nil
 }
 
-// ReadCategories is a method for get all nodes by categories names
-func (engine *Engine) ReadCategories(categoriesNames []string) (map[string][]Category, error) {
+// ReadCategoriesByName is a method for get all nodes by categories names
+func (engine *Engine) ReadCategoriesByName(categoriesNames []string) (map[string][]Category, error) {
 	categoriesByName := map[string][]Category{}
 
 	for _, categoryName := range categoriesNames {
@@ -40,6 +74,8 @@ func (engine *Engine) ReadCategories(categoriesNames []string) (map[string][]Cat
 				_uid_
 			}
 		}`, categoryName)
+
+		fmt.Println(request)
 
 		req, err := http.NewRequest("POST", engine.GraphAddress+"/query", bytes.NewBufferString(request))
 		if err != nil {
@@ -61,6 +97,10 @@ func (engine *Engine) ReadCategories(categoriesNames []string) (map[string][]Cat
 
 		var details map[string]map[string][]map[string]interface{}
 		json.Unmarshal(responseData, &details)
+
+		if details["data"]["Code"] == nil {
+			continue
+		}
 
 		categoriesInDatabase := []Category{}
 
@@ -87,7 +127,7 @@ func (engine *Engine) CreateCategories(categoriesNames []string) ([]Category, er
 
 	var createdCategories []Category
 
-	existCategoriesByName, err := engine.ReadCategories(categoriesNames)
+	existCategoriesByName, err := engine.ReadCategoriesByName(categoriesNames)
 	if err != nil {
 		log.Fatal(err)
 		return createdCategories, err
@@ -144,8 +184,6 @@ func (engine *Engine) CreateCategories(categoriesNames []string) ([]Category, er
 		log.Fatal(err)
 		return createdCategories, err
 	}
-
-	//log.Printf("Response %+v\n", string(responseData))
 
 	var details GraphResponse
 	json.Unmarshal(responseData, &details)
