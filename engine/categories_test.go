@@ -21,7 +21,7 @@ func TestIntegrationCategoriesCanBeDeleted(test *testing.T) {
 		}
 	}
 
-	if len(createdCategories) <= 2 {
+	if len(createdCategories) < 2 {
 		test.Fail()
 	}
 
@@ -31,7 +31,7 @@ func TestIntegrationCategoriesCanBeDeleted(test *testing.T) {
 		test.Error(err)
 	}
 
-	if len(deletedCategories) <= 2 {
+	if len(deletedCategories) < 2 {
 		test.Fail()
 	}
 
@@ -54,8 +54,10 @@ func TestIntegrationCategoriesCanBeCreated(test *testing.T) {
 		}
 	}
 
-	if len(categories) <= 2 {
-		test.Fail()
+	defer puffer.DeleteCategories(categories)
+
+	if len(categories) < 2 {
+		test.Fatal("Created categories count must be two")
 	}
 
 	if categories[0].Name != "First test category" {
@@ -66,7 +68,6 @@ func TestIntegrationCategoriesCanBeCreated(test *testing.T) {
 		test.Fail()
 	}
 
-	puffer.DeleteCategories(categories)
 }
 
 func TestIntegrationCategoriesCanBeRead(test *testing.T) {
@@ -90,7 +91,7 @@ func TestIntegrationCategoriesCanBeRead(test *testing.T) {
 	defer puffer.DeleteCategories(createdCategories)
 
 	if len(createdCategories) < 2 {
-		test.Fatal("Created categories must be two")
+		test.Fatal("Created categories count must be two")
 	}
 
 	readCategories, err := puffer.ReadCategoriesByName(testCategories)
