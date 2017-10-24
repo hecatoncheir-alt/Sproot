@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
 	"sort"
-	"fmt"
+	"strconv"
 )
 
 // ErrCategoriesAlreadyExists means that the categories is in the database already
@@ -21,6 +21,7 @@ var ErrCategoriesCanBeCreated = errors.New("categories can't be created")
 // ErrCategoriesCantBeDeleted means that the categories is in the database already
 var ErrCategoriesCantBeDeleted = errors.New("categories can't be deleted")
 
+// DeleteCategories method for remove categories from database
 func (engine *Engine) DeleteCategories(categories []Category) ([]Category, error) {
 	request := bytes.NewBufferString(`
 		mutation {

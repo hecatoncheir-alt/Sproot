@@ -8,6 +8,7 @@ type MessageEvent struct {
 	Data    interface{}
 }
 
+// Category is a structure of Category in database
 type Category struct {
 	ID   string
 	Name string
