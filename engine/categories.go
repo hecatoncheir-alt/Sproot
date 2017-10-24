@@ -32,7 +32,6 @@ func (engine *Engine) DeleteCategories(categories []Category) ([]Category, error
 	}
 
 	request.WriteString("}\n" + "}\n")
-	fmt.Println(request.String())
 
 	req, err := http.NewRequest("POST", engine.GraphAddress+"/query", request)
 	if err != nil {
@@ -75,8 +74,6 @@ func (engine *Engine) ReadCategoriesByName(categoriesNames []string) (map[string
 			}
 		}`, categoryName)
 
-		fmt.Println(request)
-
 		req, err := http.NewRequest("POST", engine.GraphAddress+"/query", bytes.NewBufferString(request))
 		if err != nil {
 			log.Fatal(err)
@@ -98,7 +95,7 @@ func (engine *Engine) ReadCategoriesByName(categoriesNames []string) (map[string
 		var details map[string]map[string][]map[string]interface{}
 		json.Unmarshal(responseData, &details)
 
-		if details["data"]["Code"] == nil {
+		if len(details["data"]["categories"]) == 0 {
 			continue
 		}
 

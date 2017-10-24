@@ -2,7 +2,6 @@ package engine
 
 import (
 	"testing"
-	"reflect"
 )
 
 func TestIntegrationCategoriesCanBeDeleted(test *testing.T) {
@@ -87,14 +86,30 @@ func TestIntegrationCategoriesCanBeRead(test *testing.T) {
 		}
 	}
 
+	// Created categories must be deleted
+	defer puffer.DeleteCategories(createdCategories)
+
+	if len(createdCategories) < 2 {
+		test.Fatal("Created categories must be two")
+	}
+
 	readCategories, err := puffer.ReadCategoriesByName(testCategories)
 	if err != nil {
 		test.Error(err)
 	}
 
-	if reflect.DeepEqual(createdCategories, readCategories) != true {
-		test.Fail()
+	if len(readCategories) < 2 {
+		test.Fatal("Two created categories and two categories must be in database")
 	}
 
-	puffer.DeleteCategories(createdCategories)
+	for _, categories := range readCategories {
+		for _, readCategory := range categories {
+			for _, createdCategory := range createdCategories {
+				if readCategory.Name == createdCategory.Name && readCategory.ID != createdCategory.ID {
+					test.Fatal("Created category ID must be same as a read category ID")
+				}
+			}
+
+		}
+	}
 }
