@@ -10,8 +10,8 @@ type MessageEvent struct {
 
 // Category is a structure of Category in database
 type Category struct {
-	ID   string
-	Name string
+	ID   uint64 `json:"_uid_,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 // Company type for parse

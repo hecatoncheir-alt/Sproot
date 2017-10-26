@@ -2,6 +2,7 @@ package engine
 
 import (
 	"testing"
+	"strconv"
 )
 
 func TestIntegrationCategoriesCanBeDeleted(test *testing.T) {
@@ -64,7 +65,7 @@ func TestIntegrationCategoriesCanBeCreated(test *testing.T) {
 		test.Fail()
 	}
 
-	if categories[0].ID == "" {
+	if strconv.Itoa(int(categories[0].ID)) == "" {
 		test.Fail()
 	}
 
