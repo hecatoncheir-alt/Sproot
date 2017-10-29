@@ -1,123 +1,148 @@
 package engine
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"sort"
-	"strconv"
+	"context"
+	dataBaseClient "github.com/dgraph-io/dgraph/client"
 )
 
 var (
 	// ErrCategoriesAlreadyExists means that the categories is in the database already
+	ErrCategoryDoesNotExist = errors.New("category does not exist")
+
+	// ErrCategoriesAlreadyExists means that the categories is in the database already
 	ErrCategoriesAlreadyExists = errors.New("categories already exists")
 
-	// ErrCategoriesCanBeCreated means that the categories can't be added to database
-	ErrCategoriesCanBeCreated = errors.New("categories can't be created")
+	// ErrCategoryCanBeCreated means that the categories can't be added to database
+	ErrCategoryCantBeCreated = errors.New("category can't be created")
 
-	// ErrCategoriesCantBeDeleted means that the categories is in the database already
-	ErrCategoriesCantBeDeleted = errors.New("categories can't be deleted")
+	// ErrCategoryCantBeDeleted means that the categories is in the database already
+	ErrCategoryCantBeDeleted = errors.New("category can't be deleted")
 )
 
 // DeleteCategories method for remove categories from database
-func (engine *Engine) DeleteCategories(categories []Category) ([]Category, error) {
-	request := bytes.NewBufferString(`
-		mutation {
-			delete {
-	`)
+func (engine *Engine) DeleteCategories(categories []Category) ([]uint64, error) {
+	deletedIds := []uint64{}
+
+	client, err := engine.PrepareDataBaseClient()
+	if err != nil {
+		log.Println(err)
+		return nil, ErrCategoryCantBeDeleted
+	}
+
+	defer client.Close()
 
 	for _, category := range categories {
-		request.WriteString("<" + string(category.ID) + "> * * .\n")
+		request := dataBaseClient.Req{}
+		err = request.DeleteObject(category)
+		if err != nil {
+			log.Println(err)
+			return nil, ErrCategoryCantBeDeleted
+		}
+
+		_, err := client.Run(context.Background(), &request)
+		if err != nil {
+			log.Println(err)
+			return nil, ErrCategoryCantBeDeleted
+		}
+
+		deletedIds = append(deletedIds, category.ID)
 	}
 
-	request.WriteString("}\n" + "}\n")
+	return deletedIds, nil
+}
 
-	req, err := http.NewRequest("POST", engine.GraphAddress+"/query", request)
+// ReadCategoryById is a method for get all nodes by categories names
+func (engine *Engine) ReadCategoryById(categoryId uint64) (Category, error) {
+	type categoryInDatabase struct {
+		Category Category `json:"category"`
+	}
+
+	var categoryFromDatabase categoryInDatabase
+
+	client, err := engine.PrepareDataBaseClient()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return categoryFromDatabase.Category, err
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	defer client.Close()
+
+	query := fmt.Sprintf(`{
+			category(func: uid(%d)) {
+				_uid_
+				name
+			}
+		}`, categoryId)
+
+	request := &dataBaseClient.Req{}
+	request.SetQuery(query)
+
+	response, err := client.Run(context.Background(), request)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
-	responseData, err := ioutil.ReadAll(resp.Body)
+	if len(response.N[0].Children) == 0 {
+		log.Println(ErrCategoryDoesNotExist)
+		return categoryFromDatabase.Category, ErrCategoryDoesNotExist
+	}
+
+	err = dataBaseClient.Unmarshal(response.N, &categoryFromDatabase)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
-	resp.Body.Close()
-
-	var details GraphResponse
-	json.Unmarshal(responseData, &details)
-
-	if details.Data.Code != "Success" {
-		return categories, ErrCategoriesCantBeDeleted
-	}
-
-	return categories, nil
+	return categoryFromDatabase.Category, nil
 }
 
 // ReadCategoriesByName is a method for get all nodes by categories names
 func (engine *Engine) ReadCategoriesByName(categoriesNames []string) (map[string][]Category, error) {
 	categoriesByName := map[string][]Category{}
 
+	client, err := engine.PrepareDataBaseClient()
+	if err != nil {
+		log.Println(err)
+		return categoriesByName, err
+	}
+
+	defer client.Close()
+
 	for _, categoryName := range categoriesNames {
-
-		request := fmt.Sprintf(`{
-			categories(func:allofterms(name, "%v")) {
-				name
+		query := fmt.Sprintf(`{
+			category(func: allofterms(name, "$categoryName")) {
 				_uid_
+				name
 			}
-		}`, categoryName)
+		}`)
 
-		req, err := http.NewRequest("POST", engine.GraphAddress+"/query", bytes.NewBufferString(request))
+		request := &dataBaseClient.Req{}
+		request.SetQueryWithVariables(query, map[string]string{"categoryName": categoryName})
+
+		response, err := client.Run(context.Background(), request)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		responseData, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		resp.Body.Close()
-
-		var details map[string]map[string][]map[string]interface{}
-		json.Unmarshal(responseData, &details)
-
-		if len(details["data"]["categories"]) == 0 {
+		if len(response.N[0].Children) == 0 {
+			log.Println(ErrCategoryDoesNotExist)
 			continue
 		}
 
-		categoriesInDatabase := []Category{}
+		type categoriesInDatabase struct {
+			InDatabase []Category `dgraph:"category"`
+		}
+		var categories categoriesInDatabase
 
-		for _, categoryInDatabase := range details["data"]["categories"] {
-			name := categoryInDatabase["name"].(string)
-			id := categoryInDatabase["_uid_"].(string)
-
-			id64, err := strconv.ParseUint(id, 10, 64)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			category := Category{Name: name, ID: id64}
-			categoriesInDatabase = append(categoriesInDatabase, category)
+		err = dataBaseClient.Unmarshal(response.N[0].Children, &categories)
+		if err != nil {
+			log.Println(err)
 		}
 
-		categoriesByName[categoryName] = append(categoriesByName[categoryName], categoriesInDatabase...)
+		categoriesByName[categoryName] = append(categoriesByName[categoryName], categories.InDatabase...)
 	}
 
 	return categoriesByName, nil
@@ -152,102 +177,38 @@ func (engine *Engine) CreateCategories(categoriesNames []string) ([]Category, er
 		return createdCategories, ErrCategoriesAlreadyExists
 	}
 
-	client, request, err := engine.PrepareDataBaseClient()
+	client, err := engine.PrepareDataBaseClient()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return createdCategories, err
 	}
 
-	//request.SetObject()
+	defer client.Close()
 
-	return createdCategories, nil
-}
+	request := &dataBaseClient.Req{}
 
-// CreateCategories is a method for add node for each category in database
-func (engine *Engine) CreateCategoriesByHttp(categoriesNames []string) ([]Category, error) {
-
-	if !sort.StringsAreSorted(categoriesNames) {
-		sort.Strings(categoriesNames)
-	}
-
-	var createdCategories []Category
-
-	existCategoriesByName, err := engine.ReadCategoriesByName(categoriesNames)
-	if err != nil {
-		log.Fatal(err)
-		return createdCategories, err
-	}
-
-	if len(existCategoriesByName) > 0 {
-		for _, categoryName := range categoriesNames {
-			for _, existCategory := range existCategoriesByName[categoryName] {
-				createdCategories = append(createdCategories, existCategory)
-			}
-
-			index := sort.SearchStrings(categoriesNames, categoryName)
-			categoriesNames = append(categoriesNames[:index], categoriesNames[index+1:]...)
-		}
-	}
-
-	if len(categoriesNames) == 0 {
-		return createdCategories, ErrCategoriesAlreadyExists
-	}
-
-	buf := bytes.NewBufferString(`
-		mutation {
-			schema {
+	request.SetSchema(`
 				name: string @index(exact, term) .
-			}
+	`)
 
-			set {
-		`)
+	for _, categoryName := range categoriesNames {
+		category := Category{Name: categoryName}
 
-	for index, category := range categoriesNames {
-		buf.WriteString("_:category-" + strconv.Itoa(index) + " <name> ")
-		buf.WriteString("\"" + category + "\"" + " ." + "\n")
-	}
+		err = request.SetObject(&category)
+		if err != nil {
+			log.Println(err)
+			return createdCategories, ErrCategoryCantBeCreated
+		}
 
-	buf.WriteString("}" + " \n" + "}" + "\n")
+		response, err := client.Run(context.Background(), request)
 
-	req, err := http.NewRequest("POST", engine.GraphAddress+"/query", buf)
-	if err != nil {
-		log.Fatal(err)
-		return createdCategories, err
-	}
+		if err != nil {
+			log.Println(err)
+			return createdCategories, ErrCategoryCantBeCreated
+		}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-		return createdCategories, err
-	}
-
-	defer resp.Body.Close()
-
-	responseData, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-		return createdCategories, err
-	}
-
-	var details GraphResponse
-	json.Unmarshal(responseData, &details)
-
-	if details.Data.Code == "ErrorInvalidRequest" {
-		return createdCategories, ErrCategoriesCanBeCreated
-	}
-
-	if details.Data.Message == "Done" {
-		for index, name := range categoriesNames {
-			idOfCreatedCategory := details.Data.Uids["category-"+strconv.Itoa(index)]
-			id64, err := strconv.ParseUint(idOfCreatedCategory, 10, 64)
-			if err != nil {
-				log.Fatal(err)
-			}
-			category := Category{
-				Name: name,
-				ID:   id64,
-			}
+		for _, id := range response.AssignedUids {
+			category.ID = id
 			createdCategories = append(createdCategories, category)
 		}
 	}

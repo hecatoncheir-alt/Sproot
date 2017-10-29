@@ -44,9 +44,3 @@ type GraphDataResponseField struct {
 	Message string            `json:"message"`
 	Uids    map[string]string `json:"uids"`
 }
-
-// GraphResponse is a response structure from DGraph database operation
-type GraphResponse struct {
-	Data       GraphDataResponseField `json:"data"`
-	Extensions map[string]string      `json:"extensions"`
-}

@@ -7,7 +7,7 @@ func TestIntegrationCompanyCanBeCreated(test *testing.T) {
 	var err error
 	puffer := New()
 
-	err = puffer.DatabaseSetUp("http", "192.168.99.100", 8080)
+	err = puffer.DatabaseSetUp("192.168.99.100", 9080)
 	if err != nil {
 		test.Error(err)
 	}

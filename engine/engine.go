@@ -8,14 +8,14 @@ import (
 	"github.com/dgraph-io/dgraph/x"
 	"google.golang.org/grpc"
 	"os"
+	"context"
 )
 
 // Engine is a main object of engine pkg
 type Engine struct {
-	GraphAddress string
-	GraphIRI     string
-	GraphHost    string
-	GraphPort    int
+	GraphAddress  string
+	GraphGRPCHost string
+	GraphGRPCPort int
 }
 
 // New is a constructor for Engine
@@ -25,34 +25,53 @@ func New() *Engine {
 }
 
 // DatabaseSetUp is a method for setup SQL database for graph engine
-func (engine *Engine) DatabaseSetUp(protocol string, host string, port int) error {
-
+func (engine *Engine) DatabaseSetUp(host string, port int) error {
+	engine.GraphGRPCHost = host
+	engine.GraphGRPCPort = port
 	engine.GraphAddress = fmt.Sprintf("%v:%v", host, port)
-	engine.GraphIRI = fmt.Sprintf("%v://%v:%v", protocol, host, port)
-	engine.GraphHost = host
-	engine.GraphPort = port
+	return nil
+}
+
+func (engine *Engine) SetUpIndexes() error {
+	client, err := engine.PrepareDataBaseClient()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	defer client.Close()
+
+	request := &dataBaseClient.Req{}
+
+	request.SetSchema(`
+				name: string @index(exact, term) .
+	`)
+
+	_, err = client.Run(context.Background(), request)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 
 	return nil
 }
 
-func (engine *Engine) PrepareDataBaseClient() (*dataBaseClient.Dgraph, *dataBaseClient.Req, error) {
+func (engine *Engine) PrepareDataBaseClient() (*dataBaseClient.Dgraph, error) {
 	conn, err := grpc.Dial(engine.GraphAddress, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
-		return nil, nil, err
+		return nil, err
 	}
 
 	x.Checkf(err, "While trying to dial gRPC")
-	defer conn.Close()
 
-	clientDir, err := ioutil.TempDir("", "client_")
+	clientDir, err := ioutil.TempDir("", "sproot_dgraph_client_")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer os.RemoveAll(clientDir)
 
 	client := dataBaseClient.NewDgraphClient([]*grpc.ClientConn{conn}, dataBaseClient.DefaultOptions, clientDir)
-	defer client.Close()
 
-	return client, &dataBaseClient.Req{}, nil
+	return client, nil
 }
