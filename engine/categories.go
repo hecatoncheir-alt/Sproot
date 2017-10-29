@@ -113,14 +113,14 @@ func (engine *Engine) ReadCategoriesByName(categoriesNames []string) (map[string
 
 	for _, categoryName := range categoriesNames {
 		query := fmt.Sprintf(`{
-			category(func: allofterms(name, "$categoryName")) {
+			category(func: allofterms(name, "%v")) {
 				_uid_
 				name
 			}
-		}`)
+		}`, categoryName)
 
 		request := &dataBaseClient.Req{}
-		request.SetQueryWithVariables(query, map[string]string{"categoryName": categoryName})
+		request.SetQuery(query)
 
 		response, err := client.Run(context.Background(), request)
 		if err != nil {
