@@ -31,13 +31,13 @@ func TestIntegrationCategoriesCanBeDeleted(test *testing.T) {
 		test.Fail()
 	}
 
-	deletedIds, err := puffer.DeleteCategories(createdCategories)
+	deletedIDs, err := puffer.DeleteCategories(createdCategories)
 
 	if err != nil {
 		test.Error(err)
 	}
 
-	if len(deletedIds) < 2 {
+	if len(deletedIDs) < 2 {
 		test.Fail()
 	}
 
