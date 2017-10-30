@@ -25,7 +25,7 @@ var (
 
 // DeleteCategories method for remove categories from database
 func (engine *Engine) DeleteCategories(categories []Category) ([]uint64, error) {
-	deletedIds := []uint64{}
+	deletedIDs := []uint64{}
 
 	client, err := engine.PrepareDataBaseClient()
 	if err != nil {
@@ -49,14 +49,14 @@ func (engine *Engine) DeleteCategories(categories []Category) ([]uint64, error) 
 			return nil, ErrCategoryCantBeDeleted
 		}
 
-		deletedIds = append(deletedIds, category.ID)
+		deletedIDs = append(deletedIDs, category.ID)
 	}
 
-	return deletedIds, nil
+	return deletedIDs, nil
 }
 
-// ReadCategoryById is a method for get all nodes by categories names
-func (engine *Engine) ReadCategoryById(categoryId uint64) (Category, error) {
+// ReadCategoryByID is a method for get all nodes by categories names
+func (engine *Engine) ReadCategoryByID(categoryID uint64) (Category, error) {
 	type categoryInDatabase struct {
 		Category Category `json:"category"`
 	}
@@ -76,7 +76,7 @@ func (engine *Engine) ReadCategoryById(categoryId uint64) (Category, error) {
 				_uid_
 				name
 			}
-		}`, categoryId)
+		}`, categoryID)
 
 	request := &dataBaseClient.Req{}
 	request.SetQuery(query)
