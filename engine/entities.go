@@ -16,10 +16,10 @@ type Category struct {
 
 // Company type for parse
 type Company struct {
-	ID         string
-	IRI        string
-	Name       string
-	Categories []string
+	ID         uint64 `json:"_uid_,omitempty"`
+	IRI        string `json:"iri,omitempty"`
+	Name       string `json:"name,omitempty"`
+	Categories []Category
 }
 
 // Price structure
@@ -36,11 +36,4 @@ type Item struct {
 	PreviewImageLink string
 	Price            Price
 	Company          Company
-}
-
-// GraphDataResponseField is a structure for field in response from DGraph database operation
-type GraphDataResponseField struct {
-	Code    string            `json:"code"`
-	Message string            `json:"message"`
-	Uids    map[string]string `json:"uids"`
 }

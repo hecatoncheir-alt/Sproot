@@ -1,11 +1,12 @@
 package engine
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"sort"
-	"context"
+
 	dataBaseClient "github.com/dgraph-io/dgraph/client"
 )
 
@@ -173,6 +174,7 @@ func (engine *Engine) CreateCategories(categoriesNames []string) ([]Category, er
 		}
 	}
 
+	// WTF
 	if len(categoriesNames) == 0 {
 		return createdCategories, ErrCategoriesAlreadyExists
 	}
@@ -186,10 +188,6 @@ func (engine *Engine) CreateCategories(categoriesNames []string) ([]Category, er
 	defer client.Close()
 
 	request := &dataBaseClient.Req{}
-
-	request.SetSchema(`
-				name: string @index(exact, term) .
-	`)
 
 	for _, categoryName := range categoriesNames {
 		category := Category{Name: categoryName}

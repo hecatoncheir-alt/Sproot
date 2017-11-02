@@ -3,7 +3,6 @@ package engine
 import "testing"
 
 func TestIntegrationCompanyCanBeCreated(test *testing.T) {
-	test.Skip()
 	var err error
 	puffer := New()
 
@@ -12,7 +11,12 @@ func TestIntegrationCompanyCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	testCategories := []string{"First test category", "Second test category"}
+	err = puffer.SetUpIndexes()
+	if err != nil {
+		test.Error(err)
+	}
+
+	testCategories := []Category{{Name: "First test category"}, {Name: "Second test category"}}
 
 	testCompany := Company{
 		Name:       "Test company",
@@ -20,12 +24,15 @@ func TestIntegrationCompanyCanBeCreated(test *testing.T) {
 		Categories: testCategories,
 	}
 
-	id, err := puffer.CreateCompany(&testCompany)
+	company, err := puffer.CreateCompany(&testCompany)
 	if err != nil {
 		test.Error(err)
 	}
 
-	if id == "" {
+	if int(company.ID) == 0 {
 		test.Fail()
 	}
+
+	puffer.DeleteCategories(company.Categories)
+	puffer.DeleteCompany(&company)
 }
