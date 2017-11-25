@@ -1,14 +1,15 @@
 package engine
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"io/ioutil"
+	"log"
+	"os"
+
 	dataBaseClient "github.com/dgraph-io/dgraph/client"
 	"github.com/dgraph-io/dgraph/x"
 	"google.golang.org/grpc"
-	"os"
-	"context"
 )
 
 // Engine is a main object of engine pkg
@@ -32,6 +33,7 @@ func (engine *Engine) DatabaseSetUp(host string, port int) error {
 	return nil
 }
 
+// SetUpIndexes needed for setup schema for dgraph database
 func (engine *Engine) SetUpIndexes() error {
 	client, err := engine.PrepareDataBaseClient()
 	if err != nil {
@@ -56,6 +58,7 @@ func (engine *Engine) SetUpIndexes() error {
 	return nil
 }
 
+// PrepareDataBaseClient make all for needed checks for work with Dgraph database
 func (engine *Engine) PrepareDataBaseClient() (*dataBaseClient.Dgraph, error) {
 	conn, err := grpc.Dial(engine.GraphAddress, grpc.WithInsecure())
 	if err != nil {

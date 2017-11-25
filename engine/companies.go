@@ -2,7 +2,6 @@ package engine
 
 import (
 	"errors"
-	"log"
 )
 
 // ErrCompanyNotExists means that the company is not in the database
@@ -16,25 +15,28 @@ var ErrCompanyCanNotBeDeleted = errors.New("company can not be deleted")
 
 // CreateCompany method for add triplets to graph db
 func (engine *Engine) CreateCompany(company *Company) (createdCompany Company, err error) {
-	categoriesForCompany := []Category{}
 
-	if len(company.Categories) > 0 {
-		categoriesForCreate := []string{}
-		for _, category := range company.Categories {
-			if int(category.ID) != 0 {
-				categoriesForCompany = append(categoriesForCompany, category)
-				break
-			}
+	// if len(company.Categories) > 0 {
+	// 	categoriesForCreate := []string{}
+	// 	for _, category := range company.Categories {
+	// 		if int(category.ID) != 0 {
+	// 			categoriesForCompany = append(categoriesForCompany, category)
+	// 			break
+	// 		}
 
-			categoriesForCreate = append(categoriesForCreate, category.Name)
-		}
+	// 		categoriesForCreate = append(categoriesForCreate, category.Name)
+	// 	}
 
-		categoriesForCompany, err = engine.CreateCategories(categoriesForCreate)
-		if err != nil {
-			log.Fatal(err)
-			return Company{}, err
-		}
-	}
+	// 	createdCategories, err := engine.CreateCategories(categoriesForCreate)
+	// 	if err != nil {
+	// 		if err != ErrCategoriesAlreadyExists {
+	// 			log.Fatal(err)
+	// 			return createdCompany, err
+	// 		}
+	// 	}
+
+	// 	categoriesForCompany = append(categoriesForCompany, createdCategories...)
+	// }
 
 	//request := fmt.Sprintf(`
 	//	mutation {
@@ -105,7 +107,7 @@ func (engine *Engine) UpdateCompany(company *Company) (updatedCompany Company, e
 }
 
 // DeleteCompany method for delete all nodes with company name
-func (engine *Engine) DeleteCompany(company *Company) (deletedRecordId uint64, err error) {
+func (engine *Engine) DeleteCompany(company *Company) (deletedRecordID uint64, err error) {
 	//body := bytes.NewBufferString(`
 	//	mutation {
 	//		set {
@@ -145,5 +147,5 @@ func (engine *Engine) DeleteCompany(company *Company) (deletedRecordId uint64, e
 	//}
 	//
 	//return nil
-	return deletedRecordId, nil
+	return deletedRecordID, nil
 }
