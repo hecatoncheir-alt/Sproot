@@ -2,16 +2,18 @@ package engine
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 
+	"strconv"
+
 	dataBaseClient "github.com/dgraph-io/dgraph/client"
+	"github.com/dgraph-io/dgraph/protos/api"
 )
 
 var (
-	// ErrCategoryDoesNotExist means that the category is in the database already
-	ErrCategoryDoesNotExist = errors.New("category does not exist")
 
 	// ErrCategoryAlreadyExist means that the category is in the database already
 	ErrCategoryAlreadyExist = errors.New("category already exist")
@@ -19,11 +21,17 @@ var (
 	// ErrCategoryCantBeCreated means that the category can't be added to database
 	ErrCategoryCantBeCreated = errors.New("category can't be created")
 
-	// ErrCategoryCantBeUpdated means that the category can't be updated in database
-	ErrCategoryCantBeUpdated = errors.New("category can't be updated")
+	// ErrCategoryDoesNotExist means that the category is in the database already
+	ErrCategoryDoesNotExist = errors.New("category does not exist")
 
 	// ErrCategoryWithoutID means that the category can't be updated in database
 	ErrCategoryWithoutID = errors.New("category without ID")
+
+	// ErrCategoryCanNotBeReaded means that the category is in the database already
+	ErrCategoryCanNotBeReaded = errors.New("category can not be reded")
+
+	// ErrCategoryCantBeUpdated means that the category can't be updated in database
+	ErrCategoryCantBeUpdated = errors.New("category can't be updated")
 
 	// ErrCategoryCantBeDeleted means that the category is in the database already
 	ErrCategoryCantBeDeleted = errors.New("category can't be deleted")
@@ -39,80 +47,104 @@ func (engine *Engine) CreateCategory(categoryName string) (Category, error) {
 		return category, err
 	}
 
-	defer client.Close()
-
 	existsCategories, err := engine.ReadCategoriesByName(categoryName)
 	if len(existsCategories) > 0 {
 		return existsCategories[0], ErrCategoryAlreadyExist
 	}
 
-	request := dataBaseClient.Req{}
-	err = request.SetObject(&category)
+	transaction := client.NewTxn()
+	defer transaction.Discard(context.Background())
+
+	encodedCategory, err := json.Marshal(category)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
+	}
+
+	assigned, err := transaction.Mutate(context.Background(), &api.Mutation{
+		SetJson:   encodedCategory,
+		CommitNow: true,
+	})
+
+	if err != nil {
+		log.Fatal(err)
 		return category, ErrCategoryCantBeCreated
 	}
 
-	response, err := client.Run(context.Background(), &request)
-
+	categoryID, err := strconv.ParseUint(assigned.Uids["blank-0"], 10, 64)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 		return category, ErrCategoryCantBeCreated
 	}
 
-	// fmt.Printf("Raw Response: %+v\n", proto.MarshalTextString(response))
-
-	for _, id := range response.AssignedUids {
-		category.ID = id
-	}
+	category.ID = categoryID
 
 	return category, nil
 }
 
 // ReadCategoryByID is a method for get all nodes by categories names
 func (engine *Engine) ReadCategoryByID(categoryID uint64) (Category, error) {
-	type categoryInDatabase struct {
-		Category Category `json:"category"`
-	}
+	// type categoryInDatabase struct {
+	// 	Category Category `json:"category"`
+	// }
 
-	var categoryFromDatabase categoryInDatabase
+	// var categoryFromDatabase categoryInDatabase
+
+	category := Category{ID: categoryID}
 
 	client, err := engine.PrepareDataBaseClient()
 	if err != nil {
 		log.Println(err)
-		return categoryFromDatabase.Category, err
+		return category, ErrCategoryCanNotBeReaded
 	}
 
-	defer client.Close()
+	transaction := client.NewTxn()
+	defer transaction.Discard(context.Background())
 
-	query := fmt.Sprintf(`{
-			category(func: uid(%d)) {
-				_uid_
-				name
-			}
-		}`, categoryID)
-
-	request := &dataBaseClient.Req{}
-	request.SetQuery(query)
-
-	response, err := client.Run(context.Background(), request)
+	encodedCategory, err := json.Marshal(category)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 
-	if len(response.N[0].Children) == 0 {
-		log.Println(ErrCategoryDoesNotExist)
-		return categoryFromDatabase.Category, ErrCategoryDoesNotExist
-	}
+	assigned, err := transaction.Mutate(context.Background(), &api.Mutation{
+		SetJson:   encodedCategory,
+		CommitNow: true,
+	})
 
-	err = dataBaseClient.Unmarshal(response.N, &categoryFromDatabase)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
+		return category, ErrCategoryCanNotBeReaded
 	}
 
-	if categoryFromDatabase.Category.Name == "" {
-		return categoryFromDatabase.Category, ErrCategoryDoesNotExist
-	}
+	println(assigned)
+
+	// query := fmt.Sprintf(`{
+	// 		category(func: uid(%d)) {
+	// 			_uid_
+	// 			name
+	// 		}
+	// 	}`, categoryID)
+
+	// request := &dataBaseClient.Req{}
+	// request.SetQuery(query)
+
+	// response, err := client.Run(context.Background(), request)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
+
+	// if len(response.N[0].Children) == 0 {
+	// 	log.Println(ErrCategoryDoesNotExist)
+	// 	return categoryFromDatabase.Category, ErrCategoryDoesNotExist
+	// }
+
+	// err = dataBaseClient.Unmarshal(response.N, &categoryFromDatabase)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
+
+	// if categoryFromDatabase.Category.Name == "" {
+	// 	return categoryFromDatabase.Category, ErrCategoryDoesNotExist
+	// }
 
 	return categoryFromDatabase.Category, nil
 }

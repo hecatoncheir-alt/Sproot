@@ -3,12 +3,9 @@ package engine
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 
 	dataBaseClient "github.com/dgraph-io/dgraph/client"
-	"github.com/dgraph-io/dgraph/x"
 	"google.golang.org/grpc"
 )
 
@@ -41,18 +38,13 @@ func (engine *Engine) SetUpIndexes() error {
 		return err
 	}
 
-	defer client.Close()
+	operation := &protos.Operation{Schema: `
+		name: string @index(exact, term) .
+	`}
 
-	request := &dataBaseClient.Req{}
-
-	request.SetSchema(`
-				name: string @index(exact, term) .
-	`)
-
-	_, err = client.Run(context.Background(), request)
+	err = client.Alter(context.Background(), operation)
 	if err != nil {
-		log.Println(err)
-		return err
+		log.Fatal(err)
 	}
 
 	return nil
@@ -66,15 +58,8 @@ func (engine *Engine) PrepareDataBaseClient() (*dataBaseClient.Dgraph, error) {
 		return nil, err
 	}
 
-	x.Checkf(err, "While trying to dial gRPC")
+	return client.NewDgraphClient(
+		protos.NewDgraphClient(conn),
+	), nil
 
-	clientDir, err := ioutil.TempDir("", "sproot_dgraph_client_")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.RemoveAll(clientDir)
-
-	client := dataBaseClient.NewDgraphClient([]*grpc.ClientConn{conn}, dataBaseClient.DefaultOptions, clientDir)
-
-	return client, nil
 }
