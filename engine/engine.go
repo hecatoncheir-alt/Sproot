@@ -1,19 +1,12 @@
 package engine
 
 import (
-	"context"
-	"fmt"
-	"log"
-
-	dataBaseClient "github.com/dgraph-io/dgraph/client"
-	"google.golang.org/grpc"
+	"github.com/hecatoncheir/Sproot/engine/storage"
 )
 
 // Engine is a main object of engine pkg
 type Engine struct {
-	GraphAddress  string
-	GraphGRPCHost string
-	GraphGRPCPort int
+	Storage *storage.Storage
 }
 
 // New is a constructor for Engine
@@ -22,44 +15,13 @@ func New() *Engine {
 	return &engine
 }
 
-// DatabaseSetUp is a method for setup SQL database for graph engine
-func (engine *Engine) DatabaseSetUp(host string, port int) error {
-	engine.GraphGRPCHost = host
-	engine.GraphGRPCPort = port
-	engine.GraphAddress = fmt.Sprintf("%v:%v", host, port)
-	return nil
-}
-
-// SetUpIndexes needed for setup schema for dgraph database
-func (engine *Engine) SetUpIndexes() error {
-	client, err := engine.PrepareDataBaseClient()
+// SetUpStorage for make connect to database and prepare client for requests
+func (engine *Engine) SetUpStorage(host string, port int) error {
+	engine.Storage = storage.New(host, port)
+	err := engine.Storage.SetUp()
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
-	operation := &protos.Operation{Schema: `
-		name: string @index(exact, term) .
-	`}
-
-	err = client.Alter(context.Background(), operation)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	return nil
-}
-
-// PrepareDataBaseClient make all for needed checks for work with Dgraph database
-func (engine *Engine) PrepareDataBaseClient() (*dataBaseClient.Dgraph, error) {
-	conn, err := grpc.Dial(engine.GraphAddress, grpc.WithInsecure())
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-
-	return client.NewDgraphClient(
-		protos.NewDgraphClient(conn),
-	), nil
-
 }

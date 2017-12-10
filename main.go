@@ -8,8 +8,8 @@ import (
 
 func main() {
 	puffer := engine.New()
-	err := puffer.DatabaseSetUp("192.168.99.100", 9080)
 
+	err := puffer.SetUpStorage("192.168.99.100", 9080)
 	if err != nil {
 		log.Fatal(err)
 	}
