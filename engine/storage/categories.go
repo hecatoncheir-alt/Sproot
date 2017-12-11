@@ -44,7 +44,7 @@ var (
 	// ErrCategoriesByNameNotFound means than the categories does not exist in database
 	ErrCategoriesByNameNotFound = errors.New("categories by name not found")
 
-	// ErrCategoryCantBeDeleted means that the category is in the database already
+	// ErrCategoryCantBeDeleted means that the category can't be deleted from database
 	ErrCategoryCantBeDeleted = errors.New("category can't be deleted")
 )
 
