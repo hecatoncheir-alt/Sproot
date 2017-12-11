@@ -48,7 +48,6 @@ func (storage *Storage) prepareDataBaseClient() (*dataBaseClient.Dgraph, error) 
 }
 
 func (storage *Storage) SetUp() (err error) {
-	storage.DeleteAll()
 	storage.Client, err = storage.prepareDataBaseClient()
 	if err != nil {
 		return err

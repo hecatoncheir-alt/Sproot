@@ -38,9 +38,10 @@ var (
 	// ErrCategoryAlreadyExist means that the category is in the database already
 	ErrCategoryAlreadyExist = errors.New("category already exist")
 
-	// ErrCategoryCanNotBeRead means that the category is in the database already
+	// ErrCategoriesByNameCanNotBeFound means that the category can't be found in database
 	ErrCategoriesByNameCanNotBeFound = errors.New("categories by name can not be found")
 
+	// ErrCategoriesByNameNotFound means than the categories does not exist in database
 	ErrCategoriesByNameNotFound = errors.New("categories by name not found")
 
 	// ErrCategoryCantBeDeleted means that the category is in the database already
