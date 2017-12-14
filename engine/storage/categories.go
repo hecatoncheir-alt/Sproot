@@ -132,16 +132,19 @@ func (categories *Categories) ReadCategoriesByName(categoryName string) ([]Categ
 func (categories *Categories) DeleteCategory(category Category) (string, error) {
 	transaction := categories.storage.Client.NewTxn()
 
-	encodedCategory, err := json.Marshal(category)
-	if err != nil {
-		log.Println(err)
-		return "", ErrCategoryCantBeDeleted
-	}
+	//encodedCategory, err := json.Marshal(category)
+	//if err != nil {
+	//	log.Println(err)
+	//	return "", ErrCategoryCantBeDeleted
+	//}
 
+	//categories.storage.Client.Alter(context.Background(), &dataBaseAPI.Operation{DropAll: true})
+
+	nQuad := dataBaseAPI.NQuad{ObjectId: category.ID}
 	mutation := dataBaseAPI.Mutation{
-		DeleteJson: encodedCategory,
-		CommitNow:  true,
-	}
+		Del:                 []*dataBaseAPI.NQuad{&nQuad},
+		CommitNow:           true,
+		IgnoreIndexConflict: true}
 
 	assigned, err := transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
@@ -151,6 +154,7 @@ func (categories *Categories) DeleteCategory(category Category) (string, error) 
 		return "", ErrCategoryCantBeDeleted
 	}
 
+	fmt.Println(assigned)
 	categoryID := assigned.Uids["blank-0"]
 	if categoryID == "" {
 		return "", ErrCategoryCantBeDeleted

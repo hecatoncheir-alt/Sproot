@@ -19,6 +19,8 @@ func TestIntegrationCategoryCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
+	defer storage.Categories.DeleteCategory(createdCategory)
+
 	if createdCategory.ID == "" {
 		test.Fail()
 	}
@@ -33,8 +35,6 @@ func TestIntegrationCategoryCanBeCreated(test *testing.T) {
 	if existCategory.ID != createdCategory.ID {
 		test.Fail()
 	}
-
-	storage.Categories.DeleteCategory(createdCategory)
 }
 
 //
