@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/dgraph-io/dgraph/y"
 	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 )
 
@@ -76,9 +77,9 @@ func (categories *Categories) CreateCategory(categoryName string) (Category, err
 	}
 
 	mutation := &dataBaseAPI.Mutation{
-		SetJson:   encodedCategory,
-		CommitNow: true,
-	}
+		SetJson:             encodedCategory,
+		CommitNow:           true,
+		IgnoreIndexConflict: true}
 
 	assigned, err := transaction.Mutate(context.Background(), mutation)
 	if err != nil {
@@ -130,31 +131,28 @@ func (categories *Categories) ReadCategoriesByName(categoryName string) ([]Categ
 
 // DeleteCategory method for remove categories from database
 func (categories *Categories) DeleteCategory(category Category) (string, error) {
-	transaction := categories.storage.Client.NewTxn()
-
-	//encodedCategory, err := json.Marshal(category)
-	//if err != nil {
-	//	log.Println(err)
-	//	return "", ErrCategoryCantBeDeleted
-	//}
-
-	//categories.storage.Client.Alter(context.Background(), &dataBaseAPI.Operation{DropAll: true})
-
-	nQuad := dataBaseAPI.NQuad{ObjectId: category.ID}
-	mutation := dataBaseAPI.Mutation{
-		Del:                 []*dataBaseAPI.NQuad{&nQuad},
-		CommitNow:           true,
-		IgnoreIndexConflict: true}
-
-	assigned, err := transaction.Mutate(context.Background(), &mutation)
+	encodedCategory, err := json.Marshal(Category{ID: category.ID})
 	if err != nil {
-		//TODO
-		//fmt.Println("Transaction has been aborted. Please retry.")
 		log.Println(err)
 		return "", ErrCategoryCantBeDeleted
 	}
 
-	fmt.Println(assigned)
+	mutation := dataBaseAPI.Mutation{
+		DeleteJson:          encodedCategory,
+		CommitNow:           true,
+		IgnoreIndexConflict: true}
+
+	transaction := categories.storage.Client.NewTxn()
+	assigned, err := transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		if err == y.ErrAborted {
+			log.Println(err)
+		} else {
+			log.Println(err)
+			return "", ErrCategoryCantBeDeleted
+		}
+	}
+
 	categoryID := assigned.Uids["blank-0"]
 	if categoryID == "" {
 		return "", ErrCategoryCantBeDeleted
