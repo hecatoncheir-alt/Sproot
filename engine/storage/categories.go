@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/dgraph-io/dgraph/y"
 	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 )
 
@@ -145,12 +144,9 @@ func (categories *Categories) DeleteCategory(category Category) (string, error) 
 	transaction := categories.storage.Client.NewTxn()
 	assigned, err := transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
-		if err == y.ErrAborted {
-			log.Println(err)
-		} else {
-			log.Println(err)
-			return "", ErrCategoryCantBeDeleted
-		}
+		log.Println(err)
+		return "", ErrCategoryCantBeDeleted
+
 	}
 
 	categoryID := assigned.Uids["blank-0"]
