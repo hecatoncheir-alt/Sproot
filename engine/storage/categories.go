@@ -44,6 +44,12 @@ var (
 	// ErrCategoriesByNameNotFound means than the categories does not exist in database
 	ErrCategoriesByNameNotFound = errors.New("categories by name not found")
 
+	// ErrCategoryByIDCanNotBeFound means that the category can't be found in database
+	ErrCategoryByIDCanNotBeFound = errors.New("category by id can not be found")
+
+	// ErrCategoryByIDNotFound means than the categories does not exist in database
+	ErrCategoryByIDNotFound = errors.New("categories by id not found")
+
 	// ErrCategoryCantBeDeleted means that the category can't be deleted from database
 	ErrCategoryCantBeDeleted = errors.New("category can't be deleted")
 )
@@ -55,16 +61,14 @@ type Category struct {
 }
 
 // CreateCategory make category and save it to storage
-func (categories *Categories) CreateCategory(categoryName string) (Category, error) {
-	category := Category{Name: categoryName}
-
-	existsCategories, err := categories.ReadCategoriesByName(categoryName)
+func (categories *Categories) CreateCategory(category *Category) (*Category, error) {
+	existsCategories, err := categories.ReadCategoriesByName(category.Name)
 	if err != nil && err != ErrCategoriesByNameNotFound {
 		log.Println(err)
 		return category, ErrCategoryCantBeCreated
 	}
 	if existsCategories != nil {
-		return existsCategories[0], ErrCategoryAlreadyExist
+		return &existsCategories[0], ErrCategoryAlreadyExist
 	}
 
 	transaction := categories.storage.Client.NewTxn()
@@ -94,7 +98,7 @@ func (categories *Categories) CreateCategory(categoryName string) (Category, err
 	return category, nil
 }
 
-// ReadCategoriesByName is a method for get all nodes by categories names
+// ReadCategoriesByName is a method for get all nodes by categories name
 func (categories *Categories) ReadCategoriesByName(categoryName string) ([]Category, error) {
 	query := fmt.Sprintf(`{
 				categories(func: eq(name, "%v")) {
@@ -126,6 +130,43 @@ func (categories *Categories) ReadCategoriesByName(categoryName string) ([]Categ
 	}
 
 	return foundedCategories.AllCategoriesFoundedByName, nil
+}
+
+// ReadCategoryByID is a method for get all nodes of categories by ID
+func (categories *Categories) ReadCategoryByID(categoryID string) (Category, error) {
+	category := Category{ID: categoryID}
+
+	query := fmt.Sprintf(`{
+				category(func: uid("%s")) {
+					uid
+					name
+				}
+			}`, categoryID)
+
+	transaction := categories.storage.Client.NewTxn()
+	response, err := transaction.Query(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+		return category, ErrCategoryByIDCanNotBeFound
+	}
+
+	type categoryInStore struct {
+		Category []Category `json:"category"`
+	}
+
+	var foundedCategory categoryInStore
+
+	err = json.Unmarshal(response.GetJson(), &foundedCategory)
+	if err != nil {
+		log.Println(err)
+		return category, ErrCategoryByIDCanNotBeFound
+	}
+
+	if foundedCategory.Category[0].Name == "" {
+		return category, ErrCategoryByIDNotFound
+	}
+
+	return foundedCategory.Category[0], nil
 }
 
 // DeleteCategory method for remove categories from database
