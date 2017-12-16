@@ -60,7 +60,7 @@ var (
 	ErrCategoryCanNotBeDeleted = errors.New("category can't be deleted")
 )
 
-// Category is a structure of Category in database
+// Categories is a structure of Categories in database
 type Category struct {
 	ID   string `json:"uid,omitempty"`
 	Name string `json:"name,omitempty"`
@@ -157,7 +157,7 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (Category, err
 	}
 
 	type categoryInStore struct {
-		Category []Category `json:"category"`
+		Categories []Category `json:"category"`
 	}
 
 	var foundedCategory categoryInStore
@@ -168,11 +168,11 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (Category, err
 		return category, ErrCategoryByIDCanNotBeFound
 	}
 
-	if foundedCategory.Category[0].Name == "" {
+	if foundedCategory.Categories[0].Name == "" {
 		return category, ErrCategoryDoesNotExist
 	}
 
-	return foundedCategory.Category[0], nil
+	return foundedCategory.Categories[0], nil
 }
 
 // UpdateCategory make category and save it to storage

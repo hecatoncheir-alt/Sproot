@@ -22,6 +22,7 @@ type Storage struct {
 
 	Client     *dataBaseClient.Dgraph
 	Categories *Categories
+	Companies  *Companies
 }
 
 func New(host string, port int) *Storage {
@@ -55,6 +56,12 @@ func (storage *Storage) SetUp() (err error) {
 
 	storage.Categories = NewCategoriesResourceForStorage(storage)
 	err = storage.Categories.SetUp()
+	if err != nil {
+		return err
+	}
+
+	storage.Companies = NewCompaniesResourceForStorage(storage)
+	err = storage.Companies.SetUp()
 	if err != nil {
 		return err
 	}
