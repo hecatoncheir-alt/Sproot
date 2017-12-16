@@ -19,7 +19,7 @@ func TestIntegrationCategoryCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(*createdCategory)
+	defer storage.Categories.DeleteCategory(createdCategory)
 
 	if createdCategory.ID == "" {
 		test.Fail()
@@ -62,7 +62,7 @@ func TestIntegrationCategoryCanBeReadByName(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(*createdCategory)
+	defer storage.Categories.DeleteCategory(createdCategory)
 
 	categoriesFromStore, err = storage.Categories.ReadCategoriesByName(createdCategory.Name)
 	if err != nil {
@@ -95,7 +95,7 @@ func TestIntegrationCategoryCanBeReadById(test *testing.T) {
 	}
 
 	categoryFromStore, err := storage.Categories.ReadCategoryByID("0")
-	if err != ErrCategoryByIDNotFound {
+	if err != ErrCategoryDoesNotExist {
 		test.Fail()
 	}
 
@@ -108,7 +108,7 @@ func TestIntegrationCategoryCanBeReadById(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(*createdCategory)
+	defer storage.Categories.DeleteCategory(createdCategory)
 
 	categoryFromStore, err = storage.Categories.ReadCategoryByID(createdCategory.ID)
 	if err != nil {
@@ -126,38 +126,30 @@ func TestIntegrationCategoryCanBeReadById(test *testing.T) {
 
 func TestIntegrationCategoryCanBeUpdated(test *testing.T) {
 	var err error
-	puffer := New()
+	storage := New(databaseHost, databasePort)
 
-	err = puffer.DatabaseSetUp("192.168.99.100", 9080)
+	err = storage.SetUp()
 	if err != nil {
 		test.Error(err)
 	}
 
-	err = puffer.SetUpIndexes()
+	categoryForCreate := Category{Name: "Test category"}
+	createdCategory, err := storage.Categories.CreateCategory(&categoryForCreate)
 	if err != nil {
 		test.Error(err)
 	}
 
-	categoryForCreate := Category{Name: "First test category"}
+	defer storage.Categories.DeleteCategory(createdCategory)
 
-	updatedCategory, err := puffer.UpdateCategory(&Category{Name: "Updated test category"})
+	updatedCategory, err := storage.Categories.UpdateCategory(&Category{Name: "Updated test category"})
 	if err != nil {
-		if err != ErrCategoryWithoutID {
+		if err != ErrCategoryCanNotBeWithoutID {
 			test.Error(err)
 		}
 	}
-
-	createdCategory, err := puffer.CreateCategory(categoryForCreate.Name)
-	if err != nil {
-		if err != ErrCategoryAlreadyExist {
-			test.Error(err)
-		}
-	}
-
-	defer puffer.DeleteCategory(createdCategory)
 
 	categoryForUpdate := Category{ID: createdCategory.ID, Name: "Updated test category"}
-	updatedCategory, err = puffer.UpdateCategory(&categoryForUpdate)
+	updatedCategory, err = storage.Categories.UpdateCategory(&categoryForUpdate)
 	if err != nil {
 		test.Error(err)
 	}
@@ -166,7 +158,7 @@ func TestIntegrationCategoryCanBeUpdated(test *testing.T) {
 		test.Fail()
 	}
 
-	categoryInStore, err := puffer.ReadCategoryByID(createdCategory.ID)
+	categoryInStore, err := storage.Categories.ReadCategoryByID(createdCategory.ID)
 	if err != nil {
 		test.Error(err)
 	}
@@ -176,39 +168,32 @@ func TestIntegrationCategoryCanBeUpdated(test *testing.T) {
 	}
 }
 
-//func TestIntegrationCategoryCanBeDeleted(test *testing.T) {
-//	var err error
-//	puffer := New()
-//
-//	err = puffer.DatabaseSetUp("192.168.99.100", 9080)
-//	if err != nil {
-//		test.Error(err)
-//	}
-//
-//	err = puffer.SetUpIndexes()
-//	if err != nil {
-//		test.Error(err)
-//	}
-//
-//	createdCategory, err := puffer.CreateCategory("First test category")
-//	if err != nil {
-//		if err != ErrCategoryAlreadyExist {
-//			test.Error(err)
-//		}
-//	}
-//
-//	deletedCategoryID, err := puffer.DeleteCategory(createdCategory)
-//
-//	if err != nil {
-//		test.Error(err)
-//	}
-//
-//	if deletedCategoryID != createdCategory.ID {
-//		test.Fail()
-//	}
-//
-//	_, err = puffer.ReadCategoryByID(deletedCategoryID)
-//	if err != ErrCategoryDoesNotExist {
-//		test.Fail()
-//	}
-//}
+func TestIntegrationCategoryCanBeDeleted(test *testing.T) {
+	var err error
+	storage := New(databaseHost, databasePort)
+
+	err = storage.SetUp()
+	if err != nil {
+		test.Error(err)
+	}
+
+	categoryForCreate := Category{Name: "Test category"}
+	createdCategory, err := storage.Categories.CreateCategory(&categoryForCreate)
+	if err != nil {
+		test.Error(err)
+	}
+
+	deletedCategoryID, err := storage.Categories.DeleteCategory(createdCategory)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if deletedCategoryID != createdCategory.ID {
+		test.Fail()
+	}
+
+	_, err = storage.Categories.ReadCategoryByID(deletedCategoryID)
+	if err != ErrCategoryDoesNotExist {
+		test.Error(err)
+	}
+}

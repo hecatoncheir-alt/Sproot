@@ -32,8 +32,8 @@ func (categories *Categories) SetUp() (err error) {
 }
 
 var (
-	// ErrCategoryCantBeCreated means that the category can't be added to database
-	ErrCategoryCantBeCreated = errors.New("category can't be created")
+	// ErrCategoryCanNotBeCreated means that the category can't be added to database
+	ErrCategoryCanNotBeCreated = errors.New("category can't be created")
 
 	// ErrCategoryAlreadyExist means that the category is in the database already
 	ErrCategoryAlreadyExist = errors.New("category already exist")
@@ -47,11 +47,17 @@ var (
 	// ErrCategoryByIDCanNotBeFound means that the category can't be found in database
 	ErrCategoryByIDCanNotBeFound = errors.New("category by id can not be found")
 
-	// ErrCategoryByIDNotFound means than the categories does not exist in database
-	ErrCategoryByIDNotFound = errors.New("categories by id not found")
+	// ErrCategoryDoesNotExist means than the categories does not exist in database
+	ErrCategoryDoesNotExist = errors.New("categories by id not found")
 
-	// ErrCategoryCantBeDeleted means that the category can't be deleted from database
-	ErrCategoryCantBeDeleted = errors.New("category can't be deleted")
+	// ErrCategoryCanNotBeWithoutID means that category can't be found in storage for make some operation
+	ErrCategoryCanNotBeWithoutID = errors.New("category can not be without id")
+
+	// ErrCategoryCanNotBeUpdated means that category can't be updated
+	ErrCategoryCanNotBeUpdated = errors.New("category can not be updated")
+
+	// ErrCategoryCanNotBeDeleted means that the category can't be deleted from database
+	ErrCategoryCanNotBeDeleted = errors.New("category can't be deleted")
 )
 
 // Category is a structure of Category in database
@@ -61,14 +67,14 @@ type Category struct {
 }
 
 // CreateCategory make category and save it to storage
-func (categories *Categories) CreateCategory(category *Category) (*Category, error) {
+func (categories *Categories) CreateCategory(category *Category) (Category, error) {
 	existsCategories, err := categories.ReadCategoriesByName(category.Name)
 	if err != nil && err != ErrCategoriesByNameNotFound {
 		log.Println(err)
-		return category, ErrCategoryCantBeCreated
+		return *category, ErrCategoryCanNotBeCreated
 	}
 	if existsCategories != nil {
-		return &existsCategories[0], ErrCategoryAlreadyExist
+		return existsCategories[0], ErrCategoryAlreadyExist
 	}
 
 	transaction := categories.storage.Client.NewTxn()
@@ -76,7 +82,7 @@ func (categories *Categories) CreateCategory(category *Category) (*Category, err
 	encodedCategory, err := json.Marshal(category)
 	if err != nil {
 		log.Println(err)
-		return category, ErrCategoryCantBeCreated
+		return *category, ErrCategoryCanNotBeCreated
 	}
 
 	mutation := &dataBaseAPI.Mutation{
@@ -87,15 +93,15 @@ func (categories *Categories) CreateCategory(category *Category) (*Category, err
 	assigned, err := transaction.Mutate(context.Background(), mutation)
 	if err != nil {
 		log.Println(err)
-		return category, ErrCategoryCantBeCreated
+		return *category, ErrCategoryCanNotBeCreated
 	}
 
 	category.ID = assigned.Uids["blank-0"]
 	if category.ID == "" {
-		return category, ErrCategoryCantBeCreated
+		return *category, ErrCategoryCanNotBeCreated
 	}
 
-	return category, nil
+	return *category, nil
 }
 
 // ReadCategoriesByName is a method for get all nodes by categories name
@@ -163,10 +169,53 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (Category, err
 	}
 
 	if foundedCategory.Category[0].Name == "" {
-		return category, ErrCategoryByIDNotFound
+		return category, ErrCategoryDoesNotExist
 	}
 
 	return foundedCategory.Category[0], nil
+}
+
+// UpdateCategory make category and save it to storage
+func (categories *Categories) UpdateCategory(category *Category) (Category, error) {
+	if category.ID == "" {
+		return *category, ErrCategoryCanNotBeWithoutID
+	}
+
+	existsCategories, err := categories.ReadCategoriesByName(category.Name)
+	if err != nil && err != ErrCategoriesByNameNotFound {
+		log.Println(err)
+		return *category, ErrCategoryCanNotBeCreated
+	}
+	if existsCategories != nil {
+		return existsCategories[0], ErrCategoryAlreadyExist
+	}
+
+	transaction := categories.storage.Client.NewTxn()
+
+	encodedCategory, err := json.Marshal(category)
+	if err != nil {
+		log.Println(err)
+		return *category, ErrCategoryCanNotBeUpdated
+	}
+
+	mutation := &dataBaseAPI.Mutation{
+		SetJson:             encodedCategory,
+		CommitNow:           true,
+		IgnoreIndexConflict: true}
+
+	_, err = transaction.Mutate(context.Background(), mutation)
+	if err != nil {
+		log.Println(err)
+		return *category, ErrCategoryCanNotBeUpdated
+	}
+
+	updatedCategory, err := categories.ReadCategoryByID(category.ID)
+	if err != nil {
+		log.Println(err)
+		return *category, ErrCategoryCanNotBeUpdated
+	}
+
+	return updatedCategory, nil
 }
 
 // DeleteCategory method for remove categories from database
@@ -174,7 +223,7 @@ func (categories *Categories) DeleteCategory(category Category) (string, error) 
 	encodedCategory, err := json.Marshal(Category{ID: category.ID})
 	if err != nil {
 		log.Println(err)
-		return "", ErrCategoryCantBeDeleted
+		return "", ErrCategoryCanNotBeDeleted
 	}
 
 	mutation := dataBaseAPI.Mutation{
@@ -183,17 +232,11 @@ func (categories *Categories) DeleteCategory(category Category) (string, error) 
 		IgnoreIndexConflict: true}
 
 	transaction := categories.storage.Client.NewTxn()
-	assigned, err := transaction.Mutate(context.Background(), &mutation)
+	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
 		log.Println(err)
-		return "", ErrCategoryCantBeDeleted
-
+		return "", ErrCategoryCanNotBeDeleted
 	}
 
-	categoryID := assigned.Uids["blank-0"]
-	if categoryID == "" {
-		return "", ErrCategoryCantBeDeleted
-	}
-
-	return categoryID, nil
+	return category.ID, nil
 }
