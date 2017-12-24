@@ -1,9 +1,10 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"context"
+
 	"google.golang.org/grpc"
 
 	dataBaseClient "github.com/dgraph-io/dgraph/client"
@@ -15,6 +16,7 @@ var (
 	databasePort = 9080
 )
 
+// Storage is a object with database resource
 type Storage struct {
 	GraphAddress  string
 	GraphGRPCHost string
@@ -25,6 +27,7 @@ type Storage struct {
 	Companies  *Companies
 }
 
+// New is a constructor for Storage objects
 func New(host string, port int) *Storage {
 	storage := &Storage{}
 
@@ -48,6 +51,7 @@ func (storage *Storage) prepareDataBaseClient() (*dataBaseClient.Dgraph, error) 
 	return databaseGraph, nil
 }
 
+// SetUp is a method of storage for prepare database client and objects of resource of database.
 func (storage *Storage) SetUp() (err error) {
 	storage.Client, err = storage.prepareDataBaseClient()
 	if err != nil {
@@ -69,6 +73,7 @@ func (storage *Storage) SetUp() (err error) {
 	return nil
 }
 
+// DeleteAll drop all records in database
 func (storage *Storage) DeleteAll() error {
 	return storage.Client.Alter(context.Background(), &dataBaseAPI.Operation{DropAll: true})
 }
