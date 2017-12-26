@@ -4,6 +4,37 @@ import (
 	"testing"
 )
 
+func TestIntegrationCompanyCanBeCreated(test *testing.T) {
+	var err error
+	storage := New(databaseHost, databasePort)
+
+	err = storage.SetUp()
+	if err != nil {
+		test.Error(err)
+	}
+
+	companyForTest := Company{Name: "Test company"}
+
+	createdCompany, err := storage.Companies.CreateCompany(&companyForTest)
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer storage.Companies.DeactivateCompany(createdCompany)
+
+	if createdCompany.ID == "" {
+		test.Fail()
+	}
+
+	if createdCompany.IsActive != true {
+		test.Fail()
+	}
+
+	if createdCompany.Name != companyForTest.Name {
+		test.Fail()
+	}
+}
+
 func TestIntegrationCompanyCanBeReadByName(test *testing.T) {
 	var err error
 	storage := New(databaseHost, databasePort)
@@ -89,6 +120,11 @@ func TestIntegrationCompanyCanBeReadById(test *testing.T) {
 	if companyFromStore.ID == "" {
 		test.Fail()
 	}
+}
+
+// TODO
+func TestIntegrationCompanyCanBeUpdated(test *testing.T) {
+
 }
 
 func TestIntegrationCompanyCanBeDeactivate(test *testing.T) {
