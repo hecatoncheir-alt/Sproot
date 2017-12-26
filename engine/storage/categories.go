@@ -10,14 +10,17 @@ import (
 	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 )
 
+// Categories is resource os storage for CRUD operations
 type Categories struct {
 	storage *Storage
 }
 
+// NewCategoriesResourceForStorage is a constructor of Categories resource
 func NewCategoriesResourceForStorage(storage *Storage) *Categories {
 	return &Categories{storage: storage}
 }
 
+// SetUp is a method of Categories resource for prepare database client and schema.
 func (categories *Categories) SetUp() (err error) {
 	schema := `
 		name: string @index(exact, term) .
@@ -63,7 +66,7 @@ var (
 	ErrCategoryCanNotBeDeactivate = errors.New("category can't be deactivate")
 )
 
-// Categories is a structure of Categories in database
+// Category is a structure of Categories in database
 type Category struct {
 	ID       string `json:"uid,omitempty"`
 	Name     string `json:"name,omitempty"`
