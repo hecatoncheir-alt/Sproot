@@ -21,3 +21,10 @@ docker exec -it diggy dgraph server --memory_mb 2048 --zero localhost:5080
 go get
 go test ./...
 ```
+
+## With DockerCompose for use with docker-compose.yaml
+```
+docker-compose up -d
+
+docker-compose stop
+```
