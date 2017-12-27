@@ -15,7 +15,7 @@ func TestIntegrationCompanyCanBeCreated(test *testing.T) {
 
 	companyForTest := Company{Name: "Test company"}
 
-	createdCompany, err := storage.Companies.CreateCompany(&companyForTest)
+	createdCompany, err := storage.Companies.CreateCompany(companyForTest)
 	if err != nil {
 		test.Error(err)
 	}
@@ -55,7 +55,7 @@ func TestIntegrationCompanyCanBeReadByName(test *testing.T) {
 		test.Fail()
 	}
 
-	createdCompany, err := storage.Companies.CreateCompany(&companyForTest)
+	createdCompany, err := storage.Companies.CreateCompany(companyForTest)
 	if err != nil || createdCompany.ID == "" {
 		test.Fail()
 	}
@@ -101,7 +101,7 @@ func TestIntegrationCompanyCanBeReadById(test *testing.T) {
 		test.Fail()
 	}
 
-	createdCompany, err := storage.Companies.CreateCompany(&companyForSearch)
+	createdCompany, err := storage.Companies.CreateCompany(companyForSearch)
 	if err != nil {
 		test.Error(err)
 	}
@@ -122,9 +122,48 @@ func TestIntegrationCompanyCanBeReadById(test *testing.T) {
 	}
 }
 
-// TODO
 func TestIntegrationCompanyCanBeUpdated(test *testing.T) {
+	var err error
+	storage := New(databaseHost, databasePort)
 
+	err = storage.SetUp()
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedCompany, err := storage.Companies.UpdateCompany(Company{Name: "Updated test company"})
+	if err != nil {
+		if err != ErrCompanyCanNotBeWithoutID {
+			test.Error(err)
+		}
+	}
+
+	companytForCreate := Company{Name: "Test company"}
+	createdCompany, err := storage.Companies.CreateCompany(companytForCreate)
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer storage.Companies.DeactivateCompany(createdCompany)
+
+	companyForUpdate := Company{ID: createdCompany.ID, Name: "Updated test company", IsActive: createdCompany.IsActive}
+	updatedCompany, err = storage.Companies.UpdateCompany(companyForUpdate)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if updatedCompany.Name != companyForUpdate.Name {
+		test.Fail()
+	}
+
+	companyInStore, err := storage.Companies.ReadCompanyByID(createdCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if updatedCompany.Name != companyInStore.Name {
+		test.Fail()
+	}
 }
 
 func TestIntegrationCompanyCanBeDeactivate(test *testing.T) {
@@ -137,7 +176,7 @@ func TestIntegrationCompanyCanBeDeactivate(test *testing.T) {
 	}
 
 	companyForTest := Company{Name: "Test company"}
-	createdCompany, err := storage.Companies.CreateCompany(&companyForTest)
+	createdCompany, err := storage.Companies.CreateCompany(companyForTest)
 	if err != nil {
 		test.Error(err)
 	}

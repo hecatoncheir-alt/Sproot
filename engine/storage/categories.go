@@ -185,7 +185,7 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (Category, err
 	return foundedCategories.Categories[0], nil
 }
 
-// UpdateCategory make category and save it to storage
+// UpdateCategory method for change category in storage
 func (categories *Categories) UpdateCategory(category Category) (Category, error) {
 	if category.ID == "" {
 		return category, ErrCategoryCanNotBeWithoutID

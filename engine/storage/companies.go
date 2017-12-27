@@ -59,6 +59,9 @@ var (
 	// ErrCompanyByIDCanNotBeFound means that the company can't be found in database
 	ErrCompanyByIDCanNotBeFound = errors.New("company by id can not be found")
 
+	// ErrCompanyCanNotBeUpdated means that company can't be updated
+	ErrCompanyCanNotBeUpdated = errors.New("company can not be updated")
+
 	// ErrCompanyDoesNotExist means than the company does not exist in database
 	ErrCompanyDoesNotExist = errors.New("company by id not found")
 )
@@ -73,11 +76,11 @@ type Company struct {
 }
 
 // CreateCompany make category and save it to storage
-func (companies *Companies) CreateCompany(company *Company) (Company, error) {
+func (companies *Companies) CreateCompany(company Company) (Company, error) {
 	existsCompanies, err := companies.ReadCompaniesByName(company.Name)
 	if err != nil && err != ErrCompaniesByNameNotFound {
 		log.Println(err)
-		return *company, ErrCompanyCanNotBeCreated
+		return company, ErrCompanyCanNotBeCreated
 	}
 
 	if existsCompanies != nil {
@@ -90,7 +93,7 @@ func (companies *Companies) CreateCompany(company *Company) (Company, error) {
 	encodedCompany, err := json.Marshal(company)
 	if err != nil {
 		log.Println(err)
-		return *company, ErrCompanyCanNotBeCreated
+		return company, ErrCompanyCanNotBeCreated
 	}
 
 	mutation := &dataBaseAPI.Mutation{
@@ -101,15 +104,15 @@ func (companies *Companies) CreateCompany(company *Company) (Company, error) {
 	assigned, err := transaction.Mutate(context.Background(), mutation)
 	if err != nil {
 		log.Println(err)
-		return *company, ErrCompanyCanNotBeCreated
+		return company, ErrCompanyCanNotBeCreated
 	}
 
 	company.ID = assigned.Uids["blank-0"]
 	if company.ID == "" {
-		return *company, ErrCompanyCanNotBeCreated
+		return company, ErrCompanyCanNotBeCreated
 	}
 
-	return *company, nil
+	return company, nil
 }
 
 // ReadCompaniesByName is a method for get all nodes by categories name
@@ -189,17 +192,16 @@ func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
 	return foundedCompanies.Companies[0], nil
 }
 
-// DeactivateCompany method for remove categories from database
-func (companies *Companies) DeactivateCompany(company Company) (string, error) {
+// UpdateCompany method for change company in storage
+func (companies *Companies) UpdateCompany(company Company) (Company, error) {
 	if company.ID == "" {
-		return "", ErrCompanyCanNotBeWithoutID
+		return company, ErrCompanyCanNotBeWithoutID
 	}
 
-	company.IsActive = false
 	encodedCompany, err := json.Marshal(company)
 	if err != nil {
 		log.Println(err)
-		return "", ErrCompanyCanNotBeDeactivate
+		return company, ErrCompanyCanNotBeUpdated
 	}
 
 	mutation := dataBaseAPI.Mutation{
@@ -211,8 +213,24 @@ func (companies *Companies) DeactivateCompany(company Company) (string, error) {
 	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
 		log.Println(err)
+		return company, ErrCompanyCanNotBeUpdated
+	}
+
+	return company, nil
+}
+
+// DeactivateCompany method for remove categories from database
+func (companies *Companies) DeactivateCompany(company Company) (string, error) {
+	if company.ID == "" {
+		return "", ErrCompanyCanNotBeWithoutID
+	}
+
+	company.IsActive = false
+	updatedCompany, err := companies.UpdateCompany(company)
+	if err != nil {
+		log.Println(err)
 		return "", ErrCompanyCanNotBeDeactivate
 	}
 
-	return company.ID, nil
+	return updatedCompany.ID, nil
 }
