@@ -10,14 +10,17 @@ import (
 	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 )
 
+// Companies is resource os storage for CRUD operations
 type Companies struct {
 	storage *Storage
 }
 
+// NewCompaniesResourceForStorage is a constructor of Categories resource
 func NewCompaniesResourceForStorage(storage *Storage) *Companies {
 	return &Companies{storage: storage}
 }
 
+// SetUp is a method of Companies resource for prepare database client and schema.
 func (companies *Companies) SetUp() (err error) {
 	schema := `
 		name: string @index(exact, term) .
