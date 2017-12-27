@@ -12,6 +12,7 @@ func TestIntegrationStorageCanConnectToDatabase(test *testing.T) {
 	}
 }
 
+// TODO
 func TestIntegrationStorageCanGetCompanyWithCategories(test *testing.T) {
-
+	test.Skip()
 }
