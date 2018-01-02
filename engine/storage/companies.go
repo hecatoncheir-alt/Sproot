@@ -149,6 +149,10 @@ func (companies *Companies) ReadCompaniesByName(companyName string) ([]Company, 
 
 // ReadCompanyByID is a method for get all nodes of categories by ID
 func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
+	if companyID == "" {
+		return Company{}, ErrCompanyCanNotBeWithoutID
+	}
+
 	company := Company{ID: companyID}
 
 	query := fmt.Sprintf(`{
@@ -236,8 +240,28 @@ func (companies *Companies) DeactivateCompany(company Company) (string, error) {
 	}
 
 	company.IsActive = false
-	updatedCompany, err := companies.UpdateCompany(company)
+
+	encodedCompany, err := json.Marshal(company)
 	if err != nil {
+		log.Println(err)
+		return company.ID, ErrCompanyCanNotBeDeactivate
+	}
+
+	mutation := dataBaseAPI.Mutation{
+		SetJson:             encodedCompany,
+		CommitNow:           true,
+		IgnoreIndexConflict: true}
+
+	transaction := companies.storage.Client.NewTxn()
+
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		log.Println(err)
+		return company.ID, ErrCompanyCanNotBeDeactivate
+	}
+
+	updatedCompany, err := companies.ReadCompanyByID(company.ID)
+	if err != nil && err != ErrCompanyDoesNotExist {
 		log.Println(err)
 		return "", ErrCompanyCanNotBeDeactivate
 	}
