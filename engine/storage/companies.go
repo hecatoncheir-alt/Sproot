@@ -66,15 +66,6 @@ var (
 	ErrCompanyDoesNotExist = errors.New("company by id not found")
 )
 
-// Company is a structure of Categories in database
-type Company struct {
-	ID         string      `json:"uid,omitempty"`
-	IRI        string      `json:"iri, omitempty"`
-	Name       string      `json:"name,omitempty"`
-	Categories []*Category `json:"category, omitempty"`
-	IsActive   bool        `json:"isActive, omitempty"`
-}
-
 // CreateCompany make category and save it to storage
 func (companies *Companies) CreateCompany(company Company) (Company, error) {
 	existsCompanies, err := companies.ReadCompaniesByName(company.Name)
@@ -112,6 +103,7 @@ func (companies *Companies) CreateCompany(company Company) (Company, error) {
 		return company, ErrCompanyCanNotBeCreated
 	}
 
+	company.storage = companies.storage
 	return company, nil
 }
 
@@ -122,7 +114,10 @@ func (companies *Companies) ReadCompaniesByName(companyName string) ([]Company, 
 					uid
 					name
 					iri
-					categories
+					categories @filter(eq(isActive, true)) {
+						uid
+						name
+					}
 					isActive
 				}
 			}`, companyName)
@@ -161,7 +156,14 @@ func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
 					uid
 					name
 					iri
-					categories
+					categories @filter(eq(isActive, true)) {
+						uid
+						name
+						companies {
+							uid
+							name
+						}
+					}
 					isActive
 				}
 			}`, companyID)
@@ -189,6 +191,7 @@ func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
 		return company, ErrCompanyDoesNotExist
 	}
 
+	foundedCompanies.Companies[0].storage = companies.storage
 	return foundedCompanies.Companies[0], nil
 }
 
@@ -216,7 +219,14 @@ func (companies *Companies) UpdateCompany(company Company) (Company, error) {
 		return company, ErrCompanyCanNotBeUpdated
 	}
 
-	return company, nil
+	updatedCompany, err := companies.ReadCompanyByID(company.ID)
+	if err != nil {
+		log.Println(err)
+		return company, ErrCompanyCanNotBeUpdated
+	}
+
+	updatedCompany.storage = companies.storage
+	return updatedCompany, nil
 }
 
 // DeactivateCompany method for remove categories from database

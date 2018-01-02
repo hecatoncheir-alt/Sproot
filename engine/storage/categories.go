@@ -66,13 +66,6 @@ var (
 	ErrCategoryCanNotBeDeactivate = errors.New("category can't be deactivate")
 )
 
-// Category is a structure of Categories in database
-type Category struct {
-	ID       string `json:"uid,omitempty"`
-	Name     string `json:"name,omitempty"`
-	IsActive bool   `json:"isActive, omitempty"`
-}
-
 // CreateCategory make category and save it to storage
 func (categories *Categories) CreateCategory(category Category) (Category, error) {
 	existsCategories, err := categories.ReadCategoriesByName(category.Name)
@@ -109,6 +102,7 @@ func (categories *Categories) CreateCategory(category Category) (Category, error
 		return category, ErrCategoryCanNotBeCreated
 	}
 
+	category.storage = categories.storage
 	return category, nil
 }
 
@@ -155,6 +149,14 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (Category, err
 				categories(func: uid("%s")) @filter(eq(isActive, true)) {
 					uid
 					name
+					companies @filter(eq(isActive, true)) {
+						uid
+						name
+						categories {
+							uid
+							name
+						}
+					}
 					isActive
 				}
 			}`, categoryID)
@@ -182,6 +184,7 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (Category, err
 		return category, ErrCategoryDoesNotExist
 	}
 
+	foundedCategories.Categories[0].storage = categories.storage
 	return foundedCategories.Categories[0], nil
 }
 
@@ -189,15 +192,6 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (Category, err
 func (categories *Categories) UpdateCategory(category Category) (Category, error) {
 	if category.ID == "" {
 		return category, ErrCategoryCanNotBeWithoutID
-	}
-
-	existsCategories, err := categories.ReadCategoriesByName(category.Name)
-	if err != nil && err != ErrCategoriesByNameNotFound {
-		log.Println(err)
-		return category, ErrCategoryCanNotBeCreated
-	}
-	if existsCategories != nil {
-		return existsCategories[0], ErrCategoryAlreadyExist
 	}
 
 	transaction := categories.storage.Client.NewTxn()
@@ -225,6 +219,7 @@ func (categories *Categories) UpdateCategory(category Category) (Category, error
 		return category, ErrCategoryCanNotBeUpdated
 	}
 
+	updatedCategory.storage = categories.storage
 	return updatedCategory, nil
 }
 
