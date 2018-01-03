@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"fmt"
 	"testing"
+	"fmt"
 )
 
 func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
@@ -40,8 +40,8 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 	}
 }
 
+// TODO last
 func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
-	test.Skip()
 	var err error
 	storage := New(databaseHost, databasePort)
 
@@ -65,9 +65,23 @@ func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
 
 	defer storage.Categories.DeactivateCategory(firstCategory)
 
-	updatedCompany, err := createdCompany.AddCategory(firstCategory.ID)
+	_, err = createdCompany.AddCategory(firstCategory.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
-	fmt.Println(updatedCompany)
+	updatedCompany, err := storage.Companies.ReadCompanyByID(createdCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if len(updatedCompany.Categories) != 1 {
+		test.Fail()
+	}
+
+	if updatedCompany.Categories[0].ID != firstCategory.ID {
+		test.Fail()
+	}
 
 	secondCategory, err :=
 		storage.Categories.CreateCategory(Category{Name: "Second category for company"})
@@ -75,4 +89,21 @@ func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
 		test.Error(err)
 	}
 
+	defer storage.Categories.DeactivateCategory(secondCategory)
+
+	_, err = updatedCompany.AddCategory(secondCategory.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedCompany, err = storage.Companies.ReadCompanyByID(createdCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if len(updatedCompany.Categories) != 2 {
+		test.Fail()
+	}
+
+	fmt.Println(updatedCompany)
 }
