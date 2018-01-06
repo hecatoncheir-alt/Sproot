@@ -17,17 +17,17 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 
 	defer storage.Companies.DeleteCompany(createdCompany)
 
-	createdCategory, err :=
-			storage.Categories.CreateCategory(Category{Name: "Test category for company"})
-	if err != nil || createdCategory.ID == "" {
+	createdFirstCategory, err :=
+			storage.Categories.CreateCategory(Category{Name: "First test category for company"})
+	if err != nil || createdFirstCategory.ID == "" {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(createdCategory)
+	defer storage.Categories.DeleteCategory(createdFirstCategory)
 
-	updatedCompany, err := createdCompany.AddCategory(createdCategory.ID)
+	updatedCompany, err := createdCompany.AddCategory(createdFirstCategory.ID)
 
-	if updatedCompany.Categories[0].ID != createdCategory.ID {
+	if updatedCompany.Categories[0].ID != createdFirstCategory.ID {
 		test.Fail()
 	}
 

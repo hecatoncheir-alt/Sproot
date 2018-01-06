@@ -36,8 +36,6 @@ func (company *Company) AddCategory(categoryID string) (Company, error) {
 		return *company, err
 	}
 
-	companyForUpdate, err = company.storage.Companies.ReadCompanyByID(company.ID)
-
 	companyForUpdate.Categories = append(companyForUpdate.Categories, updatedCategory)
 
 	updatedCompany, err := companyForUpdate.storage.Companies.UpdateCompany(companyForUpdate)
@@ -46,13 +44,7 @@ func (company *Company) AddCategory(categoryID string) (Company, error) {
 		return *company, err
 	}
 
-	finalCompany, err := company.storage.Companies.ReadCompanyByID(updatedCompany.ID)
-	if err != nil {
-		log.Println(err)
-		return *company, err
-	}
-
-	return finalCompany, nil
+	return updatedCompany, nil
 }
 
 // TODO
