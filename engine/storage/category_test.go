@@ -9,24 +9,18 @@ func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 	storage := New(databaseHost, databasePort)
 
 	err = storage.SetUp()
-	if err != nil {
-		test.Error(err)
-	}
 
 	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"})
-	if err != nil {
-		test.Error(err)
-	}
 
-	defer storage.Companies.DeactivateCompany(createdCompany)
+	defer storage.Companies.DeleteCompany(createdCompany)
 
 	createdCategory, err :=
-		storage.Categories.CreateCategory(Category{Name: "Test category for company"})
+			storage.Categories.CreateCategory(Category{Name: "Test category for company"})
 	if err != nil || createdCategory.ID == "" {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeactivateCategory(createdCategory)
+	defer storage.Categories.DeleteCategory(createdCategory)
 
 	updatedCategory, err := createdCategory.AddCompany(createdCompany.ID)
 
@@ -39,6 +33,4 @@ func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 	}
 }
 
-func TestIntegrationCompanyCanBeRemovedFromCategory(test *testing.T) {
-
-}
+func TestIntegrationCompanyCanBeRemovedFromCategory(test *testing.T) {}
