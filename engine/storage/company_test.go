@@ -42,6 +42,7 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 
 // TODO last
 func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
+	test.Skip()
 	var err error
 	storage := New(databaseHost, databasePort)
 

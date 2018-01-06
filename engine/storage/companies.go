@@ -41,7 +41,7 @@ var (
 	// ErrCompanyCanNotBeWithoutID means that company can't be found in storage for make some operation
 	ErrCompanyCanNotBeWithoutID = errors.New("company can not be without id")
 
-	// ErrCompanyCanNotBeDeactivate means that the company can't be deactivate from database
+	// ErrCompanyCanNotBeDeactivate means that the company can't be deactivate in database
 	ErrCompanyCanNotBeDeactivate = errors.New("company can't be deactivated")
 
 	// ErrCompaniesByNameCanNotBeFound means that the companies can't be found in database
@@ -64,6 +64,9 @@ var (
 
 	// ErrCompanyDoesNotExist means than the company does not exist in database
 	ErrCompanyDoesNotExist = errors.New("company by id not found")
+
+	// ErrCompanyCanNotBeDeleted means that the company can't be removed from database
+	ErrCompanyCanNotBeDeleted = errors.New("company can't be deleted")
 )
 
 // CreateCompany make category and save it to storage
@@ -149,11 +152,11 @@ func (companies *Companies) ReadCompaniesByName(companyName string) ([]Company, 
 
 // ReadCompanyByID is a method for get all nodes of categories by ID
 func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
-	if companyID == "" {
-		return Company{}, ErrCompanyCanNotBeWithoutID
-	}
-
 	company := Company{ID: companyID}
+
+	if companyID == "" {
+		return company, ErrCompanyCanNotBeWithoutID
+	}
 
 	query := fmt.Sprintf(`{
 				companies(func: uid("%s")) @filter(eq(isActive, true)) {
@@ -267,4 +270,29 @@ func (companies *Companies) DeactivateCompany(company Company) (string, error) {
 	}
 
 	return updatedCompany.ID, nil
+}
+
+func (companies *Companies) DeleteCompany(company Company) (string, error) {
+
+	if company.ID == "" {
+		return "", ErrCompanyCanNotBeWithoutID
+	}
+
+	deleteCompanyData, _ := json.Marshal(map[string]string{"uid": company.ID})
+
+	mutation := dataBaseAPI.Mutation{
+		DeleteJson:          deleteCompanyData,
+		CommitNow:           true,
+		IgnoreIndexConflict: true}
+
+	transaction := companies.storage.Client.NewTxn()
+
+	var err error
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		log.Println(err)
+		return company.ID, ErrCompanyCanNotBeDeleted
+	}
+
+	return company.ID, nil
 }

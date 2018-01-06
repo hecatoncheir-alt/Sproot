@@ -62,8 +62,11 @@ var (
 	// ErrCategoryCanNotBeUpdated means that category can't be updated
 	ErrCategoryCanNotBeUpdated = errors.New("category can not be updated")
 
-	// ErrCategoryCanNotBeDeactivate means that the category can't be deactivate from database
+	// ErrCategoryCanNotBeDeactivate means that the category can't be deactivate in database
 	ErrCategoryCanNotBeDeactivate = errors.New("category can't be deactivate")
+
+	// ErrCategoryCanNotBeDeleted means that the category can't be removed from database
+	ErrCategoryCanNotBeDeleted = errors.New("category can't be deleted")
 )
 
 // CreateCategory make category and save it to storage
@@ -246,6 +249,31 @@ func (categories *Categories) DeactivateCategory(category Category) (string, err
 	if err != nil {
 		log.Println(err)
 		return "", ErrCategoryCanNotBeDeactivate
+	}
+
+	return category.ID, nil
+}
+
+func (categories *Categories) DeleteCategory(category Category) (string, error) {
+
+	if category.ID == "" {
+		return "", ErrCategoryCanNotBeWithoutID
+	}
+
+	deleteCategoryData, _ := json.Marshal(map[string]string{"uid": category.ID})
+
+	mutation := dataBaseAPI.Mutation{
+		DeleteJson:          deleteCategoryData,
+		CommitNow:           true,
+		IgnoreIndexConflict: true}
+
+	transaction := categories.storage.Client.NewTxn()
+
+	var err error
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		log.Println(err)
+		return category.ID, ErrCategoryCanNotBeDeleted
 	}
 
 	return category.ID, nil

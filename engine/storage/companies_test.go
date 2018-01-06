@@ -20,7 +20,7 @@ func TestIntegrationCompanyCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Companies.DeactivateCompany(createdCompany)
+	defer storage.Companies.DeleteCompany(createdCompany)
 
 	if createdCompany.ID == "" {
 		test.Fail()
@@ -60,7 +60,7 @@ func TestIntegrationCompanyCanBeReadByName(test *testing.T) {
 		test.Fail()
 	}
 
-	defer storage.Companies.DeactivateCompany(createdCompany)
+	defer storage.Companies.DeleteCompany(createdCompany)
 
 	companiesFromStore, err = storage.Companies.ReadCompaniesByName(createdCompany.Name)
 	if err != nil {
@@ -106,7 +106,7 @@ func TestIntegrationCompanyCanBeReadById(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Companies.DeactivateCompany(createdCompany)
+	defer storage.Companies.DeleteCompany(createdCompany)
 
 	companyFromStore, err = storage.Companies.ReadCompanyByID(createdCompany.ID)
 	if err != nil {
@@ -144,7 +144,7 @@ func TestIntegrationCompanyCanBeUpdated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Companies.DeactivateCompany(createdCompany)
+	defer storage.Companies.DeleteCompany(createdCompany)
 
 	companyForUpdate := Company{ID: createdCompany.ID, Name: "Updated test company", IsActive: createdCompany.IsActive}
 	updatedCompany, err = storage.Companies.UpdateCompany(companyForUpdate)
@@ -189,6 +189,8 @@ func TestIntegrationCompanyCanBeDeactivate(test *testing.T) {
 		test.Error(err)
 	}
 
+	defer storage.Companies.DeleteCompany(createdCompany)
+
 	deactivatedCompanyID, err := storage.Companies.DeactivateCompany(createdCompany)
 	if err != nil {
 		if err != ErrCompanyCanNotBeWithoutID {
@@ -201,6 +203,38 @@ func TestIntegrationCompanyCanBeDeactivate(test *testing.T) {
 	}
 
 	_, err = storage.Companies.ReadCompanyByID(deactivatedCompanyID)
+	if err != ErrCompanyDoesNotExist {
+		test.Error(err)
+	}
+}
+
+func TestIntegrationCompanyCanBeDeleted(test *testing.T) {
+	var err error
+	storage := New(databaseHost, databasePort)
+
+	err = storage.SetUp()
+	if err != nil {
+		test.Error(err)
+	}
+
+	companyForTest := Company{Name: "Test company"}
+	createdCompany, err := storage.Companies.CreateCompany(companyForTest)
+	if err != nil {
+		test.Error(err)
+	}
+
+	deletedCompanyID, err := storage.Companies.DeleteCompany(createdCompany)
+	if err != nil {
+		if err != ErrCompanyCanNotBeWithoutID {
+			test.Error(err)
+		}
+	}
+
+	if deletedCompanyID != createdCompany.ID {
+		test.Fail()
+	}
+
+	_, err = storage.Companies.ReadCompanyByID(deletedCompanyID)
 	if err != ErrCompanyDoesNotExist {
 		test.Error(err)
 	}

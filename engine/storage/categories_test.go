@@ -19,7 +19,7 @@ func TestIntegrationCategoryCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeactivateCategory(createdCategory)
+	defer storage.Categories.DeleteCategory(createdCategory)
 
 	if createdCategory.ID == "" {
 		test.Fail()
@@ -62,7 +62,7 @@ func TestIntegrationCategoryCanBeReadByName(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeactivateCategory(createdCategory)
+	defer storage.Categories.DeleteCategory(createdCategory)
 
 	categoriesFromStore, err = storage.Categories.ReadCategoriesByName(createdCategory.Name)
 	if err != nil {
@@ -108,7 +108,7 @@ func TestIntegrationCategoryCanBeReadById(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeactivateCategory(createdCategory)
+	defer storage.Categories.DeleteCategory(createdCategory)
 
 	categoryFromStore, err = storage.Categories.ReadCategoryByID(createdCategory.ID)
 	if err != nil {
@@ -146,7 +146,7 @@ func TestIntegrationCategoryCanBeUpdated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeactivateCategory(createdCategory)
+	defer storage.Categories.DeleteCategory(createdCategory)
 
 	categoryForUpdate := Category{ID: createdCategory.ID, Name: "Updated test category", IsActive: createdCategory.IsActive}
 	updatedCategory, err = storage.Categories.UpdateCategory(categoryForUpdate)
@@ -168,6 +168,36 @@ func TestIntegrationCategoryCanBeUpdated(test *testing.T) {
 	}
 }
 
+func TestIntegrationCategoryCanBeDeactivate(test *testing.T) {
+	var err error
+	storage := New(databaseHost, databasePort)
+
+	err = storage.SetUp()
+	if err != nil {
+		test.Error(err)
+	}
+
+	categoryForCreate := Category{Name: "Test category"}
+	createdCategory, err := storage.Categories.CreateCategory(categoryForCreate)
+	if err != nil {
+		test.Error(err)
+	}
+
+	deactivatedCategoryID, err := storage.Categories.DeactivateCategory(createdCategory)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if deactivatedCategoryID != createdCategory.ID {
+		test.Fail()
+	}
+
+	_, err = storage.Categories.ReadCategoryByID(deactivatedCategoryID)
+	if err != ErrCategoryDoesNotExist {
+		test.Error(err)
+	}
+}
+
 func TestIntegrationCategoryCanBeDeleted(test *testing.T) {
 	var err error
 	storage := New(databaseHost, databasePort)
@@ -183,7 +213,7 @@ func TestIntegrationCategoryCanBeDeleted(test *testing.T) {
 		test.Error(err)
 	}
 
-	deletedCategoryID, err := storage.Categories.DeactivateCategory(createdCategory)
+	deletedCategoryID, err := storage.Categories.DeleteCategory(createdCategory)
 	if err != nil {
 		test.Error(err)
 	}
