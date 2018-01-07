@@ -9,9 +9,6 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 	storage := New(databaseHost, databasePort)
 
 	err = storage.SetUp()
-	if err != nil {
-		test.Error(err)
-	}
 
 	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company name"})
 
@@ -26,6 +23,24 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 	defer storage.Categories.DeleteCategory(createdFirstCategory)
 
 	updatedCompany, err := createdCompany.AddCategory(createdFirstCategory.ID)
+
+	if updatedCompany.Categories[0].ID != createdFirstCategory.ID {
+		test.Fail()
+	}
+
+	if updatedCompany.Categories[0].Companies[0].ID != updatedCompany.ID {
+		test.Fail()
+	}
+
+	createdSecondCategory, err :=
+			storage.Categories.CreateCategory(Category{Name: "Second test category for company"})
+	if err != nil || createdSecondCategory.ID == "" {
+		test.Error(err)
+	}
+
+	defer storage.Categories.DeleteCategory(createdSecondCategory)
+
+	updatedCompany, err = createdCompany.AddCategory(createdSecondCategory.ID)
 
 	if updatedCompany.Categories[0].ID != createdFirstCategory.ID {
 		test.Fail()
