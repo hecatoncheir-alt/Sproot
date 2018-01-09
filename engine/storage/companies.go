@@ -8,34 +8,8 @@ import (
 	"log"
 
 	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
+	"time"
 )
-
-// Companies is resource os storage for CRUD operations
-type Companies struct {
-	storage *Storage
-}
-
-// NewCompaniesResourceForStorage is a constructor of Categories resource
-func NewCompaniesResourceForStorage(storage *Storage) *Companies {
-	return &Companies{storage: storage}
-}
-
-// SetUp is a method of Companies resource for prepare database client and schema.
-func (companies *Companies) SetUp() (err error) {
-	schema := `
-		name: string @index(exact, term) .
-		isActive: bool @index(bool) .
-	`
-	operation := &dataBaseAPI.Operation{Schema: schema}
-
-	err = companies.storage.Client.Alter(context.Background(), operation)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	return nil
-}
 
 var (
 	// ErrCompanyCanNotBeWithoutID means that company can't be found in storage for make some operation
@@ -68,6 +42,42 @@ var (
 	// ErrCompanyCanNotBeDeleted means that the company can't be removed from database
 	ErrCompanyCanNotBeDeleted = errors.New("company can't be deleted")
 )
+
+// Company is a structure of Categories in database
+type Company struct {
+	ID         string     `json:"uid,omitempty"`
+	IRI        string     `json:"companyIri,omitempty"`
+	Name       string     `json:"companyName,omitempty"`
+	Categories []Category `json:"companyCategories,omitempty"`
+	IsActive   bool       `json:"companyIsActive,omitempty"`
+}
+
+// Companies is resource os storage for CRUD operations
+type Companies struct {
+	storage *Storage
+}
+
+// NewCompaniesResourceForStorage is a constructor of Categories resource
+func NewCompaniesResourceForStorage(storage *Storage) *Companies {
+	return &Companies{storage: storage}
+}
+
+// SetUp is a method of Companies resource for prepare database client and schema.
+func (companies *Companies) SetUp() (err error) {
+	schema := `
+		companyName: string @index(exact, term) .
+		companyIsActive: bool @index(bool) .
+	`
+	operation := &dataBaseAPI.Operation{Schema: schema}
+
+	err = companies.storage.Client.Alter(context.Background(), operation)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
 
 // CreateCompany make category and save it to storage
 func (companies *Companies) CreateCompany(company Company) (Company, error) {
@@ -106,22 +116,21 @@ func (companies *Companies) CreateCompany(company Company) (Company, error) {
 		return company, ErrCompanyCanNotBeCreated
 	}
 
-	company.storage = companies.storage
 	return company, nil
 }
 
 // ReadCompaniesByName is a method for get all nodes by categories name
 func (companies *Companies) ReadCompaniesByName(companyName string) ([]Company, error) {
 	query := fmt.Sprintf(`{
-				companies(func: eq(name, "%v")) @filter(eq(isActive, true)) {
+				companies(func: eq(companyName, "%v")) @filter(eq(companyIsActive, true)) {
 					uid
-					name
-					iri
-					categories @filter(eq(isActive, true)) {
+					companyName
+					companyIri
+					companyCategories @filter(eq(categoryIsActive, true)) {
 						uid
-						name
+						categoryName
 					}
-					isActive
+					companyIsActive
 				}
 			}`, companyName)
 
@@ -151,27 +160,31 @@ func (companies *Companies) ReadCompaniesByName(companyName string) ([]Company, 
 }
 
 // ReadCompanyByID is a method for get all nodes of categories by ID
-func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
+func (companies *Companies) ReadCompanyByID(companyID string) (*Company, error) {
 	company := Company{ID: companyID}
 
 	if companyID == "" {
-		return company, ErrCompanyCanNotBeWithoutID
+		return &company, ErrCompanyCanNotBeWithoutID
 	}
 
 	query := fmt.Sprintf(`{
-				companies(func: uid("%s")) @filter(eq(isActive, true)) {
+				companies(func: uid("%s")) @filter(eq(companyIsActive, true)) {
 					uid
-					name
-					iri
-					categories @filter(eq(isActive, true)) {
+					companyName
+					companyIri
+					companyCategories @filter(eq(categoryIsActive, true)) {
 						uid
-						name
-						companies {
+						categoryName
+						categoryCompanies {
 							uid
-							name
+							categoryName
+							companyCategories @filter(eq(categoryIsActive, true)) {
+								uid
+								categoryName
+							}
 						}
 					}
-					isActive
+					companyIsActive
 				}
 			}`, companyID)
 
@@ -179,7 +192,7 @@ func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
 	response, err := transaction.Query(context.Background(), query)
 	if err != nil {
 		log.Println(err)
-		return company, ErrCompanyByIDCanNotBeFound
+		return &company, ErrCompanyByIDCanNotBeFound
 	}
 
 	type companiesInStore struct {
@@ -191,19 +204,18 @@ func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
 	err = json.Unmarshal(response.GetJson(), &foundedCompanies)
 	if err != nil {
 		log.Println(err)
-		return company, ErrCompanyByIDCanNotBeFound
+		return &company, ErrCompanyByIDCanNotBeFound
 	}
 
 	if len(foundedCompanies.Companies) == 0 {
-		return company, ErrCompanyDoesNotExist
+		return &company, ErrCompanyDoesNotExist
 	}
 
-	foundedCompanies.Companies[0].storage = companies.storage
-	return foundedCompanies.Companies[0], nil
+	return &foundedCompanies.Companies[0], nil
 }
 
 // UpdateCompany method for change company in storage
-func (companies *Companies) UpdateCompany(company Company) (Company, error) {
+func (companies *Companies) UpdateCompany(company *Company) (*Company, error) {
 	if company.ID == "" {
 		return company, ErrCompanyCanNotBeWithoutID
 	}
@@ -232,7 +244,6 @@ func (companies *Companies) UpdateCompany(company Company) (Company, error) {
 		return company, ErrCompanyCanNotBeUpdated
 	}
 
-	updatedCompany.storage = companies.storage
 	return updatedCompany, nil
 }
 
@@ -272,6 +283,7 @@ func (companies *Companies) DeactivateCompany(company Company) (string, error) {
 	return updatedCompany.ID, nil
 }
 
+// DeleteCompany method for remove company from database
 func (companies *Companies) DeleteCompany(company Company) (string, error) {
 
 	if company.ID == "" {
@@ -295,4 +307,21 @@ func (companies *Companies) DeleteCompany(company Company) (string, error) {
 	}
 
 	return company.ID, nil
+}
+
+//TODO
+func (companies *Companies) AddCategoryToCompany(companyID, categoryID string) error {
+	company, _ := companies.ReadCompanyByID(companyID)
+	category, _ := companies.storage.Categories.AddCompanyToCategory(categoryID, companyID)
+
+	time.Sleep(time.Second * 2)
+	company.Categories = append(company.Categories, *category)
+	_, err := companies.UpdateCompany(company)
+	time.Sleep(time.Second * 2)
+
+	updatedCompany, _ := companies.ReadCompanyByID(companyID)
+
+	fmt.Println(updatedCompany)
+	fmt.Println(err)
+	return nil
 }
