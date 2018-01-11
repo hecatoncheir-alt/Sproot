@@ -6,9 +6,9 @@ import (
 	"errors"
 	"log"
 
-	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 	"fmt"
-	"time"
+
+	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 )
 
 var (
@@ -45,10 +45,10 @@ var (
 
 // Category is a structure of Categories in database
 type Category struct {
-	ID        string    `json:"uid,omitempty"`
-	Name      string    `json:"categoryName,omitempty"`
-	IsActive  bool      `json:"categoryIsActive,omitempty"`
-	Companies []Company `json:"categoryCompanies,omitempty"`
+	ID        string    `json:"uid, omitempty"`
+	Name      string    `json:"categoryName, omitempty"`
+	IsActive  bool      `json:"categoryIsActive, omitempty"`
+	Companies []Company `json:"belongs_to_company, omitempty"`
 }
 
 // Categories is resource os storage for CRUD operations
@@ -66,6 +66,7 @@ func (categories *Categories) SetUp() (err error) {
 	schema := `
 		categoryName: string @index(exact, term) .
 		categoryIsActive: bool @index(bool) .
+		belongs_to_company: uid .
 	`
 	operation := &dataBaseAPI.Operation{Schema: schema}
 
@@ -79,14 +80,14 @@ func (categories *Categories) SetUp() (err error) {
 }
 
 // CreateCategory make category and save it to storage
-func (categories *Categories) CreateCategory(category *Category) (*Category, error) {
+func (categories *Categories) CreateCategory(category Category) (Category, error) {
 	existsCategories, err := categories.ReadCategoriesByName(category.Name)
 	if err != nil && err != ErrCategoriesByNameNotFound {
 		log.Println(err)
 		return category, ErrCategoryCanNotBeCreated
 	}
 	if existsCategories != nil {
-		return &existsCategories[0], ErrCategoryAlreadyExist
+		return existsCategories[0], ErrCategoryAlreadyExist
 	}
 
 	transaction := categories.storage.Client.NewTxn()
@@ -123,6 +124,14 @@ func (categories *Categories) ReadCategoriesByName(categoryName string) ([]Categ
 				categories(func: eq(categoryName, "%v")) @filter(eq(categoryIsActive, true)) {
 					uid
 					categoryName
+					belongs_to_company @filter(eq(companyIsActive, true)) {
+						uid
+						companyName
+						companyCategories {
+							uid
+							categoryName
+						}
+					}
 					categoryIsActive
 				}
 			}`, categoryName)
@@ -153,14 +162,14 @@ func (categories *Categories) ReadCategoriesByName(categoryName string) ([]Categ
 }
 
 // ReadCategoryByID is a method for get all nodes of categories by ID
-func (categories *Categories) ReadCategoryByID(categoryID string) (*Category, error) {
+func (categories *Categories) ReadCategoryByID(categoryID string) (Category, error) {
 	category := Category{ID: categoryID}
 
 	query := fmt.Sprintf(`{
-				categories(func: uid("%s")) @filter(eq(categoryIsActive, true)) {
+				categories(func: uid("%s")) @filter(has(categoryName)) {
 					uid
 					categoryName
-					categoryCompanies @filter(eq(companyIsActive, true)) {
+					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
 						companyName
 						companyCategories {
@@ -176,7 +185,7 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (*Category, er
 	response, err := transaction.Query(context.Background(), query)
 	if err != nil {
 		log.Println(err)
-		return &category, ErrCategoryByIDCanNotBeFound
+		return category, ErrCategoryByIDCanNotBeFound
 	}
 
 	type categoriesInStore struct {
@@ -188,14 +197,14 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (*Category, er
 	err = json.Unmarshal(response.GetJson(), &foundedCategories)
 	if err != nil {
 		log.Println(err)
-		return &category, ErrCategoryByIDCanNotBeFound
+		return category, ErrCategoryByIDCanNotBeFound
 	}
 
 	if len(foundedCategories.Categories) == 0 {
-		return &category, ErrCategoryDoesNotExist
+		return category, ErrCategoryDoesNotExist
 	}
 
-	return &foundedCategories.Categories[0], nil
+	return foundedCategories.Categories[0], nil
 }
 
 // UpdateCategory method for change category in storage
@@ -228,11 +237,11 @@ func (categories *Categories) UpdateCategory(category Category) (Category, error
 		return category, ErrCategoryCanNotBeUpdated
 	}
 
-	return *updatedCategory, nil
+	return updatedCategory, nil
 }
 
 // DeactivateCategory method for remove categories from database
-func (categories *Categories) DeactivateCategory(category *Category) (string, error) {
+func (categories *Categories) DeactivateCategory(category Category) (string, error) {
 	if category.ID == "" {
 		return "", ErrCategoryCanNotBeWithoutID
 	}
@@ -253,7 +262,7 @@ func (categories *Categories) DeactivateCategory(category *Category) (string, er
 }
 
 /// DeleteCategory method for remove category from database
-func (categories *Categories) DeleteCategory(category *Category) (string, error) {
+func (categories *Categories) DeleteCategory(category Category) (string, error) {
 
 	if category.ID == "" {
 		return "", ErrCategoryCanNotBeWithoutID
@@ -279,12 +288,11 @@ func (categories *Categories) DeleteCategory(category *Category) (string, error)
 }
 
 //TODO
-func (categories *Categories) AddCompanyToCategory(categoryID, companyID string) (*Category, error) {
-	category, _ := categories.ReadCategoryByID(categoryID)
-	company, _ := categories.storage.Companies.ReadCompanyByID(companyID)
-	category.Companies = append(category.Companies, *company)
-	time.Sleep(time.Second * 2)
-	categories.UpdateCategory(*category)
-	updatedCategory, _ := categories.ReadCategoryByID(categoryID)
-	return updatedCategory, nil
+func (categories *Categories) AddCompanyToCategory(categoryID, companyID string) error {
+	//category, _ := categories.ReadCategoryByID(categoryID)
+	//company, _ := categories.storage.Companies.ReadCompanyByID(companyID)
+	//category.Companies = append(category.Companies, company)
+	//time.Sleep(time.Second * 2)
+	//categories.UpdateCategory(*category)
+	return nil
 }

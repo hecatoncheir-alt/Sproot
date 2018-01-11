@@ -8,7 +8,6 @@ import (
 	"log"
 
 	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
-	"time"
 )
 
 var (
@@ -44,12 +43,13 @@ var (
 )
 
 // Company is a structure of Categories in database
+// TODO: Добавить поддержку языка для name предиката
 type Company struct {
-	ID         string     `json:"uid,omitempty"`
-	IRI        string     `json:"companyIri,omitempty"`
-	Name       string     `json:"companyName,omitempty"`
-	Categories []Category `json:"companyCategories,omitempty"`
-	IsActive   bool       `json:"companyIsActive,omitempty"`
+	ID         string     `json:"uid, omitempty"`
+	IRI        string     `json:"companyIri, omitempty"`
+	Name       string     `json:"companyName, omitempty"`
+	Categories []Category `json:"has_category, omitempty"`
+	IsActive   bool       `json:"companyIsActive, omitempty"`
 }
 
 // Companies is resource os storage for CRUD operations
@@ -67,6 +67,7 @@ func (companies *Companies) SetUp() (err error) {
 	schema := `
 		companyName: string @index(exact, term) .
 		companyIsActive: bool @index(bool) .
+		has_category: uid @count .
 	`
 	operation := &dataBaseAPI.Operation{Schema: schema}
 
@@ -126,7 +127,7 @@ func (companies *Companies) ReadCompaniesByName(companyName string) ([]Company, 
 					uid
 					companyName
 					companyIri
-					companyCategories @filter(eq(categoryIsActive, true)) {
+					has_category @filter(eq(categoryIsActive, true)) {
 						uid
 						categoryName
 					}
@@ -160,25 +161,25 @@ func (companies *Companies) ReadCompaniesByName(companyName string) ([]Company, 
 }
 
 // ReadCompanyByID is a method for get all nodes of categories by ID
-func (companies *Companies) ReadCompanyByID(companyID string) (*Company, error) {
+func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
 	company := Company{ID: companyID}
 
 	if companyID == "" {
-		return &company, ErrCompanyCanNotBeWithoutID
+		return company, ErrCompanyCanNotBeWithoutID
 	}
 
 	query := fmt.Sprintf(`{
-				companies(func: uid("%s")) @filter(eq(companyIsActive, true)) {
+				companies(func: uid("%s")) @filter(has(companyName)) {
 					uid
 					companyName
 					companyIri
-					companyCategories @filter(eq(categoryIsActive, true)) {
+					has_category @filter(eq(categoryIsActive, true)) {
 						uid
 						categoryName
-						categoryCompanies {
+						belongs_to_company {
 							uid
 							categoryName
-							companyCategories @filter(eq(categoryIsActive, true)) {
+							has_category @filter(eq(categoryIsActive, true)) {
 								uid
 								categoryName
 							}
@@ -192,7 +193,7 @@ func (companies *Companies) ReadCompanyByID(companyID string) (*Company, error) 
 	response, err := transaction.Query(context.Background(), query)
 	if err != nil {
 		log.Println(err)
-		return &company, ErrCompanyByIDCanNotBeFound
+		return company, ErrCompanyByIDCanNotBeFound
 	}
 
 	type companiesInStore struct {
@@ -204,18 +205,18 @@ func (companies *Companies) ReadCompanyByID(companyID string) (*Company, error) 
 	err = json.Unmarshal(response.GetJson(), &foundedCompanies)
 	if err != nil {
 		log.Println(err)
-		return &company, ErrCompanyByIDCanNotBeFound
+		return company, ErrCompanyByIDCanNotBeFound
 	}
 
 	if len(foundedCompanies.Companies) == 0 {
-		return &company, ErrCompanyDoesNotExist
+		return company, ErrCompanyDoesNotExist
 	}
 
-	return &foundedCompanies.Companies[0], nil
+	return foundedCompanies.Companies[0], nil
 }
 
 // UpdateCompany method for change company in storage
-func (companies *Companies) UpdateCompany(company *Company) (*Company, error) {
+func (companies *Companies) UpdateCompany(company Company) (Company, error) {
 	if company.ID == "" {
 		return company, ErrCompanyCanNotBeWithoutID
 	}
@@ -274,13 +275,7 @@ func (companies *Companies) DeactivateCompany(company Company) (string, error) {
 		return company.ID, ErrCompanyCanNotBeDeactivate
 	}
 
-	updatedCompany, err := companies.ReadCompanyByID(company.ID)
-	if err != nil && err != ErrCompanyDoesNotExist {
-		log.Println(err)
-		return "", ErrCompanyCanNotBeDeactivate
-	}
-
-	return updatedCompany.ID, nil
+	return company.ID, nil
 }
 
 // DeleteCompany method for remove company from database
@@ -311,7 +306,7 @@ func (companies *Companies) DeleteCompany(company Company) (string, error) {
 
 //TODO
 func (companies *Companies) AddCategoryToCompany(companyID, categoryID string) error {
-	company, _ := companies.ReadCompanyByID(companyID)
+/*	company, _ := companies.ReadCompanyByID(companyID)
 	category, _ := companies.storage.Categories.AddCompanyToCategory(categoryID, companyID)
 
 	time.Sleep(time.Second * 2)
@@ -322,6 +317,6 @@ func (companies *Companies) AddCategoryToCompany(companyID, categoryID string) e
 	updatedCompany, _ := companies.ReadCompanyByID(companyID)
 
 	fmt.Println(updatedCompany)
-	fmt.Println(err)
+	fmt.Println(err)*/
 	return nil
 }

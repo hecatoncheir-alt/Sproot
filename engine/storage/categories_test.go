@@ -8,7 +8,7 @@ func TestIntegrationCategoryCanBeCreated(test *testing.T) {
 	once.Do(prepareStorage)
 
 	categoryForCreate := Category{Name: "Test category"}
-	createdCategory, err := storage.Categories.CreateCategory(&categoryForCreate)
+	createdCategory, err := storage.Categories.CreateCategory(categoryForCreate)
 	if err != nil {
 		test.Error(err)
 	}
@@ -19,11 +19,9 @@ func TestIntegrationCategoryCanBeCreated(test *testing.T) {
 		test.Fail()
 	}
 
-	existCategory, err := storage.Categories.CreateCategory(&categoryForCreate)
-	if err != nil {
-		if err != ErrCategoryAlreadyExist {
-			test.Error(err)
-		}
+	existCategory, err := storage.Categories.CreateCategory(categoryForCreate)
+	if err != nil && err != ErrCategoryAlreadyExist {
+		test.Error(err)
 	}
 
 	if existCategory.ID != createdCategory.ID {
@@ -45,7 +43,7 @@ func TestIntegrationCategoryCanBeReadByName(test *testing.T) {
 		test.Fail()
 	}
 
-	createdCategory, err := storage.Categories.CreateCategory(&categoryForSearch)
+	createdCategory, err := storage.Categories.CreateCategory(categoryForSearch)
 	if err != nil || createdCategory.ID == "" {
 		test.Error(err)
 	}
@@ -85,7 +83,7 @@ func TestIntegrationCategoryCanBeReadById(test *testing.T) {
 		test.Fail()
 	}
 
-	createdCategory, err := storage.Categories.CreateCategory(&categoryForSearch)
+	createdCategory, err := storage.Categories.CreateCategory(categoryForSearch)
 	if err != nil {
 		test.Error(err)
 	}
@@ -121,7 +119,7 @@ func TestIntegrationCategoryCanBeUpdated(test *testing.T) {
 	}
 
 	categoryForCreate := Category{Name: "Test category"}
-	createdCategory, err := storage.Categories.CreateCategory(&categoryForCreate)
+	createdCategory, err := storage.Categories.CreateCategory(categoryForCreate)
 	if err != nil {
 		test.Error(err)
 	}
@@ -160,7 +158,7 @@ func TestIntegrationCategoryCanBeDeactivate(test *testing.T) {
 	once.Do(prepareStorage)
 
 	categoryForCreate := Category{Name: "Test category"}
-	createdCategory, err := storage.Categories.CreateCategory(&categoryForCreate)
+	createdCategory, err := storage.Categories.CreateCategory(categoryForCreate)
 	if err != nil {
 		test.Error(err)
 	}
@@ -201,7 +199,7 @@ func TestIntegrationCategoryCanBeDeleted(test *testing.T) {
 	}
 
 	categoryForCreate := Category{Name: "Test category"}
-	createdCategory, err := storage.Categories.CreateCategory(&categoryForCreate)
+	createdCategory, err := storage.Categories.CreateCategory(categoryForCreate)
 	if err != nil {
 		test.Error(err)
 	}
