@@ -8,7 +8,6 @@ import (
 	"log"
 
 	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
-	"github.com/dgraph-io/dgraph/client"
 )
 
 var (
@@ -315,15 +314,13 @@ func (companies *Companies) DeleteCompany(company Company) (string, error) {
 func (companies *Companies) AddCategoryToCompany(companyID, categoryID string) error {
 	var err error
 	var mutation dataBaseAPI.Mutation
-	var transaction *client.Txn
 
 	forCategoryPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, categoryID, "belongs_to_company", companyID)
 	mutation = dataBaseAPI.Mutation{
-		SetNquads:           []byte(forCategoryPredicate),
-		IgnoreIndexConflict: true,
-		CommitNow:           true}
+		SetNquads: []byte(forCategoryPredicate),
+		CommitNow: true}
 
-	transaction = companies.storage.Client.NewTxn()
+	transaction := companies.storage.Client.NewTxn()
 	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
 		return ErrCompanyCanNotBeAddedToCategory
@@ -332,9 +329,8 @@ func (companies *Companies) AddCategoryToCompany(companyID, categoryID string) e
 	forCompanyPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, companyID, "has_category", categoryID)
 
 	mutation = dataBaseAPI.Mutation{
-		SetNquads:           []byte(forCompanyPredicate),
-		IgnoreIndexConflict: true,
-		CommitNow:           true}
+		SetNquads: []byte(forCompanyPredicate),
+		CommitNow: true}
 
 	transaction = companies.storage.Client.NewTxn()
 	_, err = transaction.Mutate(context.Background(), &mutation)

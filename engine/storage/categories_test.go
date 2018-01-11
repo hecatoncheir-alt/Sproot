@@ -2,6 +2,7 @@ package storage
 
 import (
 	"testing"
+	"fmt"
 )
 
 func TestIntegrationCategoryCanBeCreated(test *testing.T) {
@@ -216,5 +217,64 @@ func TestIntegrationCategoryCanBeDeleted(test *testing.T) {
 	_, err = storage.Categories.ReadCategoryByID(deletedCategoryID)
 	if err != ErrCategoryDoesNotExist {
 		test.Error(err)
+	}
+}
+
+func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
+	once.Do(prepareStorage)
+
+	var err error
+
+	createdCategory, err :=
+		storage.Categories.CreateCategory(Category{Name: "Test category"})
+
+	defer storage.Categories.DeleteCategory(createdCategory)
+
+	createdFirstCompany, _ := storage.Companies.CreateCompany(Company{Name: "First test company for category"})
+
+	defer storage.Companies.DeleteCompany(createdFirstCompany)
+
+	err = storage.Categories.AddCompanyToCategory(createdCategory.ID, createdFirstCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedCategory, _ := storage.Categories.ReadCategoryByID(createdCategory.ID)
+
+	if updatedCategory.Companies[0].ID != createdFirstCompany.ID {
+		test.Fail()
+	}
+
+	if updatedCategory.Companies[0].Categories[0].ID != createdCategory.ID {
+		test.Fail()
+	}
+
+	createdSecondCompany, _ := storage.Companies.CreateCompany(Company{Name: "Second test company for category"})
+
+	defer storage.Companies.DeleteCompany(createdSecondCompany)
+
+	err = storage.Categories.AddCompanyToCategory(createdCategory.ID, createdSecondCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedCategory, _ = storage.Categories.ReadCategoryByID(createdCategory.ID)
+
+	fmt.Println(updatedCategory)
+
+	if updatedCategory.Companies[0].ID != createdFirstCompany.ID {
+		test.Fail()
+	}
+
+	if updatedCategory.Companies[0].Categories[0].ID != updatedCategory.ID {
+		test.Fail()
+	}
+
+	if updatedCategory.Companies[1].ID != createdSecondCompany.ID {
+		test.Fail()
+	}
+
+	if updatedCategory.Companies[1].Categories[0].ID != updatedCategory.ID {
+		test.Fail()
 	}
 }

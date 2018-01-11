@@ -175,9 +175,15 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (Category, err
 					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
 						companyName
-						companyCategories {
+						has_category @filter(eq(categoryIsActive, true)) {
 							uid
 							categoryName
+							belong_to_company @filter(eq(companyIsActive, true)){
+								uid
+								companyName
+								companyIsActive
+							}
+							categoryIsActive
 						}
 						companyIsActive
 					}
@@ -291,18 +297,30 @@ func (categories *Categories) DeleteCategory(category Category) (string, error) 
 	return category.ID, nil
 }
 
-//TODO
+// AddCompanyToCategory method for set quad of predicate about category and company
 func (categories *Categories) AddCompanyToCategory(categoryID, companyID string) error {
 	var err error
+	var mutation dataBaseAPI.Mutation
 
-	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, categoryID, "belongs_to_company", companyID)
+	forCompanyPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, companyID, "has_category", categoryID)
 
-	mutation := dataBaseAPI.Mutation{
-		SetNquads: []byte(predicate),
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forCompanyPredicate),
 		CommitNow: true}
 
-	transactions := categories.storage.Client.NewTxn()
-	_, err = transactions.Mutate(context.Background(), &mutation)
+	transaction := categories.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCategoryCanNotBeAddedToCompany
+	}
+
+	forCategoryPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, categoryID, "belongs_to_company", companyID)
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forCategoryPredicate),
+		CommitNow: true}
+
+	transaction = categories.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
 		return ErrCompanyCanNotBeAddedToCategory
 	}
