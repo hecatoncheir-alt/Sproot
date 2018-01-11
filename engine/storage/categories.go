@@ -41,6 +41,9 @@ var (
 
 	// ErrCategoryCanNotBeDeleted means that the category can't be removed from database
 	ErrCategoryCanNotBeDeleted = errors.New("category can't be deleted")
+
+	// ErrCompanyCanNotBeAddedToCategory means that the company can't be removed from database
+	ErrCompanyCanNotBeAddedToCategory = errors.New("company can not be added to category")
 )
 
 // Category is a structure of Categories in database
@@ -176,6 +179,7 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (Category, err
 							uid
 							categoryName
 						}
+						companyIsActive
 					}
 					categoryIsActive
 				}
@@ -289,10 +293,19 @@ func (categories *Categories) DeleteCategory(category Category) (string, error) 
 
 //TODO
 func (categories *Categories) AddCompanyToCategory(categoryID, companyID string) error {
-	//category, _ := categories.ReadCategoryByID(categoryID)
-	//company, _ := categories.storage.Companies.ReadCompanyByID(companyID)
-	//category.Companies = append(category.Companies, company)
-	//time.Sleep(time.Second * 2)
-	//categories.UpdateCategory(*category)
+	var err error
+
+	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, categoryID, "belongs_to_company", companyID)
+
+	mutation := dataBaseAPI.Mutation{
+		SetNquads: []byte(predicate),
+		CommitNow: true}
+
+	transactions := categories.storage.Client.NewTxn()
+	_, err = transactions.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCompanyCanNotBeAddedToCategory
+	}
+
 	return nil
 }

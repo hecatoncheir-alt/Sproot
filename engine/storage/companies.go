@@ -8,6 +8,7 @@ import (
 	"log"
 
 	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
+	"github.com/dgraph-io/dgraph/client"
 )
 
 var (
@@ -40,6 +41,9 @@ var (
 
 	// ErrCompanyCanNotBeDeleted means that the company can't be removed from database
 	ErrCompanyCanNotBeDeleted = errors.New("company can't be deleted")
+
+	// ErrCategoryCanNotBeAddedToCompany means that the company can't be removed from database
+	ErrCategoryCanNotBeAddedToCompany = errors.New("category can not be added to company")
 )
 
 // Company is a structure of Categories in database
@@ -178,12 +182,15 @@ func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
 						categoryName
 						belongs_to_company {
 							uid
-							categoryName
+							companyName
 							has_category @filter(eq(categoryIsActive, true)) {
 								uid
 								categoryName
+								categoryIsActive
 							}
+							companyIsActive
 						}
+						categoryIsActive
 					}
 					companyIsActive
 				}
@@ -304,19 +311,36 @@ func (companies *Companies) DeleteCompany(company Company) (string, error) {
 	return company.ID, nil
 }
 
-//TODO
+// AddCategoryToCompany method for set quad of predicate about company and category
 func (companies *Companies) AddCategoryToCompany(companyID, categoryID string) error {
-/*	company, _ := companies.ReadCompanyByID(companyID)
-	category, _ := companies.storage.Categories.AddCompanyToCategory(categoryID, companyID)
+	var err error
+	var mutation dataBaseAPI.Mutation
+	var transaction *client.Txn
 
-	time.Sleep(time.Second * 2)
-	company.Categories = append(company.Categories, *category)
-	_, err := companies.UpdateCompany(company)
-	time.Sleep(time.Second * 2)
+	forCategoryPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, categoryID, "belongs_to_company", companyID)
+	mutation = dataBaseAPI.Mutation{
+		SetNquads:           []byte(forCategoryPredicate),
+		IgnoreIndexConflict: true,
+		CommitNow:           true}
 
-	updatedCompany, _ := companies.ReadCompanyByID(companyID)
+	transaction = companies.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCompanyCanNotBeAddedToCategory
+	}
 
-	fmt.Println(updatedCompany)
-	fmt.Println(err)*/
+	forCompanyPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, companyID, "has_category", categoryID)
+
+	mutation = dataBaseAPI.Mutation{
+		SetNquads:           []byte(forCompanyPredicate),
+		IgnoreIndexConflict: true,
+		CommitNow:           true}
+
+	transaction = companies.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCategoryCanNotBeAddedToCompany
+	}
+
 	return nil
 }
