@@ -274,7 +274,7 @@ func (categories *Categories) DeactivateCategory(category Category) (string, err
 	return updatedCategory.ID, nil
 }
 
-/// DeleteCategory method for remove category from database
+// DeleteCategory method for remove category from database
 func (categories *Categories) DeleteCategory(category Category) (string, error) {
 
 	if category.ID == "" {
@@ -331,7 +331,7 @@ func (categories *Categories) AddCompanyToCategory(categoryID, companyID string)
 	return nil
 }
 
-// RemoveCompanyToCategory method for delete quad of predicate about category and company
+// RemoveCompanyFromCategory method for delete quad of predicate about category and company
 func (categories *Categories) RemoveCompanyFromCategory(categoryID, companyID string) error {
 	var err error
 	var mutation dataBaseAPI.Mutation

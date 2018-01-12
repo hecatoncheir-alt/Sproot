@@ -44,7 +44,7 @@ var (
 	// ErrCategoryCanNotBeAddedToCompany means that the company can't be removed from database
 	ErrCategoryCanNotBeAddedToCompany = errors.New("category can not be added to company")
 
-	// ErrCategoryCanNotBeRemovedCompany means that the company can't be removed from database
+	// ErrCategoryCanNotBeRemovedFromCompany means that the company can't be removed from database
 	ErrCategoryCanNotBeRemovedFromCompany = errors.New("category can not be removed from company")
 )
 
@@ -344,7 +344,7 @@ func (companies *Companies) AddCategoryToCompany(companyID, categoryID string) e
 	return nil
 }
 
-// RemoveCategoryToCompany method for delete quad of predicate about company and category
+// RemoveCategoryFromCompany method for delete quad of predicate about company and category
 func (companies *Companies) RemoveCategoryFromCompany(companyID, categoryID string) error {
 	var err error
 	var mutation dataBaseAPI.Mutation
