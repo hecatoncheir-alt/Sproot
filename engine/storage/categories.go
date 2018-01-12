@@ -44,6 +44,9 @@ var (
 
 	// ErrCompanyCanNotBeAddedToCategory means that the company can't be removed from database
 	ErrCompanyCanNotBeAddedToCategory = errors.New("company can not be added to category")
+
+	// ErrCompanyCanNotBeRemovedFromCategory means that the company can't be removed from database
+	ErrCompanyCanNotBeRemovedFromCategory = errors.New("company can not be removed from category")
 )
 
 // Category is a structure of Categories in database
@@ -323,6 +326,37 @@ func (categories *Categories) AddCompanyToCategory(categoryID, companyID string)
 	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
 		return ErrCompanyCanNotBeAddedToCategory
+	}
+
+	return nil
+}
+
+// RemoveCompanyToCategory method for delete quad of predicate about category and company
+func (categories *Categories) RemoveCompanyFromCategory(categoryID, companyID string) error {
+	var err error
+	var mutation dataBaseAPI.Mutation
+
+	forCompanyPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, companyID, "has_category", categoryID)
+
+	mutation = dataBaseAPI.Mutation{
+		DelNquads: []byte(forCompanyPredicate),
+		CommitNow: true}
+
+	transaction := categories.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCategoryCanNotBeRemovedFromCompany
+	}
+
+	forCategoryPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, categoryID, "belongs_to_company", companyID)
+	mutation = dataBaseAPI.Mutation{
+		DelNquads: []byte(forCategoryPredicate),
+		CommitNow: true}
+
+	transaction = categories.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCompanyCanNotBeRemovedFromCategory
 	}
 
 	return nil

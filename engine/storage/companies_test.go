@@ -267,5 +267,51 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 	}
 }
 
-// TODO
-func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {}
+func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
+	once.Do(prepareStorage)
+
+	var err error
+
+	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"})
+
+	defer storage.Companies.DeleteCompany(createdCompany)
+
+	createdFirstCategory, _ :=
+		storage.Categories.CreateCategory(Category{Name: "First test category for company"})
+
+	defer storage.Categories.DeleteCategory(createdFirstCategory)
+
+	storage.Companies.AddCategoryToCompany(createdCompany.ID, createdFirstCategory.ID)
+
+	createdSecondCategory, _ :=
+		storage.Categories.CreateCategory(Category{Name: "Second test category for company"})
+
+	defer storage.Categories.DeleteCategory(createdSecondCategory)
+
+	storage.Companies.AddCategoryToCompany(createdCompany.ID, createdSecondCategory.ID)
+
+	updatedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID)
+
+	if len(updatedCompany.Categories) != 2 {
+		test.Fail()
+	}
+
+	if updatedCompany.Categories[0].ID != createdFirstCategory.ID {
+		test.Fail()
+	}
+
+	err = storage.Companies.RemoveCategoryFromCompany(createdCompany.ID, createdFirstCategory.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedCompany, _ = storage.Companies.ReadCompanyByID(createdCompany.ID)
+
+	if len(updatedCompany.Categories) != 1 {
+		test.Fail()
+	}
+
+	if updatedCompany.Categories[0].ID != createdSecondCategory.ID {
+		test.Fail()
+	}
+}
