@@ -49,7 +49,6 @@ var (
 )
 
 // Company is a structure of Categories in database
-// TODO: Добавить поддержку языка для name предиката
 type Company struct {
 	ID         string     `json:"uid, omitempty"`
 	IRI        string     `json:"companyIri, omitempty"`
@@ -87,17 +86,7 @@ func (companies *Companies) SetUp() (err error) {
 }
 
 // CreateCompany make category and save it to storage
-func (companies *Companies) CreateCompany(company Company) (Company, error) {
-	existsCompanies, err := companies.ReadCompaniesByName(company.Name)
-	if err != nil && err != ErrCompaniesByNameNotFound {
-		log.Println(err)
-		return company, ErrCompanyCanNotBeCreated
-	}
-
-	if existsCompanies != nil {
-		return existsCompanies[0], ErrCompanyAlreadyExist
-	}
-
+func (companies *Companies) CreateCompany(company Company, language string) (Company, error) {
 	transaction := companies.storage.Client.NewTxn()
 
 	company.IsActive = true
@@ -108,9 +97,8 @@ func (companies *Companies) CreateCompany(company Company) (Company, error) {
 	}
 
 	mutation := &dataBaseAPI.Mutation{
-		SetJson:             encodedCompany,
-		CommitNow:           true,
-		IgnoreIndexConflict: true}
+		SetJson:   encodedCompany,
+		CommitNow: true}
 
 	assigned, err := transaction.Mutate(context.Background(), mutation)
 	if err != nil {
@@ -123,15 +111,36 @@ func (companies *Companies) CreateCompany(company Company) (Company, error) {
 		return company, ErrCompanyCanNotBeCreated
 	}
 
+	err = companies.AddLanguageOfCompanyName(company.ID, company.Name, language)
+	if company.ID == "" {
+		return company, err
+	}
+
 	return company, nil
 }
 
+func (companies *Companies) AddLanguageOfCompanyName(companyID, name, language string) error {
+	forCompanyNamePredicate := fmt.Sprintf(`<%s> <companyName> %s .`, companyID, "\""+name+"\""+"@"+language)
+
+	mutation := dataBaseAPI.Mutation{
+		SetNquads: []byte(forCompanyNamePredicate),
+		CommitNow: true}
+
+	transaction := companies.storage.Client.NewTxn()
+	_, err := transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ReadCompaniesByName is a method for get all nodes by categories name
-func (companies *Companies) ReadCompaniesByName(companyName string) ([]Company, error) {
+func (companies *Companies) ReadCompaniesByName(companyName, language string) ([]Company, error) {
 	query := fmt.Sprintf(`{
-				companies(func: eq(companyName, "%v")) @filter(eq(companyIsActive, true)) {
+				companies(func: eq(companyName@%v, "%v")) @filter(eq(companyIsActive, true)) {
 					uid
-					companyName
+					companyName: companyName@%v
 					companyIri
 					has_category @filter(eq(categoryIsActive, true)) {
 						uid
@@ -139,7 +148,7 @@ func (companies *Companies) ReadCompaniesByName(companyName string) ([]Company, 
 					}
 					companyIsActive
 				}
-			}`, companyName)
+			}`, language, companyName, language)
 
 	transaction := companies.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -167,7 +176,7 @@ func (companies *Companies) ReadCompaniesByName(companyName string) ([]Company, 
 }
 
 // ReadCompanyByID is a method for get all nodes of categories by ID
-func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
+func (companies *Companies) ReadCompanyByID(companyID, language string) (Company, error) {
 	company := Company{ID: companyID}
 
 	if companyID == "" {
@@ -177,14 +186,14 @@ func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
 	query := fmt.Sprintf(`{
 				companies(func: uid("%s")) @filter(has(companyName)) {
 					uid
-					companyName
+					companyName: companyName@%v
 					companyIri
 					has_category @filter(eq(categoryIsActive, true)) {
 						uid
 						categoryName
 						belongs_to_company {
 							uid
-							companyName
+							companyName: companyName@%v
 							has_category @filter(eq(categoryIsActive, true)) {
 								uid
 								categoryName
@@ -196,7 +205,7 @@ func (companies *Companies) ReadCompanyByID(companyID string) (Company, error) {
 					}
 					companyIsActive
 				}
-			}`, companyID)
+			}`, companyID, language, language)
 
 	transaction := companies.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -248,7 +257,7 @@ func (companies *Companies) UpdateCompany(company Company) (Company, error) {
 		return company, ErrCompanyCanNotBeUpdated
 	}
 
-	updatedCompany, err := companies.ReadCompanyByID(company.ID)
+	updatedCompany, err := companies.ReadCompanyByID(company.ID, ".")
 	if err != nil {
 		log.Println(err)
 		return company, ErrCompanyCanNotBeUpdated

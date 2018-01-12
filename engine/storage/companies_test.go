@@ -9,7 +9,7 @@ func TestIntegrationCompanyCanBeCreated(test *testing.T) {
 
 	companyForTest := Company{Name: "Test company"}
 
-	createdCompany, err := storage.Companies.CreateCompany(companyForTest)
+	createdCompany, err := storage.Companies.CreateCompany(companyForTest, "en")
 	if err != nil {
 		test.Error(err)
 	}
@@ -34,7 +34,7 @@ func TestIntegrationCompanyCanBeReadByName(test *testing.T) {
 
 	companyForTest := Company{Name: "Test company"}
 
-	companiesFromStore, err := storage.Companies.ReadCompaniesByName(companyForTest.Name)
+	companiesFromStore, err := storage.Companies.ReadCompaniesByName(companyForTest.Name, ".")
 	if err != ErrCompaniesByNameNotFound {
 		test.Fail()
 	}
@@ -43,14 +43,14 @@ func TestIntegrationCompanyCanBeReadByName(test *testing.T) {
 		test.Fail()
 	}
 
-	createdCompany, err := storage.Companies.CreateCompany(companyForTest)
+	createdCompany, err := storage.Companies.CreateCompany(companyForTest, "en")
 	if err != nil || createdCompany.ID == "" {
 		test.Fail()
 	}
 
 	defer storage.Companies.DeleteCompany(createdCompany)
 
-	companiesFromStore, err = storage.Companies.ReadCompaniesByName(createdCompany.Name)
+	companiesFromStore, err = storage.Companies.ReadCompaniesByName(createdCompany.Name, "en")
 	if err != nil {
 		test.Fail()
 	}
@@ -73,19 +73,19 @@ func TestIntegrationCompanyCanBeReadById(test *testing.T) {
 
 	companyForSearch := Company{Name: "Test category"}
 
-	companyFromStore, err := storage.Companies.ReadCompanyByID("0")
+	companyFromStore, err := storage.Companies.ReadCompanyByID("0", ".")
 	if err != ErrCompanyDoesNotExist {
 		test.Fail()
 	}
 
-	createdCompany, err := storage.Companies.CreateCompany(companyForSearch)
+	createdCompany, err := storage.Companies.CreateCompany(companyForSearch, "en")
 	if err != nil {
 		test.Error(err)
 	}
 
 	defer storage.Companies.DeleteCompany(createdCompany)
 
-	companyFromStore, err = storage.Companies.ReadCompanyByID(createdCompany.ID)
+	companyFromStore, err = storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
 	if err != nil {
 		test.Fail()
 	}
@@ -110,7 +110,7 @@ func TestIntegrationCompanyCanBeUpdated(test *testing.T) {
 	}
 
 	companyForCreate := Company{Name: "Test company"}
-	createdCompany, err := storage.Companies.CreateCompany(companyForCreate)
+	createdCompany, err := storage.Companies.CreateCompany(companyForCreate, "en")
 	if err != nil {
 		test.Error(err)
 	}
@@ -131,7 +131,7 @@ func TestIntegrationCompanyCanBeUpdated(test *testing.T) {
 		test.Fail()
 	}
 
-	companyInStore, err := storage.Companies.ReadCompanyByID(createdCompany.ID)
+	companyInStore, err := storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
 	if err != nil {
 		test.Error(err)
 	}
@@ -149,7 +149,7 @@ func TestIntegrationCompanyCanBeDeactivate(test *testing.T) {
 	once.Do(prepareStorage)
 
 	companyForTest := Company{Name: "Test company"}
-	createdCompany, err := storage.Companies.CreateCompany(companyForTest)
+	createdCompany, err := storage.Companies.CreateCompany(companyForTest, "en")
 	if err != nil {
 		test.Error(err)
 	}
@@ -167,7 +167,7 @@ func TestIntegrationCompanyCanBeDeactivate(test *testing.T) {
 		test.Fail()
 	}
 
-	deactivatedCompany, err := storage.Companies.ReadCompanyByID(deactivatedCompanyID)
+	deactivatedCompany, err := storage.Companies.ReadCompanyByID(deactivatedCompanyID, ".")
 	if err != nil {
 		test.Error(err)
 	}
@@ -187,7 +187,7 @@ func TestIntegrationCompanyCanBeDeleted(test *testing.T) {
 	}
 
 	companyForTest := Company{Name: "Test company"}
-	createdCompany, err := storage.Companies.CreateCompany(companyForTest)
+	createdCompany, err := storage.Companies.CreateCompany(companyForTest, "en")
 	if err != nil {
 		test.Error(err)
 	}
@@ -203,7 +203,7 @@ func TestIntegrationCompanyCanBeDeleted(test *testing.T) {
 		test.Fail()
 	}
 
-	_, err = storage.Companies.ReadCompanyByID(deletedCompanyID)
+	_, err = storage.Companies.ReadCompanyByID(deletedCompanyID, ".")
 	if err != ErrCompanyDoesNotExist {
 		test.Error(err)
 	}
@@ -214,7 +214,7 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 
 	var err error
 
-	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"})
+	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
 
 	defer storage.Companies.DeleteCompany(createdCompany)
 
@@ -228,7 +228,7 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 		test.Error(err)
 	}
 
-	updatedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID)
+	updatedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
 
 	if updatedCompany.Categories[0].ID != createdFirstCategory.ID {
 		test.Fail()
@@ -248,7 +248,7 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 		test.Error(err)
 	}
 
-	updatedCompany, _ = storage.Companies.ReadCompanyByID(createdCompany.ID)
+	updatedCompany, _ = storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
 
 	if updatedCompany.Categories[0].ID != createdFirstCategory.ID {
 		test.Fail()
@@ -272,7 +272,7 @@ func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
 
 	var err error
 
-	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"})
+	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, ".")
 
 	defer storage.Companies.DeleteCompany(createdCompany)
 
@@ -290,7 +290,7 @@ func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
 
 	storage.Companies.AddCategoryToCompany(createdCompany.ID, createdSecondCategory.ID)
 
-	updatedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID)
+	updatedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
 
 	if len(updatedCompany.Categories) != 2 {
 		test.Fail()
@@ -305,13 +305,37 @@ func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
 		test.Error(err)
 	}
 
-	updatedCompany, _ = storage.Companies.ReadCompanyByID(createdCompany.ID)
+	updatedCompany, _ = storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
 
 	if len(updatedCompany.Categories) != 1 {
 		test.Fail()
 	}
 
 	if updatedCompany.Categories[0].ID != createdSecondCategory.ID {
+		test.Fail()
+	}
+}
+
+func TestIntegrationCompanyCanHasNameWithManyLanguages(test *testing.T) {
+	once.Do(prepareStorage)
+
+	var err error
+
+	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(createdCompany)
+
+	err = storage.Companies.AddLanguageOfCompanyName(createdCompany.ID, "Тестовая компания", "ru")
+	if err != nil {
+		test.Fail()
+	}
+
+	companyWithEnName, _ := storage.Companies.ReadCompanyByID(createdCompany.ID, "en")
+	if companyWithEnName.Name != "Test company" {
+		test.Fail()
+	}
+
+	companyWithRuName, _ := storage.Companies.ReadCompanyByID(createdCompany.ID, "ru")
+	if companyWithRuName.Name != "Тестовая компания" {
 		test.Fail()
 	}
 }

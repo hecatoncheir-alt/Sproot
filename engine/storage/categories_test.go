@@ -229,7 +229,7 @@ func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 
 	defer storage.Categories.DeleteCategory(createdCategory)
 
-	createdFirstCompany, _ := storage.Companies.CreateCompany(Company{Name: "First test company for category"})
+	createdFirstCompany, _ := storage.Companies.CreateCompany(Company{Name: "First test company for category"}, "en")
 
 	defer storage.Companies.DeleteCompany(createdFirstCompany)
 
@@ -248,7 +248,7 @@ func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 		test.Fail()
 	}
 
-	createdSecondCompany, _ := storage.Companies.CreateCompany(Company{Name: "Second test company for category"})
+	createdSecondCompany, _ := storage.Companies.CreateCompany(Company{Name: "Second test company for category"}, "en")
 
 	defer storage.Companies.DeleteCompany(createdSecondCompany)
 
@@ -285,13 +285,13 @@ func TestIntegrationCompanyCanBeRemovedFromCategory(test *testing.T) {
 
 	defer storage.Categories.DeleteCategory(createdCategory)
 
-	createdFirstCompany, _ := storage.Companies.CreateCompany(Company{Name: "First test company for category"})
+	createdFirstCompany, _ := storage.Companies.CreateCompany(Company{Name: "First test company for category"}, "en")
 
 	defer storage.Companies.DeleteCompany(createdFirstCompany)
 
 	storage.Categories.AddCompanyToCategory(createdCategory.ID, createdFirstCompany.ID)
 
-	createdSecondCompany, _ := storage.Companies.CreateCompany(Company{Name: "Second test company for category"})
+	createdSecondCompany, _ := storage.Companies.CreateCompany(Company{Name: "Second test company for category"}, "en")
 
 	defer storage.Companies.DeleteCompany(createdSecondCompany)
 
