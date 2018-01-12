@@ -119,6 +119,7 @@ func (companies *Companies) CreateCompany(company Company, language string) (Com
 	return company, nil
 }
 
+// AddLanguageOfCompanyName is a method for add predicate "companyName" for companyName value with new language
 func (companies *Companies) AddLanguageOfCompanyName(companyID, name, language string) error {
 	forCompanyNamePredicate := fmt.Sprintf(`<%s> <companyName> %s .`, companyID, "\""+name+"\""+"@"+language)
 

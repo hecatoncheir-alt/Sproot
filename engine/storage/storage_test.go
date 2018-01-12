@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"testing"
 	"log"
 	"sync"
+	"testing"
 )
 
 var once sync.Once
