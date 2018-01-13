@@ -1,6 +1,8 @@
 package storage
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestIntegrationProductCanBeCreated(test *testing.T) {
 	once.Do(prepareStorage)
