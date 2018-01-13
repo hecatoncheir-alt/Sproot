@@ -86,8 +86,8 @@ func (categories *Categories) SetUp() (err error) {
 }
 
 // CreateCategory make category and save it to storage
-func (categories *Categories) CreateCategory(category Category) (Category, error) {
-	existsCategories, err := categories.ReadCategoriesByName(category.Name)
+func (categories *Categories) CreateCategory(category Category, language string) (Category, error) {
+	existsCategories, err := categories.ReadCategoriesByName(category.Name, language)
 	if err != nil && err != ErrCategoriesByNameNotFound {
 		log.Println(err)
 		return category, ErrCategoryCanNotBeCreated
@@ -121,26 +121,48 @@ func (categories *Categories) CreateCategory(category Category) (Category, error
 		return category, ErrCategoryCanNotBeCreated
 	}
 
+	err = categories.AddLanguageOfCategoryName(category.ID, category.Name, language)
+	if err != nil {
+		return category, err
+	}
+
 	return category, nil
 }
 
+// AddLanguageOfCategoryName is a method for add predicate "categoryName" for companyName value with new language
+func (categories *Categories) AddLanguageOfCategoryName(categoryID, name, language string) error {
+	forCategoryNamePredicate := fmt.Sprintf(`<%s> <categoryName> %s .`, categoryID, "\""+name+"\""+"@"+language)
+
+	mutation := dataBaseAPI.Mutation{
+		SetNquads: []byte(forCategoryNamePredicate),
+		CommitNow: true}
+
+	transaction := categories.storage.Client.NewTxn()
+	_, err := transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ReadCategoriesByName is a method for get all nodes by categories name
-func (categories *Categories) ReadCategoriesByName(categoryName string) ([]Category, error) {
+func (categories *Categories) ReadCategoriesByName(categoryName, language string) ([]Category, error) {
 	query := fmt.Sprintf(`{
-				categories(func: eq(categoryName, "%v")) @filter(eq(categoryIsActive, true)) {
+				categories(func: eq(categoryName@%v, "%v")) @filter(eq(categoryIsActive, true)) {
 					uid
-					categoryName
+					categoryName: categoryName@%v
 					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
-						companyName
+						companyName: companyName@%v
 						companyCategories {
 							uid
-							categoryName
+							categoryName: categoryName@%v
 						}
 					}
 					categoryIsActive
 				}
-			}`, categoryName)
+			}`, language, categoryName, language, language, language)
 
 	transaction := categories.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -168,22 +190,22 @@ func (categories *Categories) ReadCategoriesByName(categoryName string) ([]Categ
 }
 
 // ReadCategoryByID is a method for get all nodes of categories by ID
-func (categories *Categories) ReadCategoryByID(categoryID string) (Category, error) {
+func (categories *Categories) ReadCategoryByID(categoryID, language string) (Category, error) {
 	category := Category{ID: categoryID}
 
 	query := fmt.Sprintf(`{
 				categories(func: uid("%s")) @filter(has(categoryName)) {
 					uid
-					categoryName
+					categoryName: categoryName@%v
 					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
-						companyName
+						companyName: companyName@%v
 						has_category @filter(eq(categoryIsActive, true)) {
 							uid
-							categoryName
+							categoryName: categoryName@%v
 							belong_to_company @filter(eq(companyIsActive, true)){
 								uid
-								companyName
+								companyName: companyName@%v
 								companyIsActive
 							}
 							categoryIsActive
@@ -192,7 +214,7 @@ func (categories *Categories) ReadCategoryByID(categoryID string) (Category, err
 					}
 					categoryIsActive
 				}
-			}`, categoryID)
+			}`, categoryID, language, language, language, language)
 
 	transaction := categories.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -244,7 +266,7 @@ func (categories *Categories) UpdateCategory(category Category) (Category, error
 		return category, ErrCategoryCanNotBeUpdated
 	}
 
-	updatedCategory, err := categories.ReadCategoryByID(category.ID)
+	updatedCategory, err := categories.ReadCategoryByID(category.ID, ".")
 	if err != nil {
 		log.Println(err)
 		return category, ErrCategoryCanNotBeUpdated

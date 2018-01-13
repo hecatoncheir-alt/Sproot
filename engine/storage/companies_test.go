@@ -219,7 +219,7 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 	defer storage.Companies.DeleteCompany(createdCompany)
 
 	createdFirstCategory, err :=
-		storage.Categories.CreateCategory(Category{Name: "First test category for company"})
+		storage.Categories.CreateCategory(Category{Name: "First test category for company"}, "en")
 
 	defer storage.Categories.DeleteCategory(createdFirstCategory)
 
@@ -239,7 +239,7 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 	}
 
 	createdSecondCategory, err :=
-		storage.Categories.CreateCategory(Category{Name: "Second test category for company"})
+		storage.Categories.CreateCategory(Category{Name: "Second test category for company"}, "en")
 
 	defer storage.Categories.DeleteCategory(createdSecondCategory)
 
@@ -277,14 +277,14 @@ func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
 	defer storage.Companies.DeleteCompany(createdCompany)
 
 	createdFirstCategory, _ :=
-		storage.Categories.CreateCategory(Category{Name: "First test category for company"})
+		storage.Categories.CreateCategory(Category{Name: "First test category for company"}, ".")
 
 	defer storage.Categories.DeleteCategory(createdFirstCategory)
 
 	storage.Companies.AddCategoryToCompany(createdCompany.ID, createdFirstCategory.ID)
 
 	createdSecondCategory, _ :=
-		storage.Categories.CreateCategory(Category{Name: "Second test category for company"})
+		storage.Categories.CreateCategory(Category{Name: "Second test category for company"}, ".")
 
 	defer storage.Categories.DeleteCategory(createdSecondCategory)
 

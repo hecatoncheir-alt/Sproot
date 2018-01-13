@@ -112,7 +112,7 @@ func (companies *Companies) CreateCompany(company Company, language string) (Com
 	}
 
 	err = companies.AddLanguageOfCompanyName(company.ID, company.Name, language)
-	if company.ID == "" {
+	if err != nil {
 		return company, err
 	}
 
@@ -145,11 +145,11 @@ func (companies *Companies) ReadCompaniesByName(companyName, language string) ([
 					companyIri
 					has_category @filter(eq(categoryIsActive, true)) {
 						uid
-						categoryName
+						categoryName: categoryName@%v
 					}
 					companyIsActive
 				}
-			}`, language, companyName, language)
+			}`, language, companyName, language, language)
 
 	transaction := companies.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -191,13 +191,13 @@ func (companies *Companies) ReadCompanyByID(companyID, language string) (Company
 					companyIri
 					has_category @filter(eq(categoryIsActive, true)) {
 						uid
-						categoryName
+						categoryName: categoryName@%v
 						belongs_to_company {
 							uid
 							companyName: companyName@%v
 							has_category @filter(eq(categoryIsActive, true)) {
 								uid
-								categoryName
+								categoryName: categoryName@%v
 								categoryIsActive
 							}
 							companyIsActive
@@ -206,7 +206,7 @@ func (companies *Companies) ReadCompanyByID(companyID, language string) (Company
 					}
 					companyIsActive
 				}
-			}`, companyID, language, language)
+			}`, companyID, language, language, language, language)
 
 	transaction := companies.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
