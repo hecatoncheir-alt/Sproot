@@ -87,6 +87,15 @@ func (companies *Companies) SetUp() (err error) {
 
 // CreateCompany make category and save it to storage
 func (companies *Companies) CreateCompany(company Company, language string) (Company, error) {
+	existsCompanies, err := companies.ReadCompaniesByName(company.Name, language)
+	if err != nil && err != ErrCompaniesByNameNotFound {
+		log.Println(err)
+		return company, ErrCompanyCanNotBeCreated
+	}
+	if existsCompanies != nil {
+		return existsCompanies[0], ErrCompanyAlreadyExist
+	}
+
 	transaction := companies.storage.Client.NewTxn()
 
 	company.IsActive = true
