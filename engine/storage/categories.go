@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-
 	"fmt"
 
 	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
