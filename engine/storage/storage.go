@@ -25,6 +25,7 @@ type Storage struct {
 	Client     *dataBaseClient.Dgraph
 	Categories *Categories
 	Companies  *Companies
+	Products   *Products
 }
 
 // New is a constructor for Storage objects
@@ -66,6 +67,12 @@ func (storage *Storage) SetUp() (err error) {
 
 	storage.Companies = NewCompaniesResourceForStorage(storage)
 	err = storage.Companies.SetUp()
+	if err != nil {
+		return err
+	}
+
+	storage.Products = NewProductsResourceForStorage(storage)
+	err = storage.Products.SetUp()
 	if err != nil {
 		return err
 	}
