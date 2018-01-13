@@ -32,6 +32,12 @@ var (
 
 	// ErrProductCanNotBeDeleted means that the product can't be removed from database
 	ErrProductCanNotBeDeleted = errors.New("product can't be deleted")
+
+	// ErrProductByIDCanNotBeFound means that the product can't be found in database
+	ErrProductByIDCanNotBeFound = errors.New("product by id can not be found")
+
+	// ErrProductDoesNotExist means than the product does not exist in database
+	ErrProductDoesNotExist = errors.New("product by id not found")
 )
 
 // Product is a structure of products in database
@@ -228,4 +234,77 @@ func (products *Products) DeleteProduct(product Product) (string, error) {
 	}
 
 	return product.ID, nil
+}
+
+// ReadProductByID is a method for get all nodes of products by ID
+func (products *Products) ReadProductByID(productID, language string) (Product, error) {
+	product := Product{ID: productID}
+
+	query := fmt.Sprintf(`{
+				products(func: uid("%s")) @filter(has(productName)) {
+					uid
+					productName: productName@%v
+					productIri
+					previewImageLink
+					productIsActive
+					belongs_to_category @filter(eq(categoryIsActive, true)) {
+						uid
+						categoryName: categoryName@%v
+						categoryIsActive
+						belongs_to_company @filter(eq(companyIsActive, true)) {
+							uid
+							companyName: companyName@%v
+							has_category @filter(eq(categoryIsActive, true)) {
+								uid
+								categoryName: categoryName@%v
+								categoryIsActive
+								belong_to_company @filter(eq(companyIsActive, true)){
+									uid
+									companyName: companyName@%v
+									companyIsActive
+								}
+							}
+						}
+					}
+					belongs_to_company @filter(eq(companyIsActive, true)) {
+						uid
+						companyName: companyName@%v
+						has_category @filter(eq(categoryIsActive, true)) {
+							uid
+							categoryName: categoryName@%v
+							categoryIsActive
+							belong_to_company @filter(eq(companyIsActive, true)){
+								uid
+								companyName: companyName@%v
+								companyIsActive
+							}
+						}
+					}
+				}
+			}`, productID, language, language, language, language, language, language, language, language)
+
+	transaction := products.storage.Client.NewTxn()
+	response, err := transaction.Query(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+		return product, ErrProductByIDCanNotBeFound
+	}
+
+	type productsInStore struct {
+		Products []Product `json:"products"`
+	}
+
+	var foundedProducts productsInStore
+
+	err = json.Unmarshal(response.GetJson(), &foundedProducts)
+	if err != nil {
+		log.Println(err)
+		return product, ErrProductByIDCanNotBeFound
+	}
+
+	if len(foundedProducts.Products) == 0 {
+		return product, ErrProductDoesNotExist
+	}
+
+	return foundedProducts.Products[0], nil
 }

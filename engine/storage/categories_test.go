@@ -29,7 +29,7 @@ func TestIntegrationCategoryCanBeCreated(test *testing.T) {
 	}
 }
 
-func TestIntegrationCategoryCanBeReadByName(test *testing.T) {
+func TestIntegrationCategoriesCanBeReadByName(test *testing.T) {
 	once.Do(prepareStorage)
 
 	categoryForSearch := Category{Name: "Test category"}
@@ -190,13 +190,9 @@ func TestIntegrationCategoryCanBeDeactivate(test *testing.T) {
 }
 
 func TestIntegrationCategoryCanBeDeleted(test *testing.T) {
-	var err error
-	storage := New(databaseHost, databasePort)
+	once.Do(prepareStorage)
 
-	err = storage.SetUp()
-	if err != nil {
-		test.Error(err)
-	}
+	var err error
 
 	categoryForCreate := Category{Name: "Test category"}
 	createdCategory, err := storage.Categories.CreateCategory(categoryForCreate, "en")
