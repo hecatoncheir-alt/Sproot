@@ -154,14 +154,20 @@ func (categories *Categories) ReadCategoriesByName(categoryName, language string
 					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
 						companyName: companyName@%v
-						companyCategories {
+						has_category @filter(eq(categoryIsActive, true)) {
 							uid
 							categoryName: categoryName@%v
+							belong_to_company @filter(eq(companyIsActive, true)){
+								uid
+								companyName: companyName@%v
+								companyIsActive
+							}
+							categoryIsActive
 						}
 					}
 					categoryIsActive
 				}
-			}`, language, categoryName, language, language, language)
+			}`, language, categoryName, language, language, language, language)
 
 	transaction := categories.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)

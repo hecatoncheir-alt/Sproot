@@ -20,7 +20,7 @@ func TestIntegrationCategoryCanBeCreated(test *testing.T) {
 	}
 
 	existCategory, err := storage.Categories.CreateCategory(categoryForCreate, "en")
-	if err != nil && err != ErrCategoryAlreadyExist {
+	if err == nil || err != ErrCategoryAlreadyExist {
 		test.Error(err)
 	}
 
