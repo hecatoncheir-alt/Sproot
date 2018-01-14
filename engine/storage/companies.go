@@ -41,14 +41,19 @@ var (
 	// ErrCompanyCanNotBeDeleted means that the company can't be removed from database
 	ErrCompanyCanNotBeDeleted = errors.New("company can't be deleted")
 
-	// ErrCategoryCanNotBeAddedToCompany means that the company can't be removed from database
+	// ErrCategoryCanNotBeAddedToCompany means that the category can't be added to company
 	ErrCategoryCanNotBeAddedToCompany = errors.New("category can not be added to company")
 
 	// ErrCategoryCanNotBeRemovedFromCompany means that the company can't be removed from database
 	ErrCategoryCanNotBeRemovedFromCompany = errors.New("category can not be removed from company")
+
+	// ErrProductCanNotBeAddedToCompany means that the product can't be added to company
+	ErrProductCanNotBeAddedToCompany = errors.New("product can not be added to company")
 )
 
 // Company is a structure of Categories in database
+/* Для того что бы продукт принадлежащий компании отображался в категории принадлежащей
+компании нужно иметь корректные данные belongs_to_company и belongs_to_category на гранях продукта */
 type Company struct {
 	ID         string     `json:"uid, omitempty"`
 	IRI        string     `json:"companyIri, omitempty"`
@@ -198,24 +203,41 @@ func (companies *Companies) ReadCompanyByID(companyID, language string) (Company
 					uid
 					companyName: companyName@%v
 					companyIri
+					companyIsActive
 					has_category @filter(eq(categoryIsActive, true)) {
 						uid
 						categoryName: categoryName@%v
-						belongs_to_company {
+						categoryIsActive
+						belongs_to_company @filter(eq(companyIsActive, true)) {
 							uid
 							companyName: companyName@%v
+							companyIsActive
 							has_category @filter(eq(categoryIsActive, true)) {
 								uid
 								categoryName: categoryName@%v
 								categoryIsActive
 							}
-							companyIsActive
 						}
-						categoryIsActive
+						has_product @filter(uid_in(belongs_to_company, %s) AND eq(productIsActive, true)) {
+							uid
+							productName: productName@%v
+							productIri
+							previewImageLink
+							productIsActive
+							belongs_to_category @filter(eq(categoryIsActive, true)) {
+								uid
+								categoryName: categoryName@%v
+								categoryIsActive
+							}
+							belongs_to_company @filter(eq(companyIsActive, true)) {
+								uid
+								companyName: companyName@%v
+								companyIsActive
+							}
+						}
 					}
-					companyIsActive
 				}
-			}`, companyID, language, language, language, language)
+			}`, companyID, language, language, language, language, companyID, language, language, language)
 
 	transaction := companies.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -389,6 +411,25 @@ func (companies *Companies) RemoveCategoryFromCompany(companyID, categoryID stri
 	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
 		return ErrCategoryCanNotBeRemovedFromCompany
+	}
+
+	return nil
+}
+
+//// AddProductToCompany method for set quad of predicate about company and product
+func (companies *Companies) AddProductToCompany(companyID, productID string) error {
+	var err error
+	var mutation dataBaseAPI.Mutation
+
+	forProductPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, productID, "belongs_to_company", companyID)
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forProductPredicate),
+		CommitNow: true}
+
+	transaction := companies.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrProductCanNotBeAddedToCompany
 	}
 
 	return nil

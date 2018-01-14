@@ -38,17 +38,23 @@ var (
 
 	// ErrProductDoesNotExist means than the product does not exist in database
 	ErrProductDoesNotExist = errors.New("product by id not found")
+
+	// ErrCompanyCanNotBeAddedToProduct means that the company can't be added to product
+	ErrCompanyCanNotBeAddedToProduct = errors.New("company can not be added to product")
+
+	// ErrCategoryCanNotBeAddedToProduct means that the category can't be added to product
+	ErrCategoryCanNotBeAddedToProduct = errors.New("category can not be added to product")
 )
 
 // Product is a structure of products in database
 type Product struct {
-	ID               string      `json:"uid, omitempty"`
-	Name             string      `json:"productName, omitempty"`
-	IRI              string      `json:"productIri, omitempty"`
-	PreviewImageLink string      `json:"previewImageLink, omitempty"`
-	IsActive         bool        `json:"productIsActive, omitempty"`
-	Categories       []Category  `json:"belongs_to_category, omitempty"`
-	Companies        []Companies `json:"belongs_to_company, omitempty"`
+	ID               string     `json:"uid, omitempty"`
+	Name             string     `json:"productName, omitempty"`
+	IRI              string     `json:"productIri, omitempty"`
+	PreviewImageLink string     `json:"previewImageLink, omitempty"`
+	IsActive         bool       `json:"productIsActive, omitempty"`
+	Categories       []Category `json:"belongs_to_category, omitempty"`
+	Companies        []Company  `json:"belongs_to_company, omitempty"`
 }
 
 // Products is resource os storage for CRUD operations
@@ -307,4 +313,54 @@ func (products *Products) ReadProductByID(productID, language string) (Product, 
 	}
 
 	return foundedProducts.Products[0], nil
+}
+
+// AddCategoryToProduct method for set quad of predicate about product and category
+func (products *Products) AddCategoryToProduct(productID, categoryID string) error {
+	var err error
+	var mutation dataBaseAPI.Mutation
+
+	forCategoryPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, categoryID, "has_product", productID)
+
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forCategoryPredicate),
+		CommitNow: true}
+
+	transaction := products.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrProductCanNotBeAddedToCategory
+	}
+
+	forProductPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, productID, "belongs_to_category", categoryID)
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forProductPredicate),
+		CommitNow: true}
+
+	transaction = products.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCategoryCanNotBeAddedToProduct
+	}
+
+	return nil
+}
+
+// AddCompanyToProduct method for set quad of predicate about product and company
+func (products *Products) AddCompanyToProduct(productID, companyID string) error {
+	var err error
+	var mutation dataBaseAPI.Mutation
+
+	forProductPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, productID, "belongs_to_company", companyID)
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forProductPredicate),
+		CommitNow: true}
+
+	transaction := products.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCompanyCanNotBeAddedToProduct
+	}
+
+	return nil
 }

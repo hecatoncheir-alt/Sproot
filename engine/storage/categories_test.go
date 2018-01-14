@@ -342,3 +342,33 @@ func TestIntegrationCategoryCanHasNameWithManyLanguages(test *testing.T) {
 		test.Fail()
 	}
 }
+
+func TestIntegrationProductCanBeAddedToCategory(test *testing.T) {
+	once.Do(prepareStorage)
+
+	var err error
+
+	createdCategory, err :=
+		storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+
+	defer storage.Categories.DeleteCategory(createdCategory)
+
+	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "First test product for category"}, "en")
+
+	defer storage.Products.DeleteProduct(createdProduct)
+
+	err = storage.Categories.AddProductToCategory(createdCategory.ID, createdProduct.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedCategory, _ := storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
+
+	if len(updatedCategory.Products) < 1 || len(updatedCategory.Products) > 1 {
+		test.Fatal()
+	}
+
+	if updatedCategory.Products[0].ID != createdProduct.ID {
+		test.Fail()
+	}
+}

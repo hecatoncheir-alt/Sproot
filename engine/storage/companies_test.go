@@ -339,3 +339,68 @@ func TestIntegrationCompanyCanHasNameWithManyLanguages(test *testing.T) {
 		test.Fail()
 	}
 }
+
+func TestIntegrationProductCanBeAddedToCompany(test *testing.T) {
+	once.Do(prepareStorage)
+
+	var err error
+
+	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+
+	defer storage.Companies.DeleteCompany(createdCompany)
+
+	createdCategory, _ :=
+		storage.Categories.CreateCategory(Category{Name: "Test category for company"}, "en")
+
+	defer storage.Categories.DeleteCategory(createdCategory)
+
+	storage.Companies.AddCategoryToCompany(createdCompany.ID, createdCategory.ID)
+
+	createdProductForCompany, err := storage.Products.CreateProduct(Product{Name: "Test product for company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer storage.Products.DeleteProduct(createdProductForCompany)
+
+	storage.Categories.AddProductToCategory(createdCategory.ID, createdProductForCompany.ID)
+
+	err = storage.Companies.AddProductToCompany(createdCompany.ID, createdProductForCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
+
+	if len(updatedCompany.Categories) < 1 || len(updatedCompany.Categories) > 1 {
+		test.Fatal()
+	}
+
+	if len(updatedCompany.Categories[0].Products) < 1 || len(updatedCompany.Categories[0].Products) > 1 {
+		test.Fatal()
+	}
+
+	if updatedCompany.Categories[0].Products[0].ID != createdProductForCompany.ID {
+		test.Fail()
+	}
+
+	if updatedCompany.Categories[0].Products[0].Name != createdProductForCompany.Name {
+		test.Fail()
+	}
+
+	createdProductForCategory, _ := storage.Products.CreateProduct(Product{Name: "Test product for category"}, "en")
+
+	defer storage.Products.DeleteProduct(createdProductForCategory)
+
+	storage.Categories.AddProductToCategory(createdCategory.ID, createdProductForCategory.ID)
+
+	updatedCompany, err = storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
+
+	if len(updatedCompany.Categories[0].Products) < 1 || len(updatedCompany.Categories[0].Products) > 1 {
+		test.Fatal()
+	}
+
+	if updatedCompany.Categories[0].Products[0].Name != createdProductForCompany.Name {
+		test.Fail()
+	}
+}

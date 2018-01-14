@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"fmt"
+	"log"
 
 	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 )
@@ -41,11 +41,14 @@ var (
 	// ErrCategoryCanNotBeDeleted means that the category can't be removed from database
 	ErrCategoryCanNotBeDeleted = errors.New("category can't be deleted")
 
-	// ErrCompanyCanNotBeAddedToCategory means that the company can't be removed from database
+	// ErrCompanyCanNotBeAddedToCategory means that the company can't be added to category
 	ErrCompanyCanNotBeAddedToCategory = errors.New("company can not be added to category")
 
 	// ErrCompanyCanNotBeRemovedFromCategory means that the company can't be removed from database
 	ErrCompanyCanNotBeRemovedFromCategory = errors.New("company can not be removed from category")
+
+	// ErrProductCanNotBeAddedToCategory means that the product can't be added to category
+	ErrProductCanNotBeAddedToCategory = errors.New("product can not be added to category")
 )
 
 // Category is a structure of Categories in database
@@ -54,6 +57,7 @@ type Category struct {
 	Name      string    `json:"categoryName, omitempty"`
 	IsActive  bool      `json:"categoryIsActive, omitempty"`
 	Companies []Company `json:"belongs_to_company, omitempty"`
+	Products  []Product `json:"has_product, omitempty"`
 }
 
 // Categories is resource os storage for CRUD operations
@@ -72,6 +76,7 @@ func (categories *Categories) SetUp() (err error) {
 		categoryName: string @index(exact, term) .
 		categoryIsActive: bool @index(bool) .
 		belongs_to_company: uid .
+		has_product: uid .
 	`
 	operation := &dataBaseAPI.Operation{Schema: schema}
 
@@ -202,24 +207,41 @@ func (categories *Categories) ReadCategoryByID(categoryID, language string) (Cat
 				categories(func: uid("%s")) @filter(has(categoryName)) {
 					uid
 					categoryName: categoryName@%v
+					categoryIsActive
 					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
 						companyName: companyName@%v
+						companyIsActive
 						has_category @filter(eq(categoryIsActive, true)) {
 							uid
 							categoryName: categoryName@%v
-							belong_to_company @filter(eq(companyIsActive, true)){
+							categoryIsActive
+							belong_to_company @filter(eq(companyIsActive, true)) {
 								uid
 								companyName: companyName@%v
 								companyIsActive
 							}
+						}
+					}
+					has_product @filter(eq(productIsActive, true)) {
+						uid
+						productName: productName@%v
+						productIri
+						previewImageLink
+						productIsActive
+						belongs_to_category @filter(eq(categoryIsActive, true)) {
+							uid
+							categoryName: categoryName@%v
 							categoryIsActive
 						}
-						companyIsActive
+						belongs_to_company @filter(eq(companyIsActive, true)) {
+							uid
+							companyName: companyName@%v
+							companyIsActive
+						}
 					}
-					categoryIsActive
 				}
-			}`, categoryID, language, language, language, language)
+			}`, categoryID, language, language, language, language, language, language, language)
 
 	transaction := categories.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -384,6 +406,37 @@ func (categories *Categories) RemoveCompanyFromCategory(categoryID, companyID st
 	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
 		return ErrCompanyCanNotBeRemovedFromCategory
+	}
+
+	return nil
+}
+
+// AddProductToCategory method for set quad of predicate about category and product
+func (categories *Categories) AddProductToCategory(categoryID, productID string) error {
+	var err error
+	var mutation dataBaseAPI.Mutation
+
+	forProductPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, productID, "belongs_to_category", categoryID)
+
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forProductPredicate),
+		CommitNow: true}
+
+	transaction := categories.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrProductCanNotBeAddedToCategory
+	}
+
+	forCategoryPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, categoryID, "has_product", productID)
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forCategoryPredicate),
+		CommitNow: true}
+
+	transaction = categories.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrProductCanNotBeAddedToCategory
 	}
 
 	return nil

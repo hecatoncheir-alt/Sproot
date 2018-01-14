@@ -112,3 +112,51 @@ func TestIntegrationProductCanBeDeleted(test *testing.T) {
 		test.Error(err)
 	}
 }
+
+func TestIntegrationCategoryCanBeAddedToProduct(test *testing.T) {
+	once.Do(prepareStorage)
+
+	createdCategory, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	defer storage.Categories.DeleteCategory(createdCategory)
+
+	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	defer storage.Products.DeleteProduct(createdProduct)
+
+	err := storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedProduct, _ := storage.Products.ReadProductByID(createdProduct.ID, "en")
+	if len(updatedProduct.Categories) < 1 || len(updatedProduct.Categories) > 1 {
+		test.Fatal()
+	}
+
+	if updatedProduct.Categories[0].ID != createdCategory.ID {
+		test.Fail()
+	}
+}
+
+func TestIntegrationCompanyCanBeAddedToProduct(test *testing.T) {
+	once.Do(prepareStorage)
+
+	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(createdCompany)
+
+	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	defer storage.Products.DeleteProduct(createdProduct)
+
+	err := storage.Products.AddCompanyToProduct(createdProduct.ID, createdCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedProduct, _ := storage.Products.ReadProductByID(createdProduct.ID, "en")
+	if len(updatedProduct.Companies) < 1 || len(updatedProduct.Companies) > 1 {
+		test.Fatal()
+	}
+
+	if updatedProduct.Companies[0].ID != createdCompany.ID {
+		test.Fail()
+	}
+}
