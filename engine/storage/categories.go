@@ -154,25 +154,43 @@ func (categories *Categories) AddLanguageOfCategoryName(categoryID, name, langua
 func (categories *Categories) ReadCategoriesByName(categoryName, language string) ([]Category, error) {
 	query := fmt.Sprintf(`{
 				categories(func: eq(categoryName@%v, "%v")) @filter(eq(categoryIsActive, true)) {
-					uid
+			uid
 					categoryName: categoryName@%v
+					categoryIsActive
 					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
 						companyName: companyName@%v
+						companyIsActive
 						has_category @filter(eq(categoryIsActive, true)) {
 							uid
 							categoryName: categoryName@%v
-							belong_to_company @filter(eq(companyIsActive, true)){
+							categoryIsActive
+							belong_to_company @filter(eq(companyIsActive, true)) {
 								uid
 								companyName: companyName@%v
 								companyIsActive
 							}
-							categoryIsActive
 						}
 					}
-					categoryIsActive
+					has_product @filter(eq(productIsActive, true)) {
+						uid
+						productName: productName@%v
+						productIri
+						previewImageLink
+						productIsActive
+						belongs_to_category @filter(eq(categoryIsActive, true)) {
+							uid
+							categoryName: categoryName@%v
+							categoryIsActive
+						}
+						belongs_to_company @filter(eq(companyIsActive, true)) {
+							uid
+							companyName: companyName@%v
+							companyIsActive
+						}
+					}
 				}
-			}`, language, categoryName, language, language, language, language)
+			}`, language, categoryName, language, language, language, language, language, language, language)
 
 	transaction := categories.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)

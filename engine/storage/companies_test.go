@@ -230,6 +230,10 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 
 	updatedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
 
+	if len(updatedCompany.Categories) < 1 || len(updatedCompany.Categories) > 1 {
+		test.Fatal()
+	}
+
 	if updatedCompany.Categories[0].ID != createdFirstCategory.ID {
 		test.Fail()
 	}

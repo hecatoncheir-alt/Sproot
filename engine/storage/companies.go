@@ -157,13 +157,41 @@ func (companies *Companies) ReadCompaniesByName(companyName, language string) ([
 					uid
 					companyName: companyName@%v
 					companyIri
+					companyIsActive
 					has_category @filter(eq(categoryIsActive, true)) {
 						uid
 						categoryName: categoryName@%v
+						categoryIsActive
+						belongs_to_company @filter(eq(companyIsActive, true)) {
+							uid
+							companyName: companyName@%v
+							companyIsActive
+							has_category @filter(eq(categoryIsActive, true)) {
+								uid
+								categoryName: categoryName@%v
+								categoryIsActive
+							}
+						}
+						has_product @filter(eq(productIsActive, true)) { #TODO: belongs_to_company mast be an companyID
+							uid
+							productName: productName@%v
+							productIri
+							previewImageLink
+							productIsActive
+							belongs_to_category @filter(eq(categoryIsActive, true)) {
+								uid
+								categoryName: categoryName@%v
+								categoryIsActive
+							}
+							belongs_to_company @filter(eq(companyIsActive, true)) {
+								uid
+								companyName: companyName@%v
+								companyIsActive
+							}
+						}
 					}
-					companyIsActive
 				}
-			}`, language, companyName, language, language)
+			}`, language, companyName, language, language, language, language, language, language, language)
 
 	transaction := companies.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
