@@ -70,7 +70,7 @@ func NewProductsResourceForStorage(storage *Storage) *Products {
 // SetUp is a method of Products resource for prepare database client and schema.
 func (products *Products) SetUp() (err error) {
 	schema := `
-		productName: string @index(exact, term) .
+		productName: string @index(exact, trigram) .
 		productIri: string @index(exact, term) .
 		productImageLink: string @index(exact, term) .
 		productIsActive: bool @index(bool) .
@@ -91,7 +91,7 @@ func (products *Products) SetUp() (err error) {
 // ReadProductsByName is a method for get all nodes by categories name
 func (products *Products) ReadProductsByName(productName, language string) ([]Product, error) {
 	query := fmt.Sprintf(`{
-				products(func: eq(productName@%v, "%v")) @filter(eq(productIsActive, true)) {
+				products(func: regexp(productName@%v, /%s/)) @filter(eq(productIsActive, true)) {
 					uid
 					productName: productName@%v
 					productIri

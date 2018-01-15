@@ -34,7 +34,7 @@ func TestIntegrationProductsCanBeReadByName(test *testing.T) {
 
 	productForSearch := Product{Name: "Test product"}
 
-	productsFromStore, err := storage.Products.ReadProductsByName(productForSearch.Name, ".")
+	productsFromStore, err := storage.Products.ReadProductsByName(productForSearch.Name, "en")
 	if err != ErrProductsByNameNotFound {
 		test.Fail()
 	}
@@ -50,9 +50,13 @@ func TestIntegrationProductsCanBeReadByName(test *testing.T) {
 
 	defer storage.Products.DeleteProduct(createdProduct)
 
-	productsFromStore, err = storage.Products.ReadProductsByName(createdProduct.Name, ".")
+	productsFromStore, err = storage.Products.ReadProductsByName(createdProduct.Name, "en")
 	if err != nil {
 		test.Fail()
+	}
+
+	if len(productsFromStore) < 1 || len(productsFromStore) > 1 {
+		test.Fatal()
 	}
 
 	if productsFromStore[0].Name != createdProduct.Name {
