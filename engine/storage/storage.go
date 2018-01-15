@@ -32,6 +32,14 @@ type Storage struct {
 func New(host string, port int) *Storage {
 	storage := &Storage{}
 
+	if host == "" {
+		host = databaseHost
+	}
+
+	if port == 0 {
+		port = databasePort
+	}
+
 	storage.GraphGRPCHost = host
 	storage.GraphGRPCPort = port
 	storage.GraphAddress = fmt.Sprintf("%v:%v", host, port)
