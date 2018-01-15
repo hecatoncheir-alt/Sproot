@@ -57,7 +57,7 @@ type Product struct {
 	Companies        []Company  `json:"belongs_to_company, omitempty"`
 }
 
-// Products is resource os storage for CRUD operations
+// Products is resource of storage for CRUD operations
 type Products struct {
 	storage *Storage
 }

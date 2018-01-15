@@ -62,7 +62,7 @@ type Company struct {
 	IsActive   bool       `json:"companyIsActive, omitempty"`
 }
 
-// Companies is resource os storage for CRUD operations
+// Companies is resource of storage for CRUD operations
 type Companies struct {
 	storage *Storage
 }
