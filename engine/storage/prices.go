@@ -121,7 +121,7 @@ func (prices *Prices) ReadPriceByID(priceID, language string) (Price, error) {
 	price := Price{ID: priceID}
 
 	query := fmt.Sprintf(`{
-				prices(func: uid("%s")) {
+				prices(func: uid("%s")) @filter(has(priceValue)) {
 					uid
 					priceValue
 					priceDateTime

@@ -60,10 +60,7 @@ func TestIntegrationPriceCanBeReadById(test *testing.T) {
 }
 
 func TestIntegrationPriceCanBeDeleted(test *testing.T) {
-	test.Skip()
 	once.Do(prepareStorage)
-	storage.DeleteAll()
-	storage.SetUp()
 
 	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
 	dateTime, err := time.Parse(time.RFC3339, exampleDateTime)
