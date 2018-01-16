@@ -88,7 +88,7 @@ func (products *Products) SetUp() (err error) {
 	return nil
 }
 
-// ReadProductsByName is a method for get all nodes by categories name
+// ReadProductsByName is a method for get all nodes by product name
 func (products *Products) ReadProductsByName(productName, language string) ([]Product, error) {
 	query := fmt.Sprintf(`{
 				products(func: regexp(productName@%v, /%s/)) @filter(eq(productIsActive, true)) {
@@ -182,6 +182,7 @@ func (products *Products) CreateProduct(product Product, language string) (Produ
 		log.Println(err)
 		return product, ErrProductCanNotBeCreated
 	}
+
 	if existsProducts != nil {
 		return existsProducts[0], ErrProductAlreadyExist
 	}

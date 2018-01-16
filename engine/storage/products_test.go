@@ -68,6 +68,50 @@ func TestIntegrationProductsCanBeReadByName(test *testing.T) {
 	}
 }
 
+func TestIntegrationProductCanBeReadById(test *testing.T) {
+	once.Do(prepareStorage)
+
+	productForSearch := Product{Name: "Test product"}
+
+	productsFromStore, err := storage.Products.ReadProductsByName(productForSearch.Name, "en")
+	if err != ErrProductsByNameNotFound {
+		test.Fail()
+	}
+
+	productFromStore, err := storage.Products.ReadProductByID("0", ".")
+	if err != ErrProductDoesNotExist {
+		test.Fail()
+	}
+
+	if productsFromStore != nil {
+		test.Fail()
+	}
+
+	createdProduct, err := storage.Products.CreateProduct(productForSearch, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer storage.Products.DeleteProduct(createdProduct)
+
+	productFromStore, err = storage.Products.ReadProductByID(createdProduct.ID, ".")
+	if err != nil {
+		test.Fail()
+	}
+
+	if productFromStore.Name != createdProduct.Name {
+		test.Fail()
+	}
+
+	if productFromStore.IsActive == false {
+		test.Fail()
+	}
+
+	if productFromStore.ID == "" {
+		test.Fail()
+	}
+}
+
 func TestIntegrationProductCanHasNameWithManyLanguages(test *testing.T) {
 	once.Do(prepareStorage)
 
