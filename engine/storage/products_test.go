@@ -2,6 +2,7 @@ package storage
 
 import (
 	"testing"
+	"time"
 )
 
 func TestIntegrationProductCanBeCreated(test *testing.T) {
@@ -205,6 +206,37 @@ func TestIntegrationCompanyCanBeAddedToProduct(test *testing.T) {
 	}
 
 	if updatedProduct.Companies[0].ID != createdCompany.ID {
+		test.Fail()
+	}
+}
+
+func TestIntegrationPriceCanBeAddedToProduct(test *testing.T) {
+	once.Do(prepareStorage)
+
+	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	defer storage.Products.DeleteProduct(createdProduct)
+
+	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
+	dateTime, _ := time.Parse(time.RFC3339, exampleDateTime)
+	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
+	defer storage.Prices.DeletePrice(createdPrice)
+
+	err := storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedProduct, _ := storage.Products.ReadProductByID(createdProduct.ID, "en")
+
+	if len(updatedProduct.Prices) < 1 || len(updatedProduct.Prices) > 1 {
+		test.Fatal()
+	}
+
+	if updatedProduct.Prices[0].ID != createdPrice.ID {
+		test.Fail()
+	}
+
+	if updatedProduct.Prices[0].Product[0].ID != createdProduct.ID {
 		test.Fail()
 	}
 }

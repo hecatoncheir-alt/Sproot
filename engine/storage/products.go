@@ -44,6 +44,9 @@ var (
 
 	// ErrCategoryCanNotBeAddedToProduct means that the category can't be added to product
 	ErrCategoryCanNotBeAddedToProduct = errors.New("category can not be added to product")
+
+	// ErrPriceCanNotBeAddedToProduct means that the price can't be added to product
+	ErrPriceCanNotBeAddedToProduct = errors.New("price can not be added to product")
 )
 
 // Product is a structure of products in database
@@ -55,6 +58,7 @@ type Product struct {
 	IsActive         bool       `json:"productIsActive, omitempty"`
 	Categories       []Category `json:"belongs_to_category, omitempty"`
 	Companies        []Company  `json:"belongs_to_company, omitempty"`
+	Prices           []Price    `json:"has_price, omitempty"`
 }
 
 // Products is resource of storage for CRUD operations
@@ -287,8 +291,29 @@ func (products *Products) ReadProductByID(productID, language string) (Product, 
 							}
 						}
 					}
+					has_price @filter(eq(priceIsActive, true)) {
+						uid
+						priceValue
+						priceDateTime
+						priceCity
+						priceIsActive
+						belongs_to_product @filter(eq(productIsActive, true)) {
+							uid
+							productName: productName@%v
+							productIri
+							previewImageLink
+							productIsActive
+							has_price @filter(eq(priceIsActive, true)) {
+								uid
+								priceValue
+								priceDateTime
+								priceCity
+								priceIsActive
+							}
+						}
+					}
 				}
-			}`, productID, language, language, language, language, language, language, language, language)
+			}`, productID, language, language, language, language, language, language, language, language, language)
 
 	transaction := products.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -361,6 +386,36 @@ func (products *Products) AddCompanyToProduct(productID, companyID string) error
 	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
 		return ErrCompanyCanNotBeAddedToProduct
+	}
+
+	return nil
+}
+
+// AddPriceToProduct method for set quad of predicate about product and price
+func (products *Products) AddPriceToProduct(productID, priceID string) error {
+	var err error
+	var mutation dataBaseAPI.Mutation
+
+	forPricePredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, priceID, "belongs_to_product", productID)
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forPricePredicate),
+		CommitNow: true}
+
+	transaction := products.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrPriceCanNotBeAddedToProduct
+	}
+
+	forProductPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, productID, "has_price", priceID)
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forProductPredicate),
+		CommitNow: true}
+
+	transaction = products.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrPriceCanNotBeAddedToProduct
 	}
 
 	return nil

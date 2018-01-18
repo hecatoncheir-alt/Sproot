@@ -89,3 +89,26 @@ func TestIntegrationPriceCanBeDeleted(test *testing.T) {
 		test.Error(err)
 	}
 }
+
+func TestIntegrationProductCanBeAddedToPrice(test *testing.T) {
+	once.Do(prepareStorage)
+
+	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
+	dateTime, _ := time.Parse(time.RFC3339, exampleDateTime)
+	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
+	defer storage.Prices.DeletePrice(createdPrice)
+
+	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	defer storage.Products.DeleteProduct(createdProduct)
+
+	err := storage.Prices.AddProductToPrice(createdPrice.ID, createdProduct.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedPrice, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+
+	if updatedPrice.Product[0].ID != createdProduct.ID {
+		test.Fail()
+	}
+}

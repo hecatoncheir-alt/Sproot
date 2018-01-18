@@ -17,7 +17,7 @@ type Price struct {
 	DateTime time.Time `json:"priceDateTime, omitempty"`
 	City     string    `json:"priceCity, omitempty"`
 	IsActive bool      `json:"priceIsActive, omitempty"`
-	Product  Product   `json:"belongs_to_product, omitempty"`
+	Product  []Product `json:"belongs_to_product, omitempty"`
 }
 
 // NewPricesResourceForStorage is a constructor of Prices resource
@@ -161,4 +161,37 @@ func (prices *Prices) ReadPriceByID(priceID, language string) (Price, error) {
 	}
 
 	return foundedPrices.Prices[0], nil
+}
+
+// ErrProductCanNotBeAddedToPrice means that the product can't be added to price
+var ErrProductCanNotBeAddedToPrice = errors.New("product can not be added to price")
+
+// AddProductToPrice method for set quad of predicate about price and product
+func (prices *Prices) AddProductToPrice(priceID, productID string) error {
+	var err error
+	var mutation dataBaseAPI.Mutation
+
+	forPricePredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, priceID, "belongs_to_product", productID)
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forPricePredicate),
+		CommitNow: true}
+
+	transaction := prices.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrProductCanNotBeAddedToPrice
+	}
+
+	forProductPredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, productID, "has_price", priceID)
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forProductPredicate),
+		CommitNow: true}
+
+	transaction = prices.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrProductCanNotBeAddedToPrice
+	}
+
+	return nil
 }
