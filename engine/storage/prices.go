@@ -75,9 +75,6 @@ func (prices *Prices) CreatePrice(price Price) (Price, error) {
 	}
 
 	price.ID = assigned.Uids["blank-0"]
-	if price.ID == "" {
-		return price, ErrPriceCanNotBeCreated
-	}
 
 	return price, nil
 }
@@ -194,4 +191,35 @@ func (prices *Prices) AddProductToPrice(priceID, productID string) error {
 	}
 
 	return nil
+}
+
+// ImportJSON is a method for add prices to database
+func (prices *Prices) ImportJSON(exportedPrices []byte) error {
+
+	type allPrices struct {
+		Prices []Price `json:"prices"`
+	}
+
+	var allPricesInJSON allPrices
+
+	err := json.Unmarshal(exportedPrices, &allPricesInJSON)
+	if err != nil {
+		return err
+	}
+
+	for _, exportedPrice := range allPricesInJSON.Prices {
+		_, err := prices.CreatePrice(exportedPrice)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// TODO
+func (prices *Prices) ExportJSON() string {
+	var jsonForExport string
+
+	return jsonForExport
 }

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 )
@@ -109,6 +110,47 @@ func TestIntegrationProductCanBeAddedToPrice(test *testing.T) {
 	updatedPrice, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
 
 	if updatedPrice.Product[0].ID != createdProduct.ID {
+		test.Fail()
+	}
+}
+
+func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
+	once.Do(prepareStorage)
+
+	type allPrices struct {
+		Prices []Price `json:"prices"`
+	}
+
+	all := allPrices{}
+
+	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
+	priceData, _ := time.Parse(time.RFC3339, exampleDateTime)
+	priceID := "0x273a"
+	priceValue := 123.0
+	all.Prices = append(all.Prices, Price{ID: priceID, Value: priceValue, DateTime: priceData})
+
+	exportedJSON, err := json.Marshal(all)
+	if err != nil {
+		test.Error(err)
+	}
+
+	err = storage.Prices.ImportJSON(exportedJSON)
+	if err != nil {
+		test.Error(err)
+	}
+
+	priceFromStorage, _ := storage.Prices.ReadPriceByID(priceID, "en")
+	defer storage.Prices.DeletePrice(priceFromStorage)
+
+	if priceFromStorage.ID != priceID {
+		test.Fail()
+	}
+
+	if priceFromStorage.Value != priceValue {
+		test.Fail()
+	}
+
+	if priceFromStorage.DateTime != priceData {
 		test.Fail()
 	}
 }
