@@ -236,7 +236,7 @@ func TestIntegrationPriceCanBeAddedToProduct(test *testing.T) {
 		test.Fail()
 	}
 
-	if updatedProduct.Prices[0].Product[0].ID != createdProduct.ID {
+	if updatedProduct.Prices[0].Products[0].ID != createdProduct.ID {
 		test.Fail()
 	}
 }

@@ -109,7 +109,7 @@ func TestIntegrationProductCanBeAddedToPrice(test *testing.T) {
 
 	updatedPrice, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
 
-	if updatedPrice.Product[0].ID != createdProduct.ID {
+	if updatedPrice.Products[0].ID != createdProduct.ID {
 		test.Fail()
 	}
 }
@@ -125,12 +125,20 @@ func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
 
 	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
 	priceData, _ := time.Parse(time.RFC3339, exampleDateTime)
-	priceID := "0x273a"
 	priceValue := 123.0
-	all.Prices = append(all.Prices, Price{ID: priceID, Value: priceValue, DateTime: priceData})
+
+	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: priceValue, DateTime: priceData})
+	storage.Prices.DeletePrice(createdPrice)
+
+	all.Prices = append(all.Prices, createdPrice)
 
 	exportedJSON, err := json.Marshal(all)
 	if err != nil {
+		test.Error(err)
+	}
+
+	_, err = storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+	if err != ErrPriceDoesNotExist {
 		test.Error(err)
 	}
 
@@ -139,10 +147,9 @@ func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
 		test.Error(err)
 	}
 
-	priceFromStorage, _ := storage.Prices.ReadPriceByID(priceID, "en")
-	defer storage.Prices.DeletePrice(priceFromStorage)
+	priceFromStorage, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
 
-	if priceFromStorage.ID != priceID {
+	if priceFromStorage.ID != createdPrice.ID {
 		test.Fail()
 	}
 

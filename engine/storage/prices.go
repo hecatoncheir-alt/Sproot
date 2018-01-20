@@ -17,7 +17,7 @@ type Price struct {
 	DateTime time.Time `json:"priceDateTime, omitempty"`
 	City     string    `json:"priceCity, omitempty"`
 	IsActive bool      `json:"priceIsActive, omitempty"`
-	Product  []Product `json:"belongs_to_product, omitempty"`
+	Products []Product `json:"belongs_to_product, omitempty"`
 }
 
 // NewPricesResourceForStorage is a constructor of Prices resource
@@ -211,6 +211,13 @@ func (prices *Prices) ImportJSON(exportedPrices []byte) error {
 		_, err := prices.CreatePrice(exportedPrice)
 		if err != nil {
 			return err
+		}
+
+		if len(exportedPrice.Products) > 0 {
+			err = prices.AddProductToPrice(exportedPrice.ID, exportedPrice.Products[0].ID)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
