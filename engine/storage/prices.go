@@ -225,8 +225,43 @@ func (prices *Prices) ImportJSON(exportedPrices []byte) error {
 }
 
 // TODO
-func (prices *Prices) ExportJSON() string {
-	var jsonForExport string
+func (prices *Prices) ExportJSON() ([]byte, error) {
+	query := fmt.Sprintf(`{
+				prices(func: has(belongs_to_product)) {
+					uid
+					priceValue
+					priceDateTime
+					priceCity
+					priceIsActive
+					belongs_to_product {
+						uid
+					}
+				}
+			}`)
 
-	return jsonForExport
+	transaction := prices.storage.Client.NewTxn()
+	response, err := transaction.Query(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	type PricesInStore struct {
+		Prices []Price `json:"prices"`
+	}
+
+	var foundedPrices PricesInStore
+
+	err = json.Unmarshal(response.GetJson(), &foundedPrices)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	jsonForExport, err := json.Marshal(foundedPrices)
+	if err != nil {
+		return nil, err
+	}
+
+	return jsonForExport, nil
 }

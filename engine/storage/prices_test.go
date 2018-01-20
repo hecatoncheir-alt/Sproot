@@ -161,3 +161,36 @@ func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
 		test.Fail()
 	}
 }
+
+func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
+	once.Do(prepareStorage)
+
+	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
+	priceData, _ := time.Parse(time.RFC3339, exampleDateTime)
+	priceValue := 123.0
+
+	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: priceValue, DateTime: priceData})
+	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+
+	storage.Prices.AddProductToPrice(createdPrice.ID, createdProduct.ID)
+
+	exportedJSON, err := storage.Prices.ExportJSON()
+	if err != nil {
+		test.Error(err)
+	}
+
+	storage.Products.DeleteProduct(createdProduct)
+	storage.Prices.DeletePrice(createdPrice)
+
+	_, err = storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+	if err != ErrPriceDoesNotExist {
+		test.Error(err)
+	}
+
+	err = storage.Prices.ImportJSON(exportedJSON)
+	if err != nil {
+		test.Error(err)
+	}
+
+	priceFromStorage, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+}
