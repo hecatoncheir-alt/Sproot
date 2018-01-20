@@ -43,19 +43,24 @@ func (cities *Cities) SetUp() (err error) {
 	return nil
 }
 
-// ErrCityCanNotBeCreated means that the city can't be added to database
-var ErrCityCanNotBeCreated = errors.New("city can't be created")
+var (
+	// ErrCityCanNotBeCreated means that the city can't be added to database
+	ErrCityCanNotBeCreated = errors.New("city can't be created")
+
+	// ErrCityAlreadyExist means that the city is in the database already
+	ErrCityAlreadyExist = errors.New("city already exist")
+)
 
 // CreateCategory make category and save it to storage
 func (cities *Cities) CreateCity(city City, language string) (City, error) {
-	//existsCities, err := cities.ReadCityByName(city.Name, language)
-	//if err != nil && err != ErrCitiesByNameNotFound {
-	//	log.Println(err)
-	//	return city, ErrCityCanNotBeCreated
-	//}
-	//if existsCities != nil {
-	//	return existsCities[0], ErrCityAlreadyExist
-	//}
+	existsCities, err := cities.ReadCitiesByName(city.Name, language)
+	if err != nil && err != ErrCitiesByNameNotFound {
+		log.Println(err)
+		return city, ErrCityCanNotBeCreated
+	}
+	if existsCities != nil {
+		return existsCities[0], ErrCityAlreadyExist
+	}
 
 	transaction := cities.storage.Client.NewTxn()
 
@@ -106,8 +111,101 @@ func (cities *Cities) AddLanguageOfCityName(cityID, name, language string) error
 	return nil
 }
 
-// ErrCityCanNotBeWithoutID means that city can't be found in storage for make some operation
-var ErrCityCanNotBeWithoutID = errors.New("city can not be without id")
+var (
+	// ErrCitiesByNameCanNotBeFound means that the cities can't be found in database
+	ErrCitiesByNameCanNotBeFound = errors.New("cities by name can not be found")
+
+	// ErrCitiesByNameNotFound means than the cities does not exist in database
+	ErrCitiesByNameNotFound = errors.New("cities by name not found")
+)
+
+// ReadCityByName is a method for get all nodes by city name
+func (cities *Cities) ReadCitiesByName(cityName, language string) ([]City, error) {
+	query := fmt.Sprintf(`{
+				cities(func: eq(cityName@%v, "%v")) @filter(eq(cityIsActive, true)) {
+					uid
+					cityName: cityName@%v
+					cityIsActive
+				}
+			}`, language, cityName, language)
+
+	transaction := cities.storage.Client.NewTxn()
+	response, err := transaction.Query(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+		return nil, ErrCitiesByNameCanNotBeFound
+	}
+
+	type citiesInStorage struct {
+		AllCitiesFoundedByName []City `json:"cities"`
+	}
+
+	var foundedCities citiesInStorage
+	err = json.Unmarshal(response.GetJson(), &foundedCities)
+	if err != nil {
+		log.Println(err)
+		return nil, ErrCitiesByNameCanNotBeFound
+	}
+
+	if len(foundedCities.AllCitiesFoundedByName) == 0 {
+		return nil, ErrCitiesByNameNotFound
+	}
+
+	return foundedCities.AllCitiesFoundedByName, nil
+}
+
+var (
+	// ErrCityCanNotBeWithoutID means that city can't be found in storage for make some operation
+	ErrCityCanNotBeWithoutID = errors.New("city can not be without id")
+
+	// ErrCityByIDCanNotBeFound means that the city can't be found in database
+	ErrCityByIDCanNotBeFound = errors.New("city by id can not be found")
+
+	// ErrCityDoesNotExist means than the city does not exist in database
+	ErrCityDoesNotExist = errors.New("city by id not found")
+)
+
+// ReadCityByID is a method for get all nodes of categories by ID
+func (cities *Cities) ReadCityByID(cityID, language string) (City, error) {
+	city := City{ID: cityID}
+
+	if cityID == "" {
+		return city, ErrCityCanNotBeWithoutID
+	}
+
+	query := fmt.Sprintf(`{
+				cities(func: uid("%s")) @filter(has(cityName)) {
+					uid
+					cityName: cityName@%v
+					cityIsActive
+				}
+			}`, cityID, language)
+
+	transaction := cities.storage.Client.NewTxn()
+	response, err := transaction.Query(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+		return city, ErrCityByIDCanNotBeFound
+	}
+
+	type citiesInStore struct {
+		Cities []City `json:"cities"`
+	}
+
+	var foundedCities citiesInStore
+
+	err = json.Unmarshal(response.GetJson(), &foundedCities)
+	if err != nil {
+		log.Println(err)
+		return city, ErrCityByIDCanNotBeFound
+	}
+
+	if len(foundedCities.Cities) == 0 {
+		return city, ErrCityDoesNotExist
+	}
+
+	return foundedCities.Cities[0], nil
+}
 
 // ErrCityCanNotBeDeleted means that the city can't be removed from database
 var ErrCityCanNotBeDeleted = errors.New("city can't be deleted")
