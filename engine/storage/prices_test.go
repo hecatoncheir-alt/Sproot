@@ -193,4 +193,16 @@ func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
 	}
 
 	priceFromStorage, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+
+	if priceFromStorage.ID != createdPrice.ID {
+		test.Fail()
+	}
+
+	if len(priceFromStorage.Products) != 1 {
+		test.Fatal()
+	}
+
+	if priceFromStorage.Products[0].ID != createdProduct.ID {
+		test.Fail()
+	}
 }

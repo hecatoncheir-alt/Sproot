@@ -224,7 +224,7 @@ func (prices *Prices) ImportJSON(exportedPrices []byte) error {
 	return nil
 }
 
-// TODO
+// ExportJSON method for export all prices belongs to product from database to json
 func (prices *Prices) ExportJSON() ([]byte, error) {
 	query := fmt.Sprintf(`{
 				prices(func: has(belongs_to_product)) {
@@ -235,6 +235,7 @@ func (prices *Prices) ExportJSON() ([]byte, error) {
 					priceIsActive
 					belongs_to_product {
 						uid
+						productIsActive
 					}
 				}
 			}`)
