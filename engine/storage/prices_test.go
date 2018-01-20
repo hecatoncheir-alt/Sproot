@@ -206,3 +206,8 @@ func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
 		test.Fail()
 	}
 }
+
+// TODO
+func TestIntegrationCityCanBeAddedToPrice(test *testing.T) {
+	once.Do(prepareStorage)
+}
