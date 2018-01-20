@@ -15,8 +15,8 @@ type Price struct {
 	ID       string    `json:"uid"`
 	Value    float64   `json:"priceValue, omitempty"`
 	DateTime time.Time `json:"priceDateTime, omitempty"`
-	City     string    `json:"priceCity, omitempty"`
 	IsActive bool      `json:"priceIsActive, omitempty"`
+	Cities   []City    `json:"belongs_to_city, omitempty"`
 	Products []Product `json:"belongs_to_product, omitempty"`
 }
 
@@ -25,18 +25,18 @@ func NewPricesResourceForStorage(storage *Storage) *Prices {
 	return &Prices{storage: storage}
 }
 
-// Products is resource of storage for CRUD operations
+// Prices is resource of storage for CRUD operations
 type Prices struct {
 	storage *Storage
 }
 
-// SetUp is a method of Companies resource for prepare database client and schema.
+// SetUp is a method of Prices resource for prepare database client and schema.
 func (prices *Prices) SetUp() (err error) {
 	schema := `
 		pricesValue: float @index(float) .
 		priceDateTime: dateTime @index(day) .
-		priceCity: string @index(term) .
 		priceIsActive: bool @index(bool) .
+		belongs_to_city: uid @count .
 		belongs_to_product: uid @count .
 	`
 	operation := &dataBaseAPI.Operation{Schema: schema}
@@ -190,6 +190,11 @@ func (prices *Prices) AddProductToPrice(priceID, productID string) error {
 		return ErrProductCanNotBeAddedToPrice
 	}
 
+	return nil
+}
+
+// TODO
+func (prices *Prices) AddCityToPrice(priceID, cityID string) error {
 	return nil
 }
 

@@ -27,6 +27,7 @@ type Storage struct {
 	Companies  *Companies
 	Products   *Products
 	Prices     *Prices
+	Cities     *Cities
 }
 
 // New is a constructor for Storage objects
@@ -88,6 +89,12 @@ func (storage *Storage) SetUp() (err error) {
 
 	storage.Prices = NewPricesResourceForStorage(storage)
 	err = storage.Prices.SetUp()
+	if err != nil {
+		return err
+	}
+
+	storage.Cities = NewCitiesResourceForStorage(storage)
+	err = storage.Cities.SetUp()
 	if err != nil {
 		return err
 	}

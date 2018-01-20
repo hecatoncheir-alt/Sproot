@@ -444,7 +444,7 @@ func (companies *Companies) RemoveCategoryFromCompany(companyID, categoryID stri
 	return nil
 }
 
-//// AddProductToCompany method for set quad of predicate about company and product
+// AddProductToCompany method for set quad of predicate about company and product
 func (companies *Companies) AddProductToCompany(companyID, productID string) error {
 	var err error
 	var mutation dataBaseAPI.Mutation
