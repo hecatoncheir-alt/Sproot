@@ -127,7 +127,7 @@ func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
 	priceData, _ := time.Parse(time.RFC3339, exampleDateTime)
 	priceValue := 123.0
 
-	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: priceValue, DateTime: priceData})
+	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: priceValue, DateTime: priceData, IsActive: true})
 	storage.Prices.DeletePrice(createdPrice)
 
 	all.Prices = append(all.Prices, createdPrice)

@@ -231,8 +231,21 @@ func (prices *Prices) ImportJSON(exportedPrices []byte) error {
 	}
 
 	for _, exportedPrice := range allPricesInJSON.Prices {
-		_, err := prices.CreatePrice(exportedPrice)
+		encodedPrice, err := json.Marshal(exportedPrice)
 		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		mutation := &dataBaseAPI.Mutation{
+			SetJson:   encodedPrice,
+			CommitNow: true}
+
+		transaction := prices.storage.Client.NewTxn()
+
+		_, err = transaction.Mutate(context.Background(), mutation)
+		if err != nil {
+			log.Println(err)
 			return err
 		}
 
