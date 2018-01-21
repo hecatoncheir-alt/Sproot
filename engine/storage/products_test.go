@@ -240,3 +240,29 @@ func TestIntegrationPriceCanBeAddedToProduct(test *testing.T) {
 		test.Fail()
 	}
 }
+
+func TestIntegrationProductCanHasPrice(test *testing.T) {
+	once.Do(prepareStorage)
+	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 31.2})
+	defer storage.Prices.DeletePrice(createdPrice)
+
+	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	defer storage.Cities.DeleteCity(createdCity)
+
+	storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+
+	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	defer storage.Products.DeleteProduct(createdProduct)
+
+	storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
+
+	productInStore, _ := storage.Products.ReadProductByID(createdProduct.ID, "en")
+
+	if productInStore.Prices[0].ID != createdPrice.ID {
+		test.Fail()
+	}
+
+	if productInStore.Prices[0].Cities[0].ID != createdCity.ID {
+		test.Fail()
+	}
+}

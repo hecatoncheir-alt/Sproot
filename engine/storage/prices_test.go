@@ -174,6 +174,10 @@ func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
 
 	storage.Prices.AddProductToPrice(createdPrice.ID, createdProduct.ID)
 
+	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+
+	storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+
 	exportedJSON, err := storage.Prices.ExportJSON()
 	if err != nil {
 		test.Error(err)
@@ -181,6 +185,7 @@ func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
 
 	storage.Products.DeleteProduct(createdProduct)
 	storage.Prices.DeletePrice(createdPrice)
+	storage.Cities.DeleteCity(createdCity)
 
 	_, err = storage.Prices.ReadPriceByID(createdPrice.ID, "en")
 	if err != ErrPriceDoesNotExist {
@@ -205,9 +210,31 @@ func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
 	if priceFromStorage.Products[0].ID != createdProduct.ID {
 		test.Fail()
 	}
+
+	if priceFromStorage.Cities[0].ID != createdCity.ID {
+		test.Fail()
+	}
 }
 
-// TODO
 func TestIntegrationCityCanBeAddedToPrice(test *testing.T) {
 	once.Do(prepareStorage)
+
+	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
+	dateTime, _ := time.Parse(time.RFC3339, exampleDateTime)
+	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
+	defer storage.Prices.DeletePrice(createdPrice)
+
+	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	defer storage.Cities.DeleteCity(createdCity)
+
+	err := storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedPrice, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+
+	if updatedPrice.Cities[0].ID != createdCity.ID {
+		test.Fail()
+	}
 }

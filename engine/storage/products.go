@@ -311,9 +311,14 @@ func (products *Products) ReadProductByID(productID, language string) (Product, 
 								priceIsActive
 							}
 						}
+						belongs_to_city @filter(eq(cityIsActive, true)) {
+							uid
+							cityName: cityName@%v
+							cityIsActive
+						}
 					}
 				}
-			}`, productID, language, language, language, language, language, language, language, language, language)
+			}`, productID, language, language, language, language, language, language, language, language, language, language)
 
 	transaction := products.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)

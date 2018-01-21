@@ -131,8 +131,13 @@ func (prices *Prices) ReadPriceByID(priceID, language string) (Price, error) {
 						previewImageLink
 						productIsActive
 					}
+					belongs_to_city @filter(eq(cityIsActive, true)) {
+						uid
+						cityName: cityName@%v
+						cityIsActive
+					}
 				}
-			}`, priceID, language)
+			}`, priceID, language, language)
 
 	transaction := prices.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -193,8 +198,21 @@ func (prices *Prices) AddProductToPrice(priceID, productID string) error {
 	return nil
 }
 
-// TODO
+// ErrCityCanNotBeAddedToPrice means that the city can't be added to price
+var ErrCityCanNotBeAddedToPrice = errors.New("city can not be added to price")
+
+// AddCityToPrice method for set quad of predicate about price and city
 func (prices *Prices) AddCityToPrice(priceID, cityID string) error {
+	forPricePredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, priceID, "belongs_to_city", cityID)
+	mutation := dataBaseAPI.Mutation{
+		SetNquads: []byte(forPricePredicate),
+		CommitNow: true}
+
+	transaction := prices.storage.Client.NewTxn()
+	_, err := transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCityCanNotBeAddedToPrice
+	}
 	return nil
 }
 
@@ -224,6 +242,13 @@ func (prices *Prices) ImportJSON(exportedPrices []byte) error {
 				return err
 			}
 		}
+
+		if len(exportedPrice.Cities) > 0 {
+			err = prices.AddCityToPrice(exportedPrice.ID, exportedPrice.Cities[0].ID)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -241,6 +266,10 @@ func (prices *Prices) ExportJSON() ([]byte, error) {
 					belongs_to_product {
 						uid
 						productIsActive
+					}
+					belongs_to_city {
+						uid
+						cityIsActive
 					}
 				}
 			}`)
