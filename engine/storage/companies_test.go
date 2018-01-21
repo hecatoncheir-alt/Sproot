@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"encoding/json"
 	"testing"
+	"time"
 )
 
 func TestIntegrationCompanyCanBeCreated(test *testing.T) {
@@ -406,5 +408,89 @@ func TestIntegrationProductCanBeAddedToCompany(test *testing.T) {
 
 	if updatedCompany.Categories[0].Products[0].Name != createdProductForCompany.Name {
 		test.Fail()
+	}
+}
+
+func TestIntegrationCompaniesCanBeAddedFromExportedJSON(test *testing.T) {
+	once.Do(prepareStorage)
+
+	createdCategory, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	defer storage.Categories.DeleteCategory(createdCategory)
+
+	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(createdCompany)
+
+	storage.Companies.AddCategoryToCompany(createdCompany.ID, createdCategory.ID)
+
+	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	defer storage.Products.DeleteProduct(createdProduct)
+
+	storage.Products.AddCompanyToProduct(createdProduct.ID, createdCompany.ID)
+
+	storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
+
+	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
+	priceData, _ := time.Parse(time.RFC3339, exampleDateTime)
+	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 132.3, DateTime: priceData})
+	defer storage.Prices.DeletePrice(createdPrice)
+
+	storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
+
+	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	defer storage.Cities.DeleteCity(createdCity)
+
+	storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+
+	updatedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID, "en")
+
+	all := allExportedCompanies{Language: "en"}
+	all.Companies = append(all.Companies, updatedCompany)
+
+	exportedJSON, err := json.Marshal(all)
+	if err != nil {
+		test.Error(err)
+	}
+
+	storage.Categories.DeleteCategory(createdCategory)
+	storage.Companies.DeleteCompany(createdCompany)
+	storage.Products.DeleteProduct(createdProduct)
+	storage.Prices.DeletePrice(createdPrice)
+	storage.Cities.DeleteCity(createdCity)
+
+	_, err = storage.Companies.ReadCompanyByID(createdCompany.ID, "en")
+	if err != ErrCompanyDoesNotExist {
+		test.Error(err)
+	}
+
+	err = storage.Companies.ImportJSON(exportedJSON)
+
+	importedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID, "en")
+
+	if importedCompany.Name != createdCompany.Name {
+		test.Fail()
+	}
+
+	for _, importedCategory := range importedCompany.Categories {
+		if importedCategory.Name != createdCategory.Name {
+			test.Fail()
+		}
+
+		for _, importedProduct := range importedCategory.Products {
+			if importedProduct.Name != createdProduct.Name {
+				test.Fail()
+			}
+
+			for _, importedPrice := range importedProduct.Prices {
+				if importedPrice.Value != createdPrice.Value {
+					test.Fail()
+				}
+
+				for _, importedCity := range importedPrice.Cities {
+					if importedCity.Name != createdCity.Name {
+						test.Fail()
+					}
+				}
+			}
+		}
 	}
 }

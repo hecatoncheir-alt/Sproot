@@ -188,10 +188,36 @@ func (companies *Companies) ReadCompaniesByName(companyName, language string) ([
 								companyName: companyName@%v
 								companyIsActive
 							}
+							has_price @filter(eq(priceIsActive, true)) {
+								uid
+								priceValue
+								priceDateTime
+								priceCity
+								priceIsActive
+								belongs_to_product @filter(eq(productIsActive, true)) {
+									uid
+									productName: productName@%v
+									productIri
+									previewImageLink
+									productIsActive
+									has_price @filter(eq(priceIsActive, true)) {
+										uid
+										priceValue
+										priceDateTime
+										priceCity
+										priceIsActive
+									}
+								}
+								belongs_to_city @filter(eq(cityIsActive, true)) {
+									uid
+									cityName: cityName@%v
+									cityIsActive
+								}
+							}
 						}
 					}
 				}
-			}`, language, companyName, language, language, language, language, language, language, language)
+			}`, language, companyName, language, language, language, language, language, language, language, language, language)
 
 	transaction := companies.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -262,10 +288,36 @@ func (companies *Companies) ReadCompanyByID(companyID, language string) (Company
 								companyName: companyName@%v
 								companyIsActive
 							}
+							has_price @filter(eq(priceIsActive, true)) {
+								uid
+								priceValue
+								priceDateTime
+								priceCity
+								priceIsActive
+								belongs_to_product @filter(eq(productIsActive, true)) {
+									uid
+									productName: productName@%v
+									productIri
+									previewImageLink
+									productIsActive
+									has_price @filter(eq(priceIsActive, true)) {
+										uid
+										priceValue
+										priceDateTime
+										priceCity
+										priceIsActive
+									}
+								}
+								belongs_to_city @filter(eq(cityIsActive, true)) {
+									uid
+									cityName: cityName@%v
+									cityIsActive
+								}
+							}
 						}
 					}
 				}
-			}`, companyID, language, language, language, language, companyID, language, language, language)
+			}`, companyID, language, language, language, language, companyID, language, language, language, language, language)
 
 	transaction := companies.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -458,6 +510,164 @@ func (companies *Companies) AddProductToCompany(companyID, productID string) err
 	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
 		return ErrProductCanNotBeAddedToCompany
+	}
+
+	return nil
+}
+
+type allExportedCompanies struct {
+	Language  string    `json:"language"`
+	Companies []Company `json:"companies"`
+}
+
+// ImportJSON is a method for add companies, categories of companies, products of categories, prices of products and cities of prices to database
+func (companies *Companies) ImportJSON(exportedCompanies []byte) error {
+
+	var allCompaniesInJSON allExportedCompanies
+
+	err := json.Unmarshal(exportedCompanies, &allCompaniesInJSON)
+	if err != nil {
+		return err
+	}
+
+	language := allCompaniesInJSON.Language
+
+	for _, exportedCompany := range allCompaniesInJSON.Companies {
+
+		encodedCompany, err := json.Marshal(exportedCompany)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		mutation := &dataBaseAPI.Mutation{
+			SetJson:   encodedCompany,
+			CommitNow: true}
+
+		transaction := companies.storage.Client.NewTxn()
+		_, err = transaction.Mutate(context.Background(), mutation)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		err = companies.AddLanguageOfCompanyName(exportedCompany.ID, exportedCompany.Name, language)
+		if err != nil {
+			return err
+		}
+
+		for _, exportedCategory := range exportedCompany.Categories {
+			encodedCategory, err := json.Marshal(exportedCategory)
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+
+			mutation := &dataBaseAPI.Mutation{
+				SetJson:   encodedCategory,
+				CommitNow: true}
+
+			transaction := companies.storage.Client.NewTxn()
+			_, err = transaction.Mutate(context.Background(), mutation)
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+
+			err = companies.storage.Categories.AddLanguageOfCategoryName(exportedCategory.ID, exportedCategory.Name, language)
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+
+			err = companies.storage.Categories.AddCompanyToCategory(exportedCategory.ID, exportedCompany.ID)
+			if err != nil {
+				return err
+			}
+
+			for _, exportedProduct := range exportedCategory.Products {
+				encodedProduct, err := json.Marshal(exportedProduct)
+				if err != nil {
+					log.Println(err)
+					return err
+				}
+
+				mutation := &dataBaseAPI.Mutation{
+					SetJson:   encodedProduct,
+					CommitNow: true}
+
+				transaction := companies.storage.Client.NewTxn()
+				_, err = transaction.Mutate(context.Background(), mutation)
+				if err != nil {
+					log.Println(err)
+					return err
+				}
+
+				err = companies.storage.Products.AddLanguageOfProductName(exportedProduct.ID, exportedProduct.Name, language)
+				if err != nil {
+					return err
+				}
+
+				err = companies.storage.Products.AddCategoryToProduct(exportedProduct.ID, exportedCategory.ID)
+				if err != nil {
+					return err
+				}
+
+				err = companies.storage.Products.AddCompanyToProduct(exportedProduct.ID, exportedCompany.ID)
+				if err != nil {
+					return err
+				}
+
+				for _, exportedPrice := range exportedProduct.Prices {
+					encodedPrice, err := json.Marshal(exportedPrice)
+					if err != nil {
+						log.Println(err)
+						return err
+					}
+
+					mutation := &dataBaseAPI.Mutation{
+						SetJson:   encodedPrice,
+						CommitNow: true}
+
+					transaction := companies.storage.Client.NewTxn()
+					_, err = transaction.Mutate(context.Background(), mutation)
+					if err != nil {
+						log.Println(err)
+						return err
+					}
+
+					err = companies.storage.Products.AddPriceToProduct(exportedProduct.ID, exportedPrice.ID)
+					if err != nil {
+						log.Println(err)
+						return err
+					}
+
+					for _, exportedCity := range exportedPrice.Cities {
+						encodedCity, err := json.Marshal(exportedCity)
+						if err != nil {
+							log.Println(err)
+							return err
+						}
+
+						mutation := &dataBaseAPI.Mutation{
+							SetJson:   encodedCity,
+							CommitNow: true}
+
+						transaction := companies.storage.Client.NewTxn()
+						_, err = transaction.Mutate(context.Background(), mutation)
+						if err != nil {
+							log.Println(err)
+							return err
+						}
+
+						err = companies.storage.Cities.AddLanguageOfCityName(exportedCity.ID, exportedCity.Name, language)
+						if err != nil {
+							return err
+						}
+					}
+				}
+			}
+		}
 	}
 
 	return nil
