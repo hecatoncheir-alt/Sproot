@@ -520,7 +520,8 @@ type allExportedCompanies struct {
 	Companies []Company `json:"companies"`
 }
 
-// ImportJSON is a method for add companies, categories of companies, products of categories, prices of products and cities of prices to database
+// ImportJSON is a method for add companies, categories of companies, products of categories,
+// prices of products and cities of prices to database.
 func (companies *Companies) ImportJSON(exportedCompanies []byte) error {
 
 	var allCompaniesInJSON allExportedCompanies
@@ -671,4 +672,57 @@ func (companies *Companies) ImportJSON(exportedCompanies []byte) error {
 	}
 
 	return nil
+}
+
+// ExportJSON is a method for export companies, categories of companies, products of categories,
+// prices of products and cities of prices to database.
+func (companies *Companies) ExportJSON(language string) ([]byte, error) {
+	query := fmt.Sprintf(`{
+				companies(func: has(companyName)) {
+					uid
+				}
+			}`)
+
+	transaction := companies.storage.Client.NewTxn()
+	responseWithCompaniesIDs, err := transaction.Query(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	type allCompaniesWithIDOnly struct {
+		CompaniesWithIDOnly []Company `json:"companies"`
+	}
+
+	var allCompaniesIDs allCompaniesWithIDOnly
+
+	err = json.Unmarshal(responseWithCompaniesIDs.GetJson(), &allCompaniesIDs)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	type allExportedCompanies struct {
+		Language  string    `json:"language"`
+		Companies []Company `json:"companies"`
+	}
+
+	foundedCompanies := allExportedCompanies{Language: language}
+
+	for _, companyID := range allCompaniesIDs.CompaniesWithIDOnly {
+		company, err := companies.ReadCompanyByID(companyID.ID, language)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		foundedCompanies.Companies = append(foundedCompanies.Companies, company)
+	}
+
+	jsonForExport, err := json.Marshal(foundedCompanies)
+	if err != nil {
+		return nil, err
+	}
+
+	return jsonForExport, nil
 }

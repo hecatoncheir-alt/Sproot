@@ -494,3 +494,78 @@ func TestIntegrationCompaniesCanBeAddedFromExportedJSON(test *testing.T) {
 		}
 	}
 }
+
+func TestIntegrationCompaniesCanBeExportedToJSON(test *testing.T) {
+	once.Do(prepareStorage)
+
+	createdCategory, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	defer storage.Categories.DeleteCategory(createdCategory)
+
+	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(createdCompany)
+
+	storage.Companies.AddCategoryToCompany(createdCompany.ID, createdCategory.ID)
+
+	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	defer storage.Products.DeleteProduct(createdProduct)
+
+	storage.Products.AddCompanyToProduct(createdProduct.ID, createdCompany.ID)
+
+	storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
+
+	createdOtherProduct, _ := storage.Products.CreateProduct(Product{Name: "Other test product"}, "en")
+	defer storage.Products.DeleteProduct(createdOtherProduct)
+	storage.Products.AddCategoryToProduct(createdOtherProduct.ID, createdCategory.ID)
+
+	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
+	priceData, _ := time.Parse(time.RFC3339, exampleDateTime)
+	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 132.3, DateTime: priceData})
+	defer storage.Prices.DeletePrice(createdPrice)
+
+	storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
+
+	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	defer storage.Cities.DeleteCity(createdCity)
+
+	storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+
+	exportedJSON, err := storage.Companies.ExportJSON("en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	exportedCompanies := allExportedCompanies{}
+
+	err = json.Unmarshal(exportedJSON, &exportedCompanies)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if exportedCompanies.Language != "en" {
+		test.Fail()
+	}
+
+	if exportedCompanies.Companies[0].Name != createdCompany.Name {
+		test.Fail()
+	}
+
+	if exportedCompanies.Companies[0].Categories[0].Name != createdCategory.Name {
+		test.Fail()
+	}
+
+	if len(exportedCompanies.Companies[0].Categories[0].Products) > 1 {
+		test.Fail()
+	}
+
+	if exportedCompanies.Companies[0].Categories[0].Products[0].Name != createdProduct.Name {
+		test.Fail()
+	}
+
+	if exportedCompanies.Companies[0].Categories[0].Products[0].Prices[0].Value != createdPrice.Value {
+		test.Fail()
+	}
+
+	if exportedCompanies.Companies[0].Categories[0].Products[0].Prices[0].Cities[0].Name != createdCity.Name {
+		test.Fail()
+	}
+}
