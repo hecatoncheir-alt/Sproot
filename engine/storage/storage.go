@@ -22,12 +22,13 @@ type Storage struct {
 	GraphGRPCHost string
 	GraphGRPCPort int
 
-	Client     *dataBaseClient.Dgraph
-	Categories *Categories
-	Companies  *Companies
-	Products   *Products
-	Prices     *Prices
-	Cities     *Cities
+	Client       *dataBaseClient.Dgraph
+	Categories   *Categories
+	Companies    *Companies
+	Products     *Products
+	Prices       *Prices
+	Cities       *Cities
+	Instructions *Instructions
 }
 
 // New is a constructor for Storage objects
@@ -95,6 +96,12 @@ func (storage *Storage) SetUp() (err error) {
 
 	storage.Cities = NewCitiesResourceForStorage(storage)
 	err = storage.Cities.SetUp()
+	if err != nil {
+		return err
+	}
+
+	storage.Instructions = NewInstructionsResourceForStorage(storage)
+	err = storage.Instructions.SetUp()
 	if err != nil {
 		return err
 	}
