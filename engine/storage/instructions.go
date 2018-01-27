@@ -296,11 +296,24 @@ func (resource *Instructions) AddCityToInstruction(instructionID, cityID string)
 	return nil
 }
 
-//
-//func (instructions *Instructions) RemoveCityFromInstruction(instructionID, cityID string) error {
-//
-//}
-//
+// ErrCityCanNotBeRemovedFromInstruction means that the city can't be removed from instruction
+var ErrCityCanNotBeRemovedFromInstruction = errors.New("city can not be removed from instruction")
+
+func (resource *Instructions) RemoveCityFromInstruction(instructionID, cityID string) error {
+	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, instructionID, "has_city", cityID)
+	mutation := dataBaseAPI.Mutation{
+		DelNquads: []byte(predicate),
+		CommitNow: true}
+
+	transaction := resource.storage.Client.NewTxn()
+	_, err := transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCityCanNotBeRemovedFromInstruction
+	}
+
+	return nil
+}
+
 //func (instructions *Instructions) AddPageInstructionToInstruction(instructionID, pageInstructionID string) error {
 //
 //}

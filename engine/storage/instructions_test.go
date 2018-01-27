@@ -163,3 +163,42 @@ func TestIntegrationCityCanBeAddedToInstruction(test *testing.T) {
 		test.Fail()
 	}
 }
+
+func TestIntegrationCityCanBeRemovedFromInstruction(test *testing.T) {
+	once.Do(prepareStorage)
+
+	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(company)
+
+	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer storage.Instructions.DeleteInstruction(instruction)
+
+	city, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	defer storage.Cities.DeleteCity(city)
+
+	err = storage.Instructions.AddCityToInstruction(instruction.ID, city.ID)
+
+	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+
+	if updatedInstruction.Cities[0].ID != city.ID {
+		test.Fail()
+	}
+
+	if updatedInstruction.Cities[0].Name != "Test city" {
+		test.Fail()
+	}
+
+	err = storage.Instructions.RemoveCityFromInstruction(instruction.ID, city.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedInstruction, _ = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if len(updatedInstruction.Cities) > 0 {
+		test.Fatal()
+	}
+}
