@@ -5,20 +5,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 	"log"
+
+	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 )
 
 type PageInstruction struct {
-	ID                       string `json:"uid, omitempty"`
-	Path                     string `json:"path, omitempty"`
-	PageInPaginationSelector string `json:"pageInPaginationSelector, omitempty"`
-	PageParamPath            string `json:"pageParamPath, omitempty"`
-	CityParamPath            string `json:"cityParamPath, omitempty"`
-	CityParam                string `json:"cityParam, omitempty"`
-	ItemSelector             string `json:"itemSelector, omitempty"`
-	NameOfItemSelector       string `json:"nameOfItemSelector, omitempty"`
-	PriceOfItemSelector      string `json:"priceOfItemSelector, omitempty"`
+	ID                         string `json:"uid, omitempty"`
+	Path                       string `json:"path, omitempty"`
+	PageInPaginationSelector   string `json:"pageInPaginationSelector, omitempty"`
+	PreviewImageOfItemSelector string `json:"previewImageOfSelector, omitempty"`
+	PageParamPath              string `json:"pageParamPath, omitempty"`
+	CityParamPath              string `json:"cityParamPath, omitempty"`
+	CityParam                  string `json:"cityParam, omitempty"`
+	ItemSelector               string `json:"itemSelector, omitempty"`
+	NameOfItemSelector         string `json:"nameOfItemSelector, omitempty"`
+	CityInCookieKey            string `json:"cityInCookieKey, omitempty"`
+	CityIDForCookie            string `json:"cityIdForCookie, omitempty"`
+	PriceOfItemSelector        string `json:"priceOfItemSelector, omitempty"`
 }
 
 // Instruction is a structure of instruction for parse
@@ -32,7 +36,7 @@ type Instruction struct {
 	Categories []Category        `json:"has_category, omitempty"`
 }
 
-// NewPricesResourceForStorage is a constructor of Prices resource
+// NewInstructionsResourceForStorage is a constructor of Prices resource
 func NewInstructionsResourceForStorage(storage *Storage) *Instructions {
 	return &Instructions{storage: storage}
 }
@@ -53,12 +57,15 @@ func (resource *Instructions) SetUp() (err error) {
 
 		path: string @index(exact, term) .
 		pageInPaginationSelector: string @index(exact, term) .
+		previewImageOfSelector: string @index(exact, term) .
 		pageParamPath: string @index(exact, term) .
 		pageCityPath: string @index(exact, term) .
 		cityParam: string @index(exact, term) .
 		itemSelector: string @index(exact, term) .
 		nameOfItemSelector: string @index(exact, term) .
 		priceOfItemSelector: string @index(exact, term) .
+		cityInCookieKey: string @index(exact, term) .
+		cityIdForCookie: string @index(exact, term) .
 	`
 	operation := &dataBaseAPI.Operation{Schema: schema}
 
