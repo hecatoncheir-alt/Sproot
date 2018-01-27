@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"golang.org/x/net/html/atom"
 	"testing"
 )
 
@@ -81,12 +82,56 @@ func TestIntegrationPageInstructionCanBeDeleted(test *testing.T) {
 		test.Error(err)
 	}
 
-	if deletedPageInstructionID != deletedPageInstructionID {
+	if deletedPageInstructionID != createdPageInstruction.ID {
 		test.Fail()
 	}
 
 	_, err = storage.Instructions.ReadPageInstructionByID(createdPageInstruction.ID)
 	if err != ErrPageInstructionDoesNotExist {
+		test.Error(err)
+	}
+}
+
+func TestIntegrationInstructionCanBeCreated(test *testing.T) {
+	once.Do(prepareStorage)
+
+	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(company)
+
+	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	defer storage.Instructions.DeleteInstruction(instruction)
+	if err != nil {
+		test.Fail()
+	}
+
+	if instruction.ID == "" {
+		test.Fail()
+	}
+
+	if instruction.IsActive != true {
+		test.Fail()
+	}
+}
+
+func TestIntegrationInstructionCanBeDeleted(test *testing.T) {
+	once.Do(prepareStorage)
+
+	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(company)
+
+	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+
+	deletedInstructionID, err := storage.Instructions.DeleteInstruction(instruction)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if deletedInstructionID != instruction.ID {
+		test.Fail()
+	}
+
+	_, err = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if err != ErrInstructionDoesNotExist {
 		test.Error(err)
 	}
 }

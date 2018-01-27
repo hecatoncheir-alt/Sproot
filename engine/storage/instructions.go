@@ -23,12 +23,13 @@ type PageInstruction struct {
 
 // Instruction is a structure of instruction for parse
 type Instruction struct {
-	ID        string            `json:"uid, omitempty"`
-	Language  string            `json:"instructionLanguage, omitempty"`
-	IsActive  bool              `json:"instructionIsActive, omitempty"`
-	Pages     []PageInstruction `json:"has_pages, omitempty"`
-	Cities    []City            `json:"has_city, omitempty"`
-	Companies []Company         `json:"has_company, omitempty"`
+	ID         string            `json:"uid, omitempty"`
+	Language   string            `json:"instructionLanguage, omitempty"`
+	IsActive   bool              `json:"instructionIsActive, omitempty"`
+	Pages      []PageInstruction `json:"has_pages, omitempty"`
+	Cities     []City            `json:"has_city, omitempty"`
+	Companies  []Company         `json:"has_company, omitempty"`
+	Categories []Categories      `json:"has_category, omitempty"`
 }
 
 // NewPricesResourceForStorage is a constructor of Prices resource
@@ -161,3 +162,142 @@ func (instructions *Instructions) DeletePageInstruction(pageInstruction PageInst
 
 	return pageInstruction.ID, nil
 }
+
+func (instructions *Instructions) CreateInstructionForCompany(companyID, language string) (Instruction, error) {
+	instruction := Instruction{IsActive: true, Language: language}
+
+	transaction := instructions.storage.Client.NewTxn()
+
+	encodedInstruction, err := json.Marshal(instruction)
+	if err != nil {
+		log.Println(err)
+		return instruction, err
+	}
+
+	mutation := &dataBaseAPI.Mutation{
+		SetJson:   encodedInstruction,
+		CommitNow: true}
+
+	assigned, err := transaction.Mutate(context.Background(), mutation)
+	if err != nil {
+		log.Println(err)
+		return instruction, err
+	}
+
+	instruction.ID = assigned.Uids["blank-0"]
+
+	return instruction, nil
+}
+
+// ErrInstructionDoesNotExist means than the instruction does not exist in database
+var ErrInstructionDoesNotExist = errors.New("instruction by id not found")
+
+func (instructions *Instructions) ReadInstructionByID(instructionID, language string) (Instruction, error) {
+
+	query := fmt.Sprintf(`{
+				instructions(func: uid("%s")) @filter(has(instructionLanguage)) {
+					uid
+					instructionLanguage
+					instructionIsActive
+					has_pages @filter(eq(cityIsActive, true)) {
+						uid
+						path
+						pageInPaginationSelector
+						pageParamPath
+						cityParamPath
+						cityParam
+						itemSelector
+						nameOfItemSelector
+						priceOfItemSelector
+					}
+					has_city @filter(eq(cityIsActive, true)) {
+						uid
+						cityName: cityName@%v
+						cityIsActive
+					}
+					has_company @filter(eq(companyIsActive, true)) {
+						uid
+						companyName: companyName@%v
+						companyIsActive
+					}
+					has_category @filter(eq(categoryIsActive, true)) {
+						uid
+						categoryName: categoryName@%v
+						categoryIsActive
+					}
+				}
+			}`, instructionID, language, language, language)
+
+	instruction := Instruction{ID: instructionID}
+
+	transaction := instructions.storage.Client.NewTxn()
+	response, err := transaction.Query(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+		return instruction, err
+	}
+
+	type InstructionsInStorage struct {
+		Instructions []Instruction `json:"instructions"`
+	}
+
+	var foundedPageInstructions InstructionsInStorage
+
+	err = json.Unmarshal(response.GetJson(), &foundedPageInstructions)
+	if err != nil {
+		log.Println(err)
+		return instruction, err
+	}
+
+	if len(foundedPageInstructions.Instructions) == 0 {
+		return instruction, ErrInstructionDoesNotExist
+	}
+
+	return foundedPageInstructions.Instructions[0], nil
+}
+
+func (instructions *Instructions) DeleteInstruction(instruction Instruction) (string, error) {
+	deleteInstructionData, err := json.Marshal(map[string]string{"uid": instruction.ID})
+	if err != nil {
+		log.Println(err)
+		return instruction.ID, err
+	}
+
+	mutation := dataBaseAPI.Mutation{
+		DeleteJson: deleteInstructionData,
+		CommitNow:  true}
+
+	transaction := instructions.storage.Client.NewTxn()
+
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		log.Println(err)
+		return instruction.ID, err
+	}
+
+	return instruction.ID, nil
+}
+
+//func (instructions *Instructions) AddCityToInstruction(instructionID, cityID string) error {
+//
+//}
+//
+//func (instructions *Instructions) RemoveCityFromInstruction(instructionID, cityID string) error {
+//
+//}
+//
+//func (instructions *Instructions) AddPageInstructionToInstruction(instructionID, pageInstructionID string) error {
+//
+//}
+//
+//func (instructions *Instructions) RemovePageInstructionFromInstruction(instructionID, pageInstructionID string) error {
+//
+//}
+//
+//func (instructions *Instructions) AddCategoryToInstruction(instructionID, categoryID string) error {
+//
+//}
+//
+//func (instructions *Instructions) RemoveCategoryFromInstruction(instructionID, categoryID string) error {
+//
+//}
