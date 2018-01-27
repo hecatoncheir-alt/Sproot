@@ -199,7 +199,7 @@ func (resource *Instructions) ReadInstructionByID(instructionID, language string
 					uid
 					instructionLanguage
 					instructionIsActive
-					has_pages @filter(eq(cityIsActive, true)) {
+					has_pages {
 						uid
 						path
 						pageInPaginationSelector
@@ -314,13 +314,42 @@ func (resource *Instructions) RemoveCityFromInstruction(instructionID, cityID st
 	return nil
 }
 
-//func (instructions *Instructions) AddPageInstructionToInstruction(instructionID, pageInstructionID string) error {
-//
-//}
-//
-//func (instructions *Instructions) RemovePageInstructionFromInstruction(instructionID, pageInstructionID string) error {
-//
-//}
+// ErrPageInstructionCanNotBeAddedToInstruction means that the page instruction can't be added to instruction
+var ErrPageInstructionCanNotBeAddedToInstruction = errors.New("page instruction can not be added to instruction")
+
+func (resource *Instructions) AddPageInstructionToInstruction(instructionID, pageInstructionID string) error {
+	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, instructionID, "has_pages", pageInstructionID)
+	mutation := dataBaseAPI.Mutation{
+		SetNquads: []byte(predicate),
+		CommitNow: true}
+
+	transaction := resource.storage.Client.NewTxn()
+	_, err := transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrPageInstructionCanNotBeAddedToInstruction
+	}
+
+	return nil
+}
+
+// ErrPageInstructionCanNotBeRemovedFromInstruction means that the page instruction can't be removed from instruction
+var ErrPageInstructionCanNotBeRemovedFromInstruction = errors.New("page instruction can not be removed from instruction")
+
+func (resource *Instructions) RemovePageInstructionFromInstruction(instructionID, pageInstructionID string) error {
+	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, instructionID, "has_pages", pageInstructionID)
+	mutation := dataBaseAPI.Mutation{
+		DelNquads: []byte(predicate),
+		CommitNow: true}
+
+	transaction := resource.storage.Client.NewTxn()
+	_, err := transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrPageInstructionCanNotBeRemovedFromInstruction
+	}
+
+	return nil
+}
+
 //
 //func (instructions *Instructions) AddCategoryToInstruction(instructionID, categoryID string) error {
 //

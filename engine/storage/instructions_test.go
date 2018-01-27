@@ -154,6 +154,9 @@ func TestIntegrationCityCanBeAddedToInstruction(test *testing.T) {
 	err = storage.Instructions.AddCityToInstruction(instruction.ID, city.ID)
 
 	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if len(updatedInstruction.Cities) > 0 {
+		test.Fatal()
+	}
 
 	if updatedInstruction.Cities[0].ID != city.ID {
 		test.Fail()
@@ -199,6 +202,101 @@ func TestIntegrationCityCanBeRemovedFromInstruction(test *testing.T) {
 
 	updatedInstruction, _ = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
 	if len(updatedInstruction.Cities) > 0 {
+		test.Fatal()
+	}
+}
+
+func TestIntegrationPageInstructionCanBeAddedToInstruction(test *testing.T) {
+	once.Do(prepareStorage)
+
+	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(company)
+
+	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer storage.Instructions.DeleteInstruction(instruction)
+
+	mVideoPageInstruction := PageInstruction{
+		Path: "smartfony-i-svyaz/smartfony-205",
+		PageInPaginationSelector: ".pagination-list .pagination-item",
+		PageParamPath:            "/f/page=",
+		CityParamPath:            "?cityId=",
+		CityParam:                "CityCZ_975",
+		ItemSelector:             ".grid-view .product-tile",
+		NameOfItemSelector:       ".product-tile-title",
+		PriceOfItemSelector:      ".product-price-current"}
+
+	createdPageInstruction, _ := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
+	defer storage.Instructions.DeletePageInstruction(createdPageInstruction)
+
+	err = storage.Instructions.AddPageInstructionToInstruction(instruction.ID, createdPageInstruction.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+
+	if len(updatedInstruction.Pages) != 1 {
+		test.Fatal()
+	}
+
+	if updatedInstruction.Pages[0].ID != createdPageInstruction.ID {
+		test.Fail()
+	}
+}
+
+func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) {
+	once.Do(prepareStorage)
+
+	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(company)
+
+	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer storage.Instructions.DeleteInstruction(instruction)
+
+	mVideoPageInstruction := PageInstruction{
+		Path: "smartfony-i-svyaz/smartfony-205",
+		PageInPaginationSelector: ".pagination-list .pagination-item",
+		PageParamPath:            "/f/page=",
+		CityParamPath:            "?cityId=",
+		CityParam:                "CityCZ_975",
+		ItemSelector:             ".grid-view .product-tile",
+		NameOfItemSelector:       ".product-tile-title",
+		PriceOfItemSelector:      ".product-price-current"}
+
+	createdPageInstruction, _ := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
+	defer storage.Instructions.DeletePageInstruction(createdPageInstruction)
+
+	err = storage.Instructions.AddPageInstructionToInstruction(instruction.ID, createdPageInstruction.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+
+	if len(updatedInstruction.Pages) != 1 {
+		test.Fatal()
+	}
+
+	if updatedInstruction.Pages[0].ID != createdPageInstruction.ID {
+		test.Fail()
+	}
+
+	err = storage.Instructions.RemovePageInstructionFromInstruction(instruction.ID, createdPageInstruction.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedInstruction, _ = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+
+	if len(updatedInstruction.Pages) > 0 {
 		test.Fatal()
 	}
 }
