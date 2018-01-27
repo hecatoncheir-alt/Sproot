@@ -110,6 +110,14 @@ func TestIntegrationInstructionCanBeCreated(test *testing.T) {
 	if instruction.IsActive != true {
 		test.Fail()
 	}
+
+	if len(instruction.Companies) != 1 {
+		test.Fatal()
+	}
+
+	if instruction.Companies[0].ID != company.ID {
+		test.Fail()
+	}
 }
 
 func TestIntegrationInstructionCanBeDeleted(test *testing.T) {
@@ -371,5 +379,35 @@ func TestIntegrationCategoryCanBeRemovedFromInstruction(test *testing.T) {
 
 	if len(updatedInstruction.Categories) > 0 {
 		test.Fatal()
+	}
+}
+
+func TestIntegrationCanGetAllInstructionsOfCompany(test *testing.T) {
+	once.Do(prepareStorage)
+
+	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(company)
+
+	instruction, _ := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+
+	defer storage.Instructions.DeleteInstruction(instruction)
+
+	anotherCompany, _ := storage.Companies.CreateCompany(Company{Name: "Another test company"}, "en")
+	defer storage.Companies.DeleteCompany(anotherCompany)
+
+	anotherInstruction, _ := storage.Instructions.CreateInstructionForCompany(anotherCompany.ID, "en")
+	defer storage.Instructions.DeleteInstruction(anotherInstruction)
+
+	instructionsForCompany, err := storage.Instructions.ReadAllInstructionsForCompany(company.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	if len(instructionsForCompany) != 1 {
+		test.Fail()
+	}
+
+	if instructionsForCompany[0].Companies[0].ID != company.ID {
+		test.Fail()
 	}
 }

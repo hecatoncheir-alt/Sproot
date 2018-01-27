@@ -186,7 +186,23 @@ func (resource *Instructions) CreateInstructionForCompany(companyID, language st
 
 	instruction.ID = assigned.Uids["blank-0"]
 
-	return instruction, nil
+	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, instruction.ID, "has_company", companyID)
+	mutation = &dataBaseAPI.Mutation{
+		SetNquads: []byte(predicate),
+		CommitNow: true}
+
+	transaction = resource.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), mutation)
+	if err != nil {
+		return instruction, err
+	}
+
+	updatedInstruction, err := resource.ReadInstructionByID(instruction.ID, language)
+	if err != nil {
+		return updatedInstruction, err
+	}
+
+	return updatedInstruction, nil
 }
 
 // ErrInstructionDoesNotExist means than the instruction does not exist in database
@@ -241,19 +257,19 @@ func (resource *Instructions) ReadInstructionByID(instructionID, language string
 		Instructions []Instruction `json:"instructions"`
 	}
 
-	var foundedPageInstructions InstructionsInStorage
+	var foundedInstructions InstructionsInStorage
 
-	err = json.Unmarshal(response.GetJson(), &foundedPageInstructions)
+	err = json.Unmarshal(response.GetJson(), &foundedInstructions)
 	if err != nil {
 		log.Println(err)
 		return instruction, err
 	}
 
-	if len(foundedPageInstructions.Instructions) == 0 {
+	if len(foundedInstructions.Instructions) == 0 {
 		return instruction, ErrInstructionDoesNotExist
 	}
 
-	return foundedPageInstructions.Instructions[0], nil
+	return foundedInstructions.Instructions[0], nil
 }
 
 func (resource *Instructions) DeleteInstruction(instruction Instruction) (string, error) {
@@ -381,4 +397,68 @@ func (resource *Instructions) RemoveCategoryFromInstruction(instructionID, categ
 	}
 
 	return nil
+}
+
+var ErrInstructionsForCompanyDoesNotExist = errors.New("instructions can not be founded for company")
+
+func (resource *Instructions) ReadAllInstructionsForCompany(companyID, language string) ([]Instruction, error) {
+
+	query := fmt.Sprintf(`{
+				instructions(func: has(has_company)) @filter(eq(instructionIsActive, true) AND uid_in(has_company, %v)) {
+					uid
+					instructionLanguage
+					instructionIsActive
+					has_pages {
+						uid
+						path
+						pageInPaginationSelector
+						pageParamPath
+						cityParamPath
+						cityParam
+						itemSelector
+						nameOfItemSelector
+						priceOfItemSelector
+					}
+					has_company @filter(eq(companyIsActive, true)) {
+						uid
+						companyName: companyName@%v
+						companyIsActive
+					}
+					has_city @filter(eq(cityIsActive, true)) {
+						uid
+						cityName: cityName@%v
+						cityIsActive
+					}
+					has_category @filter(eq(categoryIsActive, true)) {
+						uid
+						categoryName: categoryName@%v
+						categoryIsActive
+					}
+				}
+			}`, companyID, language, language, language)
+
+	transaction := resource.storage.Client.NewTxn()
+	response, err := transaction.Query(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	type InstructionsFromStorage struct {
+		Instructions []Instruction `json:"instructions"`
+	}
+
+	var foundedInstructions InstructionsFromStorage
+
+	err = json.Unmarshal(response.GetJson(), &foundedInstructions)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	if len(foundedInstructions.Instructions) == 0 {
+		return nil, ErrInstructionsForCompanyDoesNotExist
+	}
+
+	return foundedInstructions.Instructions, nil
 }
