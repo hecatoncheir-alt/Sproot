@@ -154,7 +154,8 @@ func TestIntegrationCityCanBeAddedToInstruction(test *testing.T) {
 	err = storage.Instructions.AddCityToInstruction(instruction.ID, city.ID)
 
 	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
-	if len(updatedInstruction.Cities) > 0 {
+
+	if len(updatedInstruction.Cities) != 1 {
 		test.Fatal()
 	}
 
