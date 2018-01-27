@@ -29,7 +29,7 @@ type Instruction struct {
 	Pages      []PageInstruction `json:"has_pages, omitempty"`
 	Cities     []City            `json:"has_city, omitempty"`
 	Companies  []Company         `json:"has_company, omitempty"`
-	Categories []Categories      `json:"has_category, omitempty"`
+	Categories []Category        `json:"has_category, omitempty"`
 }
 
 // NewPricesResourceForStorage is a constructor of Prices resource
@@ -350,11 +350,35 @@ func (resource *Instructions) RemovePageInstructionFromInstruction(instructionID
 	return nil
 }
 
-//
-//func (instructions *Instructions) AddCategoryToInstruction(instructionID, categoryID string) error {
-//
-//}
-//
-//func (instructions *Instructions) RemoveCategoryFromInstruction(instructionID, categoryID string) error {
-//
-//}
+// ErrCategoryCanNotBeAddedToInstruction means that the category can't be added to instruction
+var ErrCategoryCanNotBeAddedToInstruction = errors.New("category can not be added to instruction")
+
+func (resource *Instructions) AddCategoryToInstruction(instructionID, categoryID string) error {
+	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, instructionID, "has_category", categoryID)
+	mutation := dataBaseAPI.Mutation{
+		SetNquads: []byte(predicate),
+		CommitNow: true}
+
+	transaction := resource.storage.Client.NewTxn()
+	_, err := transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCategoryCanNotBeAddedToInstruction
+	}
+
+	return nil
+}
+
+func (resource *Instructions) RemoveCategoryFromInstruction(instructionID, categoryID string) error {
+	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, instructionID, "has_category", categoryID)
+	mutation := dataBaseAPI.Mutation{
+		DelNquads: []byte(predicate),
+		CommitNow: true}
+
+	transaction := resource.storage.Client.NewTxn()
+	_, err := transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCategoryCanNotBeAddedToInstruction
+	}
+
+	return nil
+}

@@ -301,3 +301,75 @@ func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) 
 		test.Fatal()
 	}
 }
+
+func TestIntegrationCategoryCanBeAddedToInstruction(test *testing.T) {
+	once.Do(prepareStorage)
+
+	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(company)
+
+	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer storage.Instructions.DeleteInstruction(instruction)
+
+	category, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	defer storage.Categories.DeleteCategory(category)
+
+	err = storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+
+	if len(updatedInstruction.Categories) != 1 {
+		test.Fatal()
+	}
+
+	if updatedInstruction.Categories[0].ID != category.ID {
+		test.Fail()
+	}
+}
+
+func TestIntegrationCategoryCanBeRemovedFromInstruction(test *testing.T) {
+	once.Do(prepareStorage)
+
+	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(company)
+
+	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer storage.Instructions.DeleteInstruction(instruction)
+
+	category, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	defer storage.Categories.DeleteCategory(category)
+
+	storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
+
+	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+
+	if len(updatedInstruction.Categories) != 1 {
+		test.Fatal()
+	}
+
+	if updatedInstruction.Categories[0].ID != category.ID {
+		test.Fail()
+	}
+
+	err = storage.Instructions.RemoveCategoryFromInstruction(instruction.ID, category.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedInstruction, _ = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+
+	if len(updatedInstruction.Categories) > 0 {
+		test.Fatal()
+	}
+}
