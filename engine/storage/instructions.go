@@ -30,7 +30,7 @@ type Instruction struct {
 	ID         string            `json:"uid, omitempty"`
 	Language   string            `json:"instructionLanguage, omitempty"`
 	IsActive   bool              `json:"instructionIsActive, omitempty"`
-	Pages      []PageInstruction `json:"has_pages, omitempty"`
+	Pages      []PageInstruction `json:"has_page, omitempty"`
 	Cities     []City            `json:"has_city, omitempty"`
 	Companies  []Company         `json:"has_company, omitempty"`
 	Categories []Category        `json:"has_category, omitempty"`
@@ -53,7 +53,7 @@ func (resource *Instructions) SetUp() (err error) {
 		instructionIsActive: bool @index(bool) .
 		has_company: uid @count .
 		has_city: uid @count .
-		has_pages: uid @count .
+		has_page: uid @count .
 
 		path: string @index(exact, term) .
 		pageInPaginationSelector: string @index(exact, term) .
@@ -222,7 +222,7 @@ func (resource *Instructions) ReadInstructionByID(instructionID, language string
 					uid
 					instructionLanguage
 					instructionIsActive
-					has_pages {
+					has_page {
 						uid
 						path
 						pageInPaginationSelector
@@ -341,7 +341,7 @@ func (resource *Instructions) RemoveCityFromInstruction(instructionID, cityID st
 var ErrPageInstructionCanNotBeAddedToInstruction = errors.New("page instruction can not be added to instruction")
 
 func (resource *Instructions) AddPageInstructionToInstruction(instructionID, pageInstructionID string) error {
-	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, instructionID, "has_pages", pageInstructionID)
+	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, instructionID, "has_page", pageInstructionID)
 	mutation := dataBaseAPI.Mutation{
 		SetNquads: []byte(predicate),
 		CommitNow: true}
@@ -359,7 +359,7 @@ func (resource *Instructions) AddPageInstructionToInstruction(instructionID, pag
 var ErrPageInstructionCanNotBeRemovedFromInstruction = errors.New("page instruction can not be removed from instruction")
 
 func (resource *Instructions) RemovePageInstructionFromInstruction(instructionID, pageInstructionID string) error {
-	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, instructionID, "has_pages", pageInstructionID)
+	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, instructionID, "has_page", pageInstructionID)
 	mutation := dataBaseAPI.Mutation{
 		DelNquads: []byte(predicate),
 		CommitNow: true}
@@ -415,7 +415,7 @@ func (resource *Instructions) ReadAllInstructionsForCompany(companyID, language 
 					uid
 					instructionLanguage
 					instructionIsActive
-					has_pages {
+					has_page {
 						uid
 						path
 						pageInPaginationSelector
