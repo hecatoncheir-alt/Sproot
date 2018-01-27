@@ -43,7 +43,7 @@ type Instructions struct {
 }
 
 // SetUp is a method of Instructions resource for prepare database client and schema.
-func (instructions *Instructions) SetUp() (err error) {
+func (resource *Instructions) SetUp() (err error) {
 	schema := `
 		instructionLanguage: string @index(exact, term) .
 		instructionIsActive: bool @index(bool) .
@@ -62,7 +62,7 @@ func (instructions *Instructions) SetUp() (err error) {
 	`
 	operation := &dataBaseAPI.Operation{Schema: schema}
 
-	err = instructions.storage.Client.Alter(context.Background(), operation)
+	err = resource.storage.Client.Alter(context.Background(), operation)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -71,8 +71,8 @@ func (instructions *Instructions) SetUp() (err error) {
 	return nil
 }
 
-func (instructions *Instructions) CreatePageInstruction(pageInstruction PageInstruction) (PageInstruction, error) {
-	transaction := instructions.storage.Client.NewTxn()
+func (resource *Instructions) CreatePageInstruction(pageInstruction PageInstruction) (PageInstruction, error) {
+	transaction := resource.storage.Client.NewTxn()
 
 	encodedPageInstruction, err := json.Marshal(pageInstruction)
 	if err != nil {
@@ -98,7 +98,7 @@ func (instructions *Instructions) CreatePageInstruction(pageInstruction PageInst
 // ErrPageInstructionDoesNotExist means than the page instruction does not exist in database
 var ErrPageInstructionDoesNotExist = errors.New("page instruction by id not found")
 
-func (instructions *Instructions) ReadPageInstructionByID(pageInstructionID string) (PageInstruction, error) {
+func (resource *Instructions) ReadPageInstructionByID(pageInstructionID string) (PageInstruction, error) {
 	pageInstruction := PageInstruction{ID: pageInstructionID}
 
 	query := fmt.Sprintf(`{
@@ -115,7 +115,7 @@ func (instructions *Instructions) ReadPageInstructionByID(pageInstructionID stri
 				}
 			}`, pageInstructionID)
 
-	transaction := instructions.storage.Client.NewTxn()
+	transaction := resource.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
 	if err != nil {
 		log.Println(err)
@@ -141,7 +141,7 @@ func (instructions *Instructions) ReadPageInstructionByID(pageInstructionID stri
 	return foundedPageInstructions.PageInstructions[0], nil
 }
 
-func (instructions *Instructions) DeletePageInstruction(pageInstruction PageInstruction) (string, error) {
+func (resource *Instructions) DeletePageInstruction(pageInstruction PageInstruction) (string, error) {
 	deletePageInstructionData, err := json.Marshal(map[string]string{"uid": pageInstruction.ID})
 	if err != nil {
 		log.Println(err)
@@ -152,7 +152,7 @@ func (instructions *Instructions) DeletePageInstruction(pageInstruction PageInst
 		DeleteJson: deletePageInstructionData,
 		CommitNow:  true}
 
-	transaction := instructions.storage.Client.NewTxn()
+	transaction := resource.storage.Client.NewTxn()
 
 	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
@@ -163,10 +163,10 @@ func (instructions *Instructions) DeletePageInstruction(pageInstruction PageInst
 	return pageInstruction.ID, nil
 }
 
-func (instructions *Instructions) CreateInstructionForCompany(companyID, language string) (Instruction, error) {
+func (resource *Instructions) CreateInstructionForCompany(companyID, language string) (Instruction, error) {
 	instruction := Instruction{IsActive: true, Language: language}
 
-	transaction := instructions.storage.Client.NewTxn()
+	transaction := resource.storage.Client.NewTxn()
 
 	encodedInstruction, err := json.Marshal(instruction)
 	if err != nil {
@@ -192,7 +192,7 @@ func (instructions *Instructions) CreateInstructionForCompany(companyID, languag
 // ErrInstructionDoesNotExist means than the instruction does not exist in database
 var ErrInstructionDoesNotExist = errors.New("instruction by id not found")
 
-func (instructions *Instructions) ReadInstructionByID(instructionID, language string) (Instruction, error) {
+func (resource *Instructions) ReadInstructionByID(instructionID, language string) (Instruction, error) {
 
 	query := fmt.Sprintf(`{
 				instructions(func: uid("%s")) @filter(has(instructionLanguage)) {
@@ -230,7 +230,7 @@ func (instructions *Instructions) ReadInstructionByID(instructionID, language st
 
 	instruction := Instruction{ID: instructionID}
 
-	transaction := instructions.storage.Client.NewTxn()
+	transaction := resource.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
 	if err != nil {
 		log.Println(err)
@@ -256,7 +256,7 @@ func (instructions *Instructions) ReadInstructionByID(instructionID, language st
 	return foundedPageInstructions.Instructions[0], nil
 }
 
-func (instructions *Instructions) DeleteInstruction(instruction Instruction) (string, error) {
+func (resource *Instructions) DeleteInstruction(instruction Instruction) (string, error) {
 	deleteInstructionData, err := json.Marshal(map[string]string{"uid": instruction.ID})
 	if err != nil {
 		log.Println(err)
@@ -267,7 +267,7 @@ func (instructions *Instructions) DeleteInstruction(instruction Instruction) (st
 		DeleteJson: deleteInstructionData,
 		CommitNow:  true}
 
-	transaction := instructions.storage.Client.NewTxn()
+	transaction := resource.storage.Client.NewTxn()
 
 	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
@@ -278,9 +278,24 @@ func (instructions *Instructions) DeleteInstruction(instruction Instruction) (st
 	return instruction.ID, nil
 }
 
-//func (instructions *Instructions) AddCityToInstruction(instructionID, cityID string) error {
-//
-//}
+// ErrCityCanNotBeAddedToInstruction means that the city can't be added to instruction
+var ErrCityCanNotBeAddedToInstruction = errors.New("city can not be added to instruction")
+
+func (resource *Instructions) AddCityToInstruction(instructionID, cityID string) error {
+	predicate := fmt.Sprintf(`<%s> <%s> <%s> .`, instructionID, "has_city", cityID)
+	mutation := dataBaseAPI.Mutation{
+		SetNquads: []byte(predicate),
+		CommitNow: true}
+
+	transaction := resource.storage.Client.NewTxn()
+	_, err := transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCityCanNotBeAddedToInstruction
+	}
+
+	return nil
+}
+
 //
 //func (instructions *Instructions) RemoveCityFromInstruction(instructionID, cityID string) error {
 //
