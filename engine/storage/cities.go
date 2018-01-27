@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 	"log"
+
+	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 )
 
 // City is a structure of prices in database
@@ -51,7 +52,7 @@ var (
 	ErrCityAlreadyExist = errors.New("city already exist")
 )
 
-// CreateCategory make category and save it to storage
+// CreateCity make category and save it to storage
 func (cities *Cities) CreateCity(city City, language string) (City, error) {
 	existsCities, err := cities.ReadCitiesByName(city.Name, language)
 	if err != nil && err != ErrCitiesByNameNotFound {
@@ -119,7 +120,7 @@ var (
 	ErrCitiesByNameNotFound = errors.New("cities by name not found")
 )
 
-// ReadCityByName is a method for get all nodes by city name
+// ReadCitiesByName is a method for get all nodes by city name
 func (cities *Cities) ReadCitiesByName(cityName, language string) ([]City, error) {
 	query := fmt.Sprintf(`{
 				cities(func: eq(cityName@%v, "%v")) @filter(eq(cityIsActive, true)) {
