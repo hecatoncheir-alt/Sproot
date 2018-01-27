@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"golang.org/x/net/html/atom"
 	"testing"
 )
 
