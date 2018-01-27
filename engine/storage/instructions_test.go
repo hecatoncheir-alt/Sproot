@@ -411,3 +411,68 @@ func TestIntegrationCanGetAllInstructionsOfCompany(test *testing.T) {
 		test.Fail()
 	}
 }
+
+func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
+	once.Do(prepareStorage)
+
+	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeleteCompany(company)
+
+	instruction, _ := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	defer storage.Instructions.DeleteInstruction(instruction)
+
+	category, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	defer storage.Categories.DeleteCategory(category)
+
+	storage.Companies.AddCategoryToCompany(company.ID, category.ID)
+
+	storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
+
+	city, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	defer storage.Cities.DeleteCity(city)
+
+	storage.Instructions.AddCityToInstruction(instruction.ID, city.ID)
+
+	mVideoPageInstruction := PageInstruction{
+		Path: "smartfony-i-svyaz/smartfony-205",
+		PageInPaginationSelector: ".pagination-list .pagination-item",
+		PageParamPath:            "/f/page=",
+		CityParamPath:            "?cityId=",
+		CityParam:                "CityCZ_975",
+		ItemSelector:             ".grid-view .product-tile",
+		NameOfItemSelector:       ".product-tile-title",
+		PriceOfItemSelector:      ".product-price-current"}
+
+	createdPageInstruction, _ := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
+	defer storage.Instructions.DeletePageInstruction(createdPageInstruction)
+
+	storage.Instructions.AddPageInstructionToInstruction(instruction.ID, createdPageInstruction.ID)
+
+	instructionForCompany, err := storage.Instructions.ReadAllInstructionsForCompany(company.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	if len(instructionForCompany) != 1 {
+		test.Fail()
+	}
+
+	storage.Companies.AddLanguageOfCompanyName(company.ID, "Тестовая компания", "ru")
+
+	secondInstruction, _ := storage.Instructions.CreateInstructionForCompany(company.ID, "ru")
+	defer storage.Instructions.DeleteInstruction(secondInstruction)
+
+	secondCity, _ := storage.Cities.CreateCity(City{Name: "Тестовый город"}, "ru")
+	defer storage.Cities.DeleteCity(secondCity)
+
+	storage.Instructions.AddCityToInstruction(secondInstruction.ID, secondCity.ID)
+
+	instructionForCompany, err = storage.Instructions.ReadAllInstructionsForCompany(company.ID, "ru")
+	if err != nil {
+		test.Error(err)
+	}
+
+	if len(instructionForCompany) != 2 {
+		test.Fail()
+	}
+}

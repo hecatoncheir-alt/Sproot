@@ -28,3 +28,53 @@ docker-compose up -d
 
 docker-compose stop
 ```
+
+## Example of Instruction for company
+
+```$xslt
+[  
+   {  
+      "uid":"0x1eb",
+      "instructionLanguage":"en",
+      "instructionIsActive":true,
+      "has_pages":[  
+         {  
+            "uid":"0x1ed",
+            "path":"smartfony-i-svyaz/smartfony-205",
+            "pageInPaginationSelector":".pagination-list .pagination-item",
+            "pageParamPath":"/f/page=",
+            "cityParamPath":"?cityId=",
+            "cityParam":"CityCZ_975",
+            "itemSelector":".grid-view .product-tile",
+            "nameOfItemSelector":".product-tile-title",
+            "priceOfItemSelector":".product-price-current"
+         }
+      ],
+      "has_city":[  
+         {  
+            "uid":"0x1ec",
+            "cityName":"Test city",
+            "cityIsActive":true
+         }
+      ],
+      "has_company":[  
+         {  
+            "uid":"0x1ea",
+            "companyIri":"",
+            "companyName":"Test company",
+            "has_category":null,
+            "companyIsActive":true
+         }
+      ],
+      "has_category":[  
+         {  
+            "uid":"0x1c9",
+            "categoryName":"Test category",
+            "categoryIsActive":true,
+            "belongs_to_company":null,
+            "has_product":null
+         }
+      ]
+   }
+]
+```
