@@ -10,11 +10,6 @@ type Company struct {
 	Storage *storage.Storage
 }
 
-func (entity *Company) ParseAllCategories() error {
-
-	return nil
-}
-
 func (entity *Company) GetJSONInstructions() (string, error) {
 	instructions, err := entity.Storage.Instructions.ReadAllInstructionsForCompany(entity.ID, ".")
 	if err != nil {
