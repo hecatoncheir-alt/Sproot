@@ -8,6 +8,10 @@ import (
 
 type Configuration struct {
 	Production struct {
+		Broker struct {
+			Host string
+			Port int
+		}
 		Database struct {
 			Host string
 			Port int
@@ -15,6 +19,10 @@ type Configuration struct {
 	}
 
 	Development struct {
+		Broker struct {
+			Host string
+			Port int
+		}
 		Database struct {
 			Host string
 			Port int
@@ -24,6 +32,44 @@ type Configuration struct {
 
 func GetConfiguration() (Configuration, error) {
 	configuration := Configuration{}
+
+	productionBrokerHostFromEnvironment := os.Getenv("Production-Broker-Host")
+	if productionBrokerHostFromEnvironment == "" {
+		configuration.Production.Broker.Host = "192.168.99.100"
+	} else {
+		configuration.Production.Broker.Host = productionBrokerHostFromEnvironment
+	}
+
+	productionBrokerPortFromEnvironment := os.Getenv("Production-Broker-Port")
+	if productionBrokerPortFromEnvironment == "" {
+		configuration.Production.Broker.Port = 4150
+	} else {
+		port, err := strconv.Atoi(productionBrokerPortFromEnvironment)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		configuration.Production.Broker.Port = port
+	}
+
+	developmentBrokerHostFromEnvironment := os.Getenv("Development-Broker-Host")
+	if developmentBrokerHostFromEnvironment == "" {
+		configuration.Development.Broker.Host = "192.168.99.100"
+	} else {
+		configuration.Development.Broker.Host = developmentBrokerHostFromEnvironment
+	}
+
+	developmentBrokerPortFromEnvironment := os.Getenv("Development-Broker-Port")
+	if developmentBrokerPortFromEnvironment == "" {
+		configuration.Development.Broker.Port = 4150
+	} else {
+		port, err := strconv.Atoi(developmentBrokerPortFromEnvironment)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		configuration.Development.Broker.Port = port
+	}
 
 	productionDatabaseHostFromEnvironment := os.Getenv("Production-Database-Host")
 	if productionDatabaseHostFromEnvironment == "" {
