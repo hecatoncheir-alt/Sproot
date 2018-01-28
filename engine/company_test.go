@@ -2,12 +2,18 @@ package engine
 
 import (
 	"encoding/json"
+	"github.com/hecatoncheir/Sproot/configuration"
 	"github.com/hecatoncheir/Sproot/engine/storage"
 	"testing"
 )
 
 func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
-	store := storage.New(databaseHost, databasePort)
+	config, err := configuration.GetConfiguration()
+	if err != nil {
+		test.Error(err)
+	}
+
+	store := storage.New(config.Development.Database.Host, config.Development.Database.Port)
 	store.SetUp()
 
 	createdCompany, _ := store.Companies.CreateCompany(storage.Company{Name: "Test company"}, "en")

@@ -1,11 +1,18 @@
 package engine
 
-import "testing"
+import (
+	"github.com/hecatoncheir/Sproot/configuration"
+	"testing"
+)
 
 func TestIntegrationEngineCanBeSetUp(test *testing.T) {
-	engine := New()
+	config, err := configuration.GetConfiguration()
+	if err != nil {
+		test.Error(err)
+	}
 
-	err := engine.SetUpStorage(databaseHost, databasePort)
+	engine := New()
+	err = engine.SetUpStorage(config.Development.Database.Host, config.Development.Database.Port)
 	if err != nil {
 		test.Error(err)
 	}

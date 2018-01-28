@@ -4,11 +4,6 @@ import (
 	"github.com/hecatoncheir/Sproot/engine/storage"
 )
 
-var (
-	databaseHost = "192.168.99.100"
-	databasePort = 9080
-)
-
 // Engine is a main object of engine pkg
 type Engine struct {
 	Storage *storage.Storage

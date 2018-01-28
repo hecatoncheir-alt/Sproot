@@ -11,11 +11,6 @@ import (
 	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
 )
 
-var (
-	databaseHost = "192.168.99.100"
-	databasePort = 9080
-)
-
 // Storage is a object with database resource
 type Storage struct {
 	GraphAddress  string
@@ -34,14 +29,6 @@ type Storage struct {
 // New is a constructor for Storage objects
 func New(host string, port int) *Storage {
 	storage := &Storage{}
-
-	if host == "" {
-		host = databaseHost
-	}
-
-	if port == 0 {
-		port = databasePort
-	}
 
 	storage.GraphGRPCHost = host
 	storage.GraphGRPCPort = port

@@ -1,15 +1,19 @@
 package main
 
 import (
-	"log"
-
+	"github.com/hecatoncheir/Sproot/configuration"
 	"github.com/hecatoncheir/Sproot/engine"
+	"log"
 )
 
 func main() {
-	puffer := engine.New()
+	config, err := configuration.GetConfiguration()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	err := puffer.SetUpStorage("192.168.99.100", 9080)
+	puffer := engine.New()
+	err = puffer.SetUpStorage(config.Production.Database.Host, config.Production.Database.Port)
 	if err != nil {
 		log.Fatal(err)
 	}

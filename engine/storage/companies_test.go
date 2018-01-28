@@ -180,13 +180,9 @@ func TestIntegrationCompanyCanBeDeactivate(test *testing.T) {
 }
 
 func TestIntegrationCompanyCanBeDeleted(test *testing.T) {
-	var err error
-	storage := New(databaseHost, databasePort)
+	once.Do(prepareStorage)
 
-	err = storage.SetUp()
-	if err != nil {
-		test.Error(err)
-	}
+	var err error
 
 	companyForTest := Company{Name: "Test company"}
 	createdCompany, err := storage.Companies.CreateCompany(companyForTest, "en")

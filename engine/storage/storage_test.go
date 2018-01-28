@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"github.com/hecatoncheir/Sproot/configuration"
 	"log"
 	"sync"
 	"testing"
@@ -11,7 +12,9 @@ var storage *Storage
 
 func prepareStorage() {
 	var err error
-	storage = New(databaseHost, databasePort)
+
+	config, err := configuration.GetConfiguration()
+	storage = New(config.Development.Database.Host, config.Development.Database.Port)
 
 	err = storage.SetUp()
 	if err != nil {
@@ -20,8 +23,10 @@ func prepareStorage() {
 }
 
 func TestIntegrationStorageCanConnectToDatabase(test *testing.T) {
-	storage := New(databaseHost, databasePort)
-	err := storage.SetUp()
+	config, err := configuration.GetConfiguration()
+	storage = New(config.Development.Database.Host, config.Development.Database.Port)
+
+	err = storage.SetUp()
 	if err != nil {
 		test.Fail()
 	}
