@@ -2,9 +2,10 @@ package engine
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/hecatoncheir/Sproot/configuration"
 	"github.com/hecatoncheir/Sproot/engine/storage"
-	"testing"
 )
 
 func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
@@ -16,14 +17,23 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 	store := storage.New(config.Development.Database.Host, config.Development.Database.Port)
 	store.SetUp()
 
-	createdCompany, _ := store.Companies.CreateCompany(storage.Company{Name: "Test company"}, "en")
+	createdCompany, err := store.Companies.CreateCompany(storage.Company{Name: "Company test name"}, "en")
 	defer store.Companies.DeleteCompany(createdCompany)
+	if err != nil {
+		test.Error(err)
+	}
 
-	instruction, _ := store.Instructions.CreateInstructionForCompany(createdCompany.ID, "en")
+	instruction, err := store.Instructions.CreateInstructionForCompany(createdCompany.ID, "en")
 	defer store.Instructions.DeleteInstruction(instruction)
+	if err != nil {
+		test.Error(err)
+	}
 
-	city, _ := store.Cities.CreateCity(storage.City{Name: "Test city"}, "en")
+	city, err := store.Cities.CreateCity(storage.City{Name: "Test city"}, "en")
 	defer store.Cities.DeleteCity(city)
+	if err != nil {
+		test.Error(err)
+	}
 
 	store.Instructions.AddCityToInstruction(instruction.ID, city.ID)
 
@@ -44,24 +54,28 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 
 	company := Company{ID: createdCompany.ID, Storage: store}
 
-	instructionsJSON, err := company.GetJSONInstructions()
+	instructions, err := company.GetInstructions()
 	if err != nil {
 		test.Error(err)
 	}
 
-	if instructionsJSON == "" {
+	instructionsJSON, err := json.Marshal(instructions)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if string(instructionsJSON) == "" {
 		test.Fail()
 	}
 
 	var inst interface{}
+	json.Unmarshal(instructionsJSON, &inst)
 
-	json.Unmarshal([]byte(instructionsJSON), &inst)
-
-	if inst.(map[string]interface{})["instructions"].([]interface{})[0].(map[string]interface{})["language"] != "en" {
+	if inst.([]interface{})[0].(map[string]interface{})["language"] != "en" {
 		test.Fail()
 	}
 
-	if inst.(map[string]interface{})["instructions"].([]interface{})[0].(map[string]interface{})["company"].(map[string]interface{})["name"] != "Test company" {
+	if inst.([]interface{})[0].(map[string]interface{})["company"].(map[string]interface{})["name"] != "Company test name" {
 		test.Fail()
 	}
 }

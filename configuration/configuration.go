@@ -7,6 +7,8 @@ import (
 )
 
 type Configuration struct {
+	ApiVersion string
+
 	Production struct {
 		Broker struct {
 			Host string
@@ -32,6 +34,13 @@ type Configuration struct {
 
 func GetConfiguration() (Configuration, error) {
 	configuration := Configuration{}
+
+	apiVersion := os.Getenv("Api-Version")
+	if apiVersion == "" {
+		configuration.ApiVersion = "v1"
+	} else {
+		configuration.ApiVersion = apiVersion
+	}
 
 	productionBrokerHostFromEnvironment := os.Getenv("Production-Broker-Host")
 	if productionBrokerHostFromEnvironment == "" {
