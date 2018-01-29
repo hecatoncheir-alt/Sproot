@@ -73,7 +73,7 @@ func NewCategoriesResourceForStorage(storage *Storage) *Categories {
 // SetUp is a method of Categories resource for prepare database client and schema.
 func (categories *Categories) SetUp() (err error) {
 	schema := `
-		categoryName: string @index(exact, term) .
+		categoryName: string @index(term) .
 		categoryIsActive: bool @index(bool) .
 		belongs_to_company: uid .
 		has_product: uid .

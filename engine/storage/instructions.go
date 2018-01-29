@@ -49,23 +49,23 @@ type Instructions struct {
 // SetUp is a method of Instructions resource for prepare database client and schema.
 func (resource *Instructions) SetUp() (err error) {
 	schema := `
-		instructionLanguage: string @index(exact, term) .
+		instructionLanguage: string @index(term) .
 		instructionIsActive: bool @index(bool) .
 		has_company: uid @count .
 		has_city: uid @count .
 		has_page: uid @count .
 
-		path: string @index(exact, term) .
-		pageInPaginationSelector: string @index(exact, term) .
-		previewImageOfSelector: string @index(exact, term) .
-		pageParamPath: string @index(exact, term) .
-		pageCityPath: string @index(exact, term) .
-		cityParam: string @index(exact, term) .
-		itemSelector: string @index(exact, term) .
-		nameOfItemSelector: string @index(exact, term) .
-		priceOfItemSelector: string @index(exact, term) .
-		cityInCookieKey: string @index(exact, term) .
-		cityIdForCookie: string @index(exact, term) .
+		path: string @index(term) .
+		pageInPaginationSelector: string @index(term) .
+		previewImageOfSelector: string @index(term) .
+		pageParamPath: string @index(term) .
+		pageCityPath: string @index(term) .
+		cityParam: string @index(term) .
+		itemSelector: string @index(term) .
+		nameOfItemSelector: string @index(term) .
+		priceOfItemSelector: string @index(term) .
+		cityInCookieKey: string @index(term) .
+		cityIdForCookie: string @index(term) .
 	`
 	operation := &dataBaseAPI.Operation{Schema: schema}
 
