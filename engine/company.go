@@ -6,78 +6,71 @@ import (
 )
 
 type Company struct {
-	ID      string
-	Storage *storage.Storage
-	Broker  *broker.Broker
+	ID         string
+	Storage    *storage.Storage
+	Broker     *broker.Broker
+	ApiVersion string
 }
 
-type company struct {
+type CompanyData struct {
 	ID   string `json:"id, omitempty"`
 	Name string `json:"name, omitempty"`
 	IRI  string `json:"iri, omitempty"`
 }
 
-type category struct {
+type CategoryData struct {
 	ID   string `json:"id, omitempty"`
 	Name string `json:"name, omitempty"`
 }
 
-type city struct {
+type CityData struct {
 	ID   string `json:"id, omitempty"`
 	Name string `json:"name, omitempty"`
 }
 
-type instructionOfCompany struct {
+type InstructionOfCompany struct {
 	Language string                  `json:"language, omitempty"`
-	Company  company                 `json:"company, omitempty"`
-	Category category                `json:"category, omitempty"`
-	City     city                    `json:"city, omitempty"`
+	Company  CompanyData             `json:"company, omitempty"`
+	Category CategoryData            `json:"category, omitempty"`
+	City     CityData                `json:"city, omitempty"`
 	Page     storage.PageInstruction `json:"page, omitempty"`
 }
 
-type instructionsOfCompany struct {
-	Instructions []instructionOfCompany `json:"instructions"`
-}
-
-// TODO
-func (entity *Company) ParseAll() error {
-	//instructions, err := entity.GetInstructions()
-	//if err != nil {
-	//	return err
-	//}
-
-	//inst, err := json.Marshal(instructions)
-	//if err != nil {
-	//	return "", err
-	//}
+func (entity *Company) ParseAll([]InstructionOfCompany) error {
+	message := map[string]string{"test key": "test value"}
+	go entity.Broker.WriteToTopic(entity.ApiVersion,message)
 	return nil
 }
 
-func (entity *Company) GetInstructions() ([]instructionOfCompany, error) {
+func (entity *Company) GetInstructions() ([]InstructionOfCompany, error) {
 	instructions, err := entity.Storage.Instructions.ReadAllInstructionsForCompany(entity.ID, ".")
 	if err != nil {
 		return nil, err
+	}
+
+	type instructionsOfCompany struct {
+		Instructions []InstructionOfCompany `json:"instructions"`
 	}
 
 	instOfCompany := instructionsOfCompany{}
 
 	for _, instruction := range instructions {
 
-		inst := instructionOfCompany{
+		inst := InstructionOfCompany{
 			Language: instruction.Language,
-			Company: company{
+			Company: CompanyData{
 				ID:   instruction.Companies[0].ID,
 				IRI:  instruction.Companies[0].IRI,
 				Name: instruction.Companies[0].Name}}
 
 		if len(instruction.Categories) > 0 {
-			inst.Category = category{
+			inst.Category = CategoryData{
 				ID:   instruction.Categories[0].ID,
 				Name: instruction.Categories[0].Name}
 		}
 
 		if len(instruction.Cities) > 0 {
-			inst.City = city{
+			inst.City = CityData{
 				ID:   instruction.Cities[0].ID,
 				Name: instruction.Cities[0].Name}
 		}

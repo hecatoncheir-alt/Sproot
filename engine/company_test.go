@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/hecatoncheir/Sproot/configuration"
+	"github.com/hecatoncheir/Sproot/engine/broker"
 	"github.com/hecatoncheir/Sproot/engine/storage"
 )
 
@@ -77,5 +78,76 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 
 	if inst.([]interface{})[0].(map[string]interface{})["company"].(map[string]interface{})["name"] != "Company test name" {
 		test.Fail()
+	}
+}
+
+func TestIntegrationCompanyCanSendInstructionsToBroker(test *testing.T) {
+	instructionsJSON := `[
+	   {  
+		  "language":"en",
+		  "company":{  
+			 "id":"0x2786",
+			 "name":"Company test name",
+			 "iri":""
+		  },
+		  "category":{  
+			 "id":"",
+			 "name":""
+		  },
+		  "city":{  
+			 "id":"0x2788",
+			 "name":"Test city"
+		  },
+		  "page":{  
+			 "uid":"0x2789",
+			 "path":"smartfony-i-svyaz/smartfony-205",
+			 "pageInPaginationSelector":".pagination-list .pagination-item",
+			 "previewImageOfSelector":"",
+			 "pageParamPath":"/f/page=",
+			 "cityParamPath":"?cityId=",
+			 "cityParam":"CityCZ_975",
+			 "itemSelector":".grid-view .product-tile",
+			 "nameOfItemSelector":".product-tile-title",
+			 "cityInCookieKey":"",
+			 "cityIdForCookie":"",
+			 "priceOfItemSelector":".product-price-current"
+		  }
+	   }
+	]`
+
+	type instructionsOfCompanyForParseAllProductsFromCategory struct {
+		instructions []InstructionOfCompany
+	}
+
+	var decodedInstructions instructionsOfCompanyForParseAllProductsFromCategory
+
+	json.Unmarshal([]byte(instructionsJSON), &decodedInstructions)
+
+	config, err := configuration.GetConfiguration()
+	if err != nil {
+		test.Error(err)
+	}
+
+	bro := broker.New()
+	err = bro.Connect(config.Development.Broker.Host, config.Development.Broker.Port)
+	if err != nil {
+		test.Error(err)
+	}
+
+	company := Company{Broker: bro, ApiVersion: config.ApiVersion}
+
+	items, err := bro.ListenTopic(config.ApiVersion, "Crawler")
+	if err != nil {
+		test.Error(err)
+	}
+
+	go company.ParseAll(decodedInstructions.instructions)
+
+	for item := range items {
+		data := map[string]string{}
+		json.Unmarshal(item, &data)
+		if data["test key"] == "test value" {
+			break
+		}
 	}
 }
