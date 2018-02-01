@@ -1,44 +1,81 @@
 package engine
 
 import (
+	"time"
+
+	"encoding/json"
+	"github.com/hecatoncheir/Sproot/configuration"
 	"github.com/hecatoncheir/Sproot/engine/broker"
 	"github.com/hecatoncheir/Sproot/engine/storage"
 )
 
 type Company struct {
-	ID         string
-	Storage    *storage.Storage
-	Broker     *broker.Broker
-	ApiVersion string
+	ID      string
+	Storage *storage.Storage
+	Broker  *broker.Broker
+
+	Configuration configuration.Configuration
 }
 
 type CompanyData struct {
-	ID   string `json:"id, omitempty"`
-	Name string `json:"name, omitempty"`
-	IRI  string `json:"iri, omitempty"`
+	ID   string
+	Name string
+	IRI  string
 }
 
 type CategoryData struct {
-	ID   string `json:"id, omitempty"`
-	Name string `json:"name, omitempty"`
+	ID   string
+	Name string
 }
 
 type CityData struct {
-	ID   string `json:"id, omitempty"`
-	Name string `json:"name, omitempty"`
+	ID   string
+	Name string
 }
 
 type InstructionOfCompany struct {
-	Language string                  `json:"language, omitempty"`
-	Company  CompanyData             `json:"company, omitempty"`
-	Category CategoryData            `json:"category, omitempty"`
-	City     CityData                `json:"city, omitempty"`
-	Page     storage.PageInstruction `json:"page, omitempty"`
+	Language string
+	Company  CompanyData
+	Category CategoryData
+	City     CityData
+	Page     storage.PageInstruction
 }
 
-func (entity *Company) ParseAll([]InstructionOfCompany) error {
-	message := map[string]string{"test key": "test value"}
-	go entity.Broker.WriteToTopic(entity.ApiVersion,message)
+type PriceOfProduct struct {
+	Value    string
+	DateTime time.Time
+}
+
+type ProductOfCompany struct {
+	Language string
+	Name     string
+	Price    PriceOfProduct
+	Company  CompanyData
+	Category CityData
+}
+
+// TODO
+func (entity *Company) ParseAll(instructions []InstructionOfCompany) error {
+	products, err := entity.Broker.ListenTopic(entity.Configuration.ApiVersion, entity.Configuration.Production.ParserChannel)
+	if err != nil {
+		return err
+	}
+
+	for _, instruction := range instructions {
+		message := map[string]interface{}{"Message": "Parse products of company", "Data": instruction}
+		go entity.Broker.WriteToTopic(entity.Configuration.ApiVersion, message)
+	}
+
+	go func() {
+		for companyProduct := range products {
+			var product ProductOfCompany
+			json.Unmarshal(companyProduct, &product)
+
+			// TODO break by timeout maybe
+			break
+		}
+	}()
+
 	return nil
 }
 

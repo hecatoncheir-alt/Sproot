@@ -72,33 +72,33 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 	var inst interface{}
 	json.Unmarshal(instructionsJSON, &inst)
 
-	if inst.([]interface{})[0].(map[string]interface{})["language"] != "en" {
+	if inst.([]interface{})[0].(map[string]interface{})["Language"] != "en" {
 		test.Fail()
 	}
 
-	if inst.([]interface{})[0].(map[string]interface{})["company"].(map[string]interface{})["name"] != "Company test name" {
+	if inst.([]interface{})[0].(map[string]interface{})["Company"].(map[string]interface{})["Name"] != "Company test name" {
 		test.Fail()
 	}
 }
 
 func TestIntegrationCompanyCanSendInstructionsToBroker(test *testing.T) {
 	instructionsJSON := `[
-	   {  
+	   {
 		  "language":"en",
-		  "company":{  
+		  "company":{
 			 "id":"0x2786",
 			 "name":"Company test name",
 			 "iri":""
 		  },
-		  "category":{  
+		  "category":{
 			 "id":"",
 			 "name":""
 		  },
-		  "city":{  
+		  "city":{
 			 "id":"0x2788",
 			 "name":"Test city"
 		  },
-		  "page":{  
+		  "page":{
 			 "uid":"0x2789",
 			 "path":"smartfony-i-svyaz/smartfony-205",
 			 "pageInPaginationSelector":".pagination-list .pagination-item",
@@ -115,11 +115,7 @@ func TestIntegrationCompanyCanSendInstructionsToBroker(test *testing.T) {
 	   }
 	]`
 
-	type instructionsOfCompanyForParseAllProductsFromCategory struct {
-		instructions []InstructionOfCompany
-	}
-
-	var decodedInstructions instructionsOfCompanyForParseAllProductsFromCategory
+	decodedInstructions := []InstructionOfCompany{}
 
 	json.Unmarshal([]byte(instructionsJSON), &decodedInstructions)
 
@@ -134,19 +130,19 @@ func TestIntegrationCompanyCanSendInstructionsToBroker(test *testing.T) {
 		test.Error(err)
 	}
 
-	company := Company{Broker: bro, ApiVersion: config.ApiVersion}
+	company := Company{Broker: bro, Configuration: config}
 
-	items, err := bro.ListenTopic(config.ApiVersion, "Crawler")
+	items, err := bro.ListenTopic(config.ApiVersion, config.Development.ParserChannel)
 	if err != nil {
 		test.Error(err)
 	}
 
-	go company.ParseAll(decodedInstructions.instructions)
+	go company.ParseAll(decodedInstructions)
 
 	for item := range items {
-		data := map[string]string{}
+		data := map[string]interface{}{}
 		json.Unmarshal(item, &data)
-		if data["test key"] == "test value" {
+		if data["Message"] == "Parse products of company" {
 			break
 		}
 	}

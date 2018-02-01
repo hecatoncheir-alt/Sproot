@@ -10,7 +10,8 @@ type Configuration struct {
 	ApiVersion string
 
 	Production struct {
-		Broker struct {
+		ParserChannel string
+		Broker        struct {
 			Host string
 			Port int
 		}
@@ -21,7 +22,8 @@ type Configuration struct {
 	}
 
 	Development struct {
-		Broker struct {
+		ParserChannel string
+		Broker        struct {
 			Host string
 			Port int
 		}
@@ -40,6 +42,20 @@ func GetConfiguration() (Configuration, error) {
 		configuration.ApiVersion = "v1"
 	} else {
 		configuration.ApiVersion = apiVersion
+	}
+
+	productionParserChannel := os.Getenv("Production-Parser-Channel")
+	if productionParserChannel == "" {
+		configuration.Production.ParserChannel = "Parser"
+	} else {
+		configuration.Production.ParserChannel = productionParserChannel
+	}
+
+	developmentParserChannel := os.Getenv("Development-Parser-Channel")
+	if developmentParserChannel == "" {
+		configuration.Development.ParserChannel = "Parser"
+	} else {
+		configuration.Development.ParserChannel = developmentParserChannel
 	}
 
 	productionBrokerHostFromEnvironment := os.Getenv("Production-Broker-Host")
