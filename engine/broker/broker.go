@@ -12,7 +12,7 @@ import (
 // New constructor for Broker
 func New() *Broker {
 	broker := Broker{}
-	broker.сonfiguration = nsq.NewConfig()
+	broker.configuration = nsq.NewConfig()
 	// broker.сonfiguration.MaxInFlight = 6
 	// broker.сonfiguration.MsgTimeout = time.Duration(time.Second * 6)
 	return &broker
@@ -22,7 +22,7 @@ func New() *Broker {
 type Broker struct {
 	IP            string
 	Port          int
-	сonfiguration *nsq.Config
+	configuration *nsq.Config
 	Producer      *nsq.Producer
 }
 
@@ -34,7 +34,7 @@ func (broker *Broker) connectToMessageBroker(host string, port int) (*nsq.Produc
 	}
 
 	hostAddr := fmt.Sprintf("%v:%v", broker.IP, strconv.Itoa(broker.Port))
-	producer, err := nsq.NewProducer(hostAddr, broker.сonfiguration)
+	producer, err := nsq.NewProducer(hostAddr, broker.configuration)
 
 	if err != nil {
 		log.Print("Could not connect to message broker")
@@ -64,7 +64,7 @@ func (broker *Broker) WriteToTopic(topic string, message interface{}) error {
 
 // ListenTopic get events in channel of topic
 func (broker *Broker) ListenTopic(topic string, channel string) (<-chan []byte, error) {
-	consumer, err := nsq.NewConsumer(topic, channel, broker.сonfiguration)
+	consumer, err := nsq.NewConsumer(topic, channel, broker.configuration)
 	if err != nil {
 		return nil, err
 	}

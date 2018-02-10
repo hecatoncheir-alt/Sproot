@@ -17,7 +17,6 @@ type PageInstruction struct {
 	PreviewImageOfItemSelector string `json:"previewImageOfSelector, omitempty"`
 	PageParamPath              string `json:"pageParamPath, omitempty"`
 	CityParamPath              string `json:"cityParamPath, omitempty"`
-	CityParam                  string `json:"cityParam, omitempty"`
 	ItemSelector               string `json:"itemSelector, omitempty"`
 	NameOfItemSelector         string `json:"nameOfItemSelector, omitempty"`
 	CityInCookieKey            string `json:"cityInCookieKey, omitempty"`
@@ -60,7 +59,6 @@ func (resource *Instructions) SetUp() (err error) {
 		previewImageOfSelector: string @index(term) .
 		pageParamPath: string @index(term) .
 		pageCityPath: string @index(term) .
-		cityParam: string @index(term) .
 		itemSelector: string @index(term) .
 		nameOfItemSelector: string @index(term) .
 		priceOfItemSelector: string @index(term) .
@@ -115,7 +113,6 @@ func (resource *Instructions) ReadPageInstructionByID(pageInstructionID string) 
 					pageInPaginationSelector
 					pageParamPath
 					cityParamPath
-					cityParam
 					itemSelector
 					nameOfItemSelector
 					priceOfItemSelector
@@ -228,7 +225,6 @@ func (resource *Instructions) ReadInstructionByID(instructionID, language string
 						pageInPaginationSelector
 						pageParamPath
 						cityParamPath
-						cityParam
 						itemSelector
 						nameOfItemSelector
 						priceOfItemSelector
@@ -421,7 +417,6 @@ func (resource *Instructions) ReadAllInstructionsForCompany(companyID, language 
 						pageInPaginationSelector
 						pageParamPath
 						cityParamPath
-						cityParam
 						itemSelector
 						nameOfItemSelector
 						priceOfItemSelector

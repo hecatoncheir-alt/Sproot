@@ -12,7 +12,6 @@ func TestIntegrationPageInstructionCanBeCreated(test *testing.T) {
 		PageInPaginationSelector: ".pagination-list .pagination-item",
 		PageParamPath:            "/f/page=",
 		CityParamPath:            "?cityId=",
-		CityParam:                "CityCZ_975",
 		ItemSelector:             ".grid-view .product-tile",
 		NameOfItemSelector:       ".product-tile-title",
 		PriceOfItemSelector:      ".product-price-current"}
@@ -36,7 +35,6 @@ func TestIntegrationPageInstructionCanBeReadById(test *testing.T) {
 		PageInPaginationSelector: ".pagination-list .pagination-item",
 		PageParamPath:            "/f/page=",
 		CityParamPath:            "?cityId=",
-		CityParam:                "CityCZ_975",
 		ItemSelector:             ".grid-view .product-tile",
 		NameOfItemSelector:       ".product-tile-title",
 		PriceOfItemSelector:      ".product-price-current"}
@@ -66,7 +64,6 @@ func TestIntegrationPageInstructionCanBeDeleted(test *testing.T) {
 		PageInPaginationSelector: ".pagination-list .pagination-item",
 		PageParamPath:            "/f/page=",
 		CityParamPath:            "?cityId=",
-		CityParam:                "CityCZ_975",
 		ItemSelector:             ".grid-view .product-tile",
 		NameOfItemSelector:       ".product-tile-title",
 		PriceOfItemSelector:      ".product-price-current"}
@@ -233,7 +230,6 @@ func TestIntegrationPageInstructionCanBeAddedToInstruction(test *testing.T) {
 		PageInPaginationSelector: ".pagination-list .pagination-item",
 		PageParamPath:            "/f/page=",
 		CityParamPath:            "?cityId=",
-		CityParam:                "CityCZ_975",
 		ItemSelector:             ".grid-view .product-tile",
 		NameOfItemSelector:       ".product-tile-title",
 		PriceOfItemSelector:      ".product-price-current"}
@@ -275,7 +271,6 @@ func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) 
 		PageInPaginationSelector: ".pagination-list .pagination-item",
 		PageParamPath:            "/f/page=",
 		CityParamPath:            "?cityId=",
-		CityParam:                "CityCZ_975",
 		ItemSelector:             ".grid-view .product-tile",
 		NameOfItemSelector:       ".product-tile-title",
 		PriceOfItemSelector:      ".product-price-current"}
@@ -438,7 +433,6 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 		PageInPaginationSelector: ".pagination-list .pagination-item",
 		PageParamPath:            "/f/page=",
 		CityParamPath:            "?cityId=",
-		CityParam:                "CityCZ_975",
 		ItemSelector:             ".grid-view .product-tile",
 		NameOfItemSelector:       ".product-tile-title",
 		PriceOfItemSelector:      ".product-price-current"}

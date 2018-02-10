@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/hecatoncheir/Sproot/configuration"
-	"github.com/hecatoncheir/Sproot/engine/broker"
 	"github.com/hecatoncheir/Sproot/engine/storage"
 )
 
@@ -43,7 +42,6 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 		PageInPaginationSelector: ".pagination-list .pagination-item",
 		PageParamPath:            "/f/page=",
 		CityParamPath:            "?cityId=",
-		CityParam:                "CityCZ_975",
 		ItemSelector:             ".grid-view .product-tile",
 		NameOfItemSelector:       ".product-tile-title",
 		PriceOfItemSelector:      ".product-price-current"}
@@ -78,72 +76,5 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 
 	if inst.([]interface{})[0].(map[string]interface{})["Company"].(map[string]interface{})["Name"] != "Company test name" {
 		test.Fail()
-	}
-}
-
-func TestIntegrationCompanyCanSendInstructionsToBroker(test *testing.T) {
-	instructionsJSON := `[
-	   {
-		  "language":"en",
-		  "company":{
-			 "id":"0x2786",
-			 "name":"Company test name",
-			 "iri":""
-		  },
-		  "category":{
-			 "id":"",
-			 "name":""
-		  },
-		  "city":{
-			 "id":"0x2788",
-			 "name":"Test city"
-		  },
-		  "page":{
-			 "uid":"0x2789",
-			 "path":"smartfony-i-svyaz/smartfony-205",
-			 "pageInPaginationSelector":".pagination-list .pagination-item",
-			 "previewImageOfSelector":"",
-			 "pageParamPath":"/f/page=",
-			 "cityParamPath":"?cityId=",
-			 "cityParam":"CityCZ_975",
-			 "itemSelector":".grid-view .product-tile",
-			 "nameOfItemSelector":".product-tile-title",
-			 "cityInCookieKey":"",
-			 "cityIdForCookie":"",
-			 "priceOfItemSelector":".product-price-current"
-		  }
-	   }
-	]`
-
-	decodedInstructions := []InstructionOfCompany{}
-
-	json.Unmarshal([]byte(instructionsJSON), &decodedInstructions)
-
-	config, err := configuration.GetConfiguration()
-	if err != nil {
-		test.Error(err)
-	}
-
-	bro := broker.New()
-	err = bro.Connect(config.Development.Broker.Host, config.Development.Broker.Port)
-	if err != nil {
-		test.Error(err)
-	}
-
-	company := Company{Broker: bro, Configuration: config}
-
-	items, err := bro.ListenTopic(config.ApiVersion, config.Development.ParserChannel)
-	if err != nil {
-		test.Error(err)
-	}
-
-	go company.ParseAll(decodedInstructions)
-
-	for item := range items {
-		data := map[string]interface{}{}
-		json.Unmarshal(item, &data)
-		if data["Message"] == "Parse products of company" {
-			break
-		}
 	}
 }

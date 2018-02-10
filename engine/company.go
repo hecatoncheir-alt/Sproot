@@ -3,7 +3,6 @@ package engine
 import (
 	"time"
 
-	"encoding/json"
 	"github.com/hecatoncheir/Sproot/configuration"
 	"github.com/hecatoncheir/Sproot/engine/broker"
 	"github.com/hecatoncheir/Sproot/engine/storage"
@@ -34,11 +33,11 @@ type CityData struct {
 }
 
 type InstructionOfCompany struct {
-	Language string
-	Company  CompanyData
-	Category CategoryData
-	City     CityData
-	Page     storage.PageInstruction
+	Language        string
+	Company         CompanyData
+	Category        CategoryData
+	City            CityData
+	PageInstruction storage.PageInstruction
 }
 
 type PriceOfProduct struct {
@@ -46,35 +45,28 @@ type PriceOfProduct struct {
 	DateTime time.Time
 }
 
-type ProductOfCompany struct {
-	Language string
-	Name     string
-	Price    PriceOfProduct
-	Company  CompanyData
-	Category CityData
-}
-
 // TODO
 func (entity *Company) ParseAll(instructions []InstructionOfCompany) error {
-	products, err := entity.Broker.ListenTopic(entity.Configuration.ApiVersion, entity.Configuration.Production.ParserChannel)
-	if err != nil {
-		return err
-	}
+	//products, err := entity.Broker.ListenTopic(entity.Configuration.ApiVersion, entity.Configuration.Production.ParserChannel)
+	//if err != nil {
+	//	return err
+	//}
 
 	for _, instruction := range instructions {
-		message := map[string]interface{}{"Message": "Parse products of company", "Data": instruction}
+		message := map[string]interface{}{"Message": "Need products of category of company", "Data": instruction}
 		go entity.Broker.WriteToTopic(entity.Configuration.ApiVersion, message)
 	}
 
-	go func() {
-		for companyProduct := range products {
-			var product ProductOfCompany
-			json.Unmarshal(companyProduct, &product)
-
-			// TODO break by timeout maybe
-			break
-		}
-	}()
+	//go func() {
+	//	for companyProduct := range products {
+	//		var product ProductOfCompany
+	//		json.Unmarshal(companyProduct, &product)
+	//		fmt.Println(string(companyProduct))
+	//
+	//		// TODO break by timeout maybe
+	//		break
+	//	}
+	//}()
 
 	return nil
 }
@@ -113,7 +105,7 @@ func (entity *Company) GetInstructions() ([]InstructionOfCompany, error) {
 		}
 
 		if len(instruction.Pages) > 0 {
-			inst.Page = instruction.Pages[0]
+			inst.PageInstruction = instruction.Pages[0]
 		}
 
 		instOfCompany.Instructions = append(instOfCompany.Instructions, inst)
