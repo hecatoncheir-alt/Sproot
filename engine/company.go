@@ -1,13 +1,12 @@
 package engine
 
 import (
-	"time"
-
 	"github.com/hecatoncheir/Sproot/configuration"
 	"github.com/hecatoncheir/Sproot/engine/broker"
 	"github.com/hecatoncheir/Sproot/engine/storage"
 )
 
+// Company is a part of configuration with methods for parse products
 type Company struct {
 	ID      string
 	Storage *storage.Storage
@@ -16,22 +15,26 @@ type Company struct {
 	Configuration configuration.Configuration
 }
 
+// CompanyData is a part of configuration for parse products
 type CompanyData struct {
 	ID   string
 	Name string
 	IRI  string
 }
 
+// CategoryData is a part of configuration for parse products
 type CategoryData struct {
 	ID   string
 	Name string
 }
 
+// CityData is a part of configuration for parse products
 type CityData struct {
 	ID   string
 	Name string
 }
 
+// InstructionOfCompany is a part of configuration for parse products
 type InstructionOfCompany struct {
 	Language        string
 	Company         CompanyData
@@ -40,37 +43,21 @@ type InstructionOfCompany struct {
 	PageInstruction storage.PageInstruction
 }
 
-type PriceOfProduct struct {
-	Value    string
-	DateTime time.Time
-}
-
-// TODO
+// ParseAll is a method of Company for get all instructions of company and send events for each
 func (entity *Company) ParseAll(instructions []InstructionOfCompany) error {
-	//products, err := entity.Broker.ListenTopic(entity.Configuration.ApiVersion, entity.Configuration.Production.ParserChannel)
-	//if err != nil {
-	//	return err
-	//}
 
 	for _, instruction := range instructions {
 		message := map[string]interface{}{"Message": "Need products of category of company", "Data": instruction}
-		go entity.Broker.WriteToTopic(entity.Configuration.ApiVersion, message)
+		err := entity.Broker.WriteToTopic(entity.Configuration.ApiVersion, message)
+		if err != nil {
+			return err
+		}
 	}
-
-	//go func() {
-	//	for companyProduct := range products {
-	//		var product ProductOfCompany
-	//		json.Unmarshal(companyProduct, &product)
-	//		fmt.Println(string(companyProduct))
-	//
-	//		// TODO break by timeout maybe
-	//		break
-	//	}
-	//}()
 
 	return nil
 }
 
+// GetInstructions is a method of Company for get all instruction of category for parse products
 func (entity *Company) GetInstructions() ([]InstructionOfCompany, error) {
 	instructions, err := entity.Storage.Instructions.ReadAllInstructionsForCompany(entity.ID, ".")
 	if err != nil {

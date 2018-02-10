@@ -1,5 +1,7 @@
 package engine
 
+import "time"
+
 type ProductOfCompany struct {
 	Name             string
 	IRI              string
@@ -8,6 +10,11 @@ type ProductOfCompany struct {
 	Price            PriceOfProduct
 	Company          CompanyData
 	Category         CityData
+}
+
+type PriceOfProduct struct {
+	Value    string
+	DateTime time.Time
 }
 
 // TODO
