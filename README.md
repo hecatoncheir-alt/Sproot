@@ -18,7 +18,7 @@ docker exec -it diggy dgraph server --memory_mb 2048 --zero localhost:5080
 
 ```
 // For test
-go get
+go get -u
 go test ./...
 ```
 
@@ -27,42 +27,4 @@ go test ./...
 docker-compose up -d
 
 docker-compose stop
-```
-
-## Example of Instruction for company
-
-```$xslt
-{  
-   "Data":{  
-      "Language":"en",
-      "Company":{  
-         "ID":"0x2786",
-         "Name":"Company test name",
-         "IRI":""
-      },
-      "Category":{  
-         "ID":"",
-         "Name":""
-      },
-      "City":{  
-         "ID":"0x2788",
-         "Name":"Test city"
-      },
-      "Page":{  
-         "uid":"0x2789",
-         "path":"smartfony-i-svyaz/smartfony-205",
-         "pageInPaginationSelector":".pagination-list .pagination-item",
-         "previewImageOfSelector":"",
-         "pageParamPath":"/f/page=",
-         "cityParamPath":"?cityId=",
-         "cityParam":"CityCZ_975",
-         "itemSelector":".grid-view .product-tile",
-         "nameOfItemSelector":".product-tile-title",
-         "cityInCookieKey":"",
-         "cityIdForCookie":"",
-         "priceOfItemSelector":".product-price-current"
-      }
-   },
-   "Message":"Parse products of company"
-}
 ```
