@@ -8,6 +8,8 @@ import (
 	"log"
 )
 
+var puffer engine.Engine
+
 func main() {
 	config, err := configuration.GetConfiguration()
 	if err != nil {
@@ -45,7 +47,7 @@ func handlesProductOfCategoryOfCompanyReadyEvent(productOfCategoryOfCompanyData 
 	product := engine.ProductOfCompany{}
 	json.Unmarshal([]byte(productOfCategoryOfCompanyData), &product)
 
-	err := product.UpdateInStorage()
+	_, err := product.UpdateInStorage(puffer.Storage)
 	if err != nil {
 		log.Println(err)
 	}

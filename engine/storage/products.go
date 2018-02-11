@@ -134,8 +134,34 @@ func (products *Products) ReadProductsByName(productName, language string) ([]Pr
 							}
 						}
 					}
+					has_price @filter(eq(priceIsActive, true)) {
+						uid
+						priceValue
+						priceDateTime
+						priceCity
+						priceIsActive
+						belongs_to_product @filter(eq(productIsActive, true)) {
+							uid
+							productName: productName@%v
+							productIri
+							previewImageLink
+							productIsActive
+							has_price @filter(eq(priceIsActive, true)) {
+								uid
+								priceValue
+								priceDateTime
+								priceCity
+								priceIsActive
+							}
+						}
+						belongs_to_city @filter(eq(cityIsActive, true)) {
+							uid
+							cityName: cityName@%v
+							cityIsActive
+						}
+					}
 				}
-			}`, language, productName, language, language, language, language, language, language, language, language)
+			}`, language, productName, language, language, language, language, language, language, language, language, language, language)
 
 	transaction := products.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
