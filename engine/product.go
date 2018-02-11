@@ -1,11 +1,13 @@
 package engine
 
 import (
-	"github.com/hecatoncheir/Sproot/engine/storage"
 	"strconv"
 	"time"
+
+	"github.com/hecatoncheir/Sproot/engine/storage"
 )
 
+// ProductOfCompany object for create new price or new product in storage
 type ProductOfCompany struct {
 	Name             string
 	IRI              string
@@ -16,12 +18,14 @@ type ProductOfCompany struct {
 	Category         CategoryData
 }
 
+// PriceOfProduct part of structure of ProductOfCompany
 type PriceOfProduct struct {
 	Value    string
 	DateTime time.Time
 	City     CityData
 }
 
+// UpdateInStorage method for create product if it needed or add price to product
 func (product *ProductOfCompany) UpdateInStorage(store *storage.Storage) (storage.Product, error) {
 	products, err := store.Products.ReadProductsByName(product.Name, product.Language)
 
@@ -32,8 +36,10 @@ func (product *ProductOfCompany) UpdateInStorage(store *storage.Storage) (storag
 			for _, category := range productByName.Categories {
 				if category.ID == product.Category.ID {
 					productFromStorage = productByName
+					break
 				}
 			}
+			break
 		}
 	}
 
