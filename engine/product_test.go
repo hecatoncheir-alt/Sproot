@@ -20,12 +20,6 @@ func TestIntegrationNewPriceWithProductCanBeCreated(test *testing.T) {
 	if err != nil {
 		test.Error(err)
 	}
-	//
-	engine.Storage.DeleteAll()
-	err = engine.SetUpStorage(config.Development.Database.Host, config.Development.Database.Port)
-	if err != nil {
-		test.Error(err)
-	}
 
 	companyForTest := storage.Company{Name: "М.Видео", IRI: "http://www.mvideo.ru/"}
 	createdCompany, err := engine.Storage.Companies.CreateCompany(companyForTest, "ru")
