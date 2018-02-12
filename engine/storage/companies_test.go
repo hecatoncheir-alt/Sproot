@@ -550,7 +550,7 @@ func TestIntegrationCompaniesCanBeExportedToJSON(test *testing.T) {
 	}
 
 	if len(exportedCompanies.Companies[0].Categories[0].Products) > 1 {
-		test.Fail()
+		test.Fatal()
 	}
 
 	if exportedCompanies.Companies[0].Categories[0].Products[0].Name != createdProduct.Name {
