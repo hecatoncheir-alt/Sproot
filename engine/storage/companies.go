@@ -150,6 +150,47 @@ func (companies *Companies) AddLanguageOfCompanyName(companyID, name, language s
 	return nil
 }
 
+// ReadAllCompanies is a method for get all nodes
+func (companies *Companies) ReadAllCompanies(language string) ([]Company, error) {
+	query := fmt.Sprintf(`{
+				companies(func: eq(companyIsActive, true)) {
+					uid
+					companyName: companyName@%v
+					companyIri
+					companyIsActive
+					has_category @filter(eq(categoryIsActive, true)) {
+						uid
+						categoryName: categoryName@%v
+						categoryIsActive
+					}
+				}
+			}`, language, language)
+
+	transaction := companies.storage.Client.NewTxn()
+	response, err := transaction.Query(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+		return nil, ErrCompaniesByNameCanNotBeFound
+	}
+
+	type companiesInStorage struct {
+		AllCompaniesFoundedByName []Company `json:"companies"`
+	}
+
+	var foundedCompanies companiesInStorage
+	err = json.Unmarshal(response.GetJson(), &foundedCompanies)
+	if err != nil {
+		log.Println(err)
+		return nil, ErrCompaniesByNameCanNotBeFound
+	}
+
+	if len(foundedCompanies.AllCompaniesFoundedByName) == 0 {
+		return nil, ErrCompaniesByNameNotFound
+	}
+
+	return foundedCompanies.AllCompaniesFoundedByName, nil
+}
+
 // ReadCompaniesByName is a method for get all nodes by categories name
 func (companies *Companies) ReadCompaniesByName(companyName, language string) ([]Company, error) {
 	query := fmt.Sprintf(`{

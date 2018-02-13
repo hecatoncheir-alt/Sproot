@@ -120,6 +120,41 @@ var (
 	ErrCitiesByNameNotFound = errors.New("cities by name not found")
 )
 
+// ReadALlCities is a method for get all nodes
+func (cities *Cities) ReadAllCities(language string) ([]City, error) {
+	query := fmt.Sprintf(`{
+				cities(func: eq(cityIsActive, true)) {
+					uid
+					cityName: cityName@%v
+					cityIsActive
+				}
+			}`, language)
+
+	transaction := cities.storage.Client.NewTxn()
+	response, err := transaction.Query(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+		return nil, ErrCitiesByNameCanNotBeFound
+	}
+
+	type citiesInStorage struct {
+		AllCitiesFoundedByName []City `json:"cities"`
+	}
+
+	var foundedCities citiesInStorage
+	err = json.Unmarshal(response.GetJson(), &foundedCities)
+	if err != nil {
+		log.Println(err)
+		return nil, ErrCitiesByNameCanNotBeFound
+	}
+
+	if len(foundedCities.AllCitiesFoundedByName) == 0 {
+		return nil, ErrCitiesByNameNotFound
+	}
+
+	return foundedCities.AllCitiesFoundedByName, nil
+}
+
 // ReadCitiesByName is a method for get all nodes by city name
 func (cities *Cities) ReadCitiesByName(cityName, language string) ([]City, error) {
 	query := fmt.Sprintf(`{

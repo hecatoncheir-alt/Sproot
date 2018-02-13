@@ -244,11 +244,11 @@ func TestIntegrationPageInstructionCanBeAddedToInstruction(test *testing.T) {
 
 	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
 
-	if len(updatedInstruction.Pages) != 1 {
+	if len(updatedInstruction.PagesInstruction) != 1 {
 		test.Fatal()
 	}
 
-	if updatedInstruction.Pages[0].ID != createdPageInstruction.ID {
+	if updatedInstruction.PagesInstruction[0].ID != createdPageInstruction.ID {
 		test.Fail()
 	}
 }
@@ -285,11 +285,11 @@ func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) 
 
 	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
 
-	if len(updatedInstruction.Pages) != 1 {
+	if len(updatedInstruction.PagesInstruction) != 1 {
 		test.Fatal()
 	}
 
-	if updatedInstruction.Pages[0].ID != createdPageInstruction.ID {
+	if updatedInstruction.PagesInstruction[0].ID != createdPageInstruction.ID {
 		test.Fail()
 	}
 
@@ -300,7 +300,7 @@ func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) 
 
 	updatedInstruction, _ = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
 
-	if len(updatedInstruction.Pages) > 0 {
+	if len(updatedInstruction.PagesInstruction) > 0 {
 		test.Fatal()
 	}
 }

@@ -26,13 +26,13 @@ type PageInstruction struct {
 
 // Instruction is a structure of instruction for parse
 type Instruction struct {
-	ID         string            `json:"uid, omitempty"`
-	Language   string            `json:"instructionLanguage, omitempty"`
-	IsActive   bool              `json:"instructionIsActive, omitempty"`
-	Pages      []PageInstruction `json:"has_page, omitempty"`
-	Cities     []City            `json:"has_city, omitempty"`
-	Companies  []Company         `json:"has_company, omitempty"`
-	Categories []Category        `json:"has_category, omitempty"`
+	ID               string            `json:"uid, omitempty"`
+	Language         string            `json:"instructionLanguage, omitempty"`
+	IsActive         bool              `json:"instructionIsActive, omitempty"`
+	PagesInstruction []PageInstruction `json:"has_page, omitempty"`
+	Cities           []City            `json:"has_city, omitempty"`
+	Companies        []Company         `json:"has_company, omitempty"`
+	Categories       []Category        `json:"has_category, omitempty"`
 }
 
 // NewInstructionsResourceForStorage is a constructor of Prices resource
@@ -464,3 +464,8 @@ func (resource *Instructions) ReadAllInstructionsForCompany(companyID, language 
 
 	return foundedInstructions.Instructions, nil
 }
+
+//TODO
+//func (resource *Instructions) ReadInstructionOfCategoryForCompany(companyID, categoryID, language string) ([]Instruction, error) {
+//
+//}

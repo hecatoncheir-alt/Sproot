@@ -91,8 +91,8 @@ func (entity *Company) GetInstructions() ([]InstructionOfCompany, error) {
 				Name: instruction.Cities[0].Name}
 		}
 
-		if len(instruction.Pages) > 0 {
-			inst.PageInstruction = instruction.Pages[0]
+		if len(instruction.PagesInstruction) > 0 {
+			inst.PageInstruction = instruction.PagesInstruction[0]
 		}
 
 		instOfCompany.Instructions = append(instOfCompany.Instructions, inst)

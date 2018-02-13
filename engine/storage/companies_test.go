@@ -31,6 +31,27 @@ func TestIntegrationCompanyCanBeCreated(test *testing.T) {
 	}
 }
 
+func TestIntegrationCompanyCanBeReadedAll(test *testing.T) {
+	once.Do(prepareStorage)
+
+	companyForTest := Company{Name: "Test company"}
+	createdCompany, err := storage.Companies.CreateCompany(companyForTest, "en")
+	defer storage.Companies.DeleteCompany(createdCompany)
+
+	otherCompanyForTest := Company{Name: "Other test company"}
+	otherCreatedCompany, err := storage.Companies.CreateCompany(otherCompanyForTest, "en")
+	defer storage.Companies.DeleteCompany(otherCreatedCompany)
+
+	companiesFromStore, err := storage.Companies.ReadAllCompanies("en")
+	if err != nil {
+		test.Fail()
+	}
+
+	if len(companiesFromStore) != 2 {
+		test.Fail()
+	}
+}
+
 func TestIntegrationCompanyCanBeReadByName(test *testing.T) {
 	once.Do(prepareStorage)
 
