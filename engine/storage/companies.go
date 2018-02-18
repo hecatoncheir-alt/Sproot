@@ -153,7 +153,7 @@ func (companies *Companies) AddLanguageOfCompanyName(companyID, name, language s
 // ReadAllCompanies is a method for get all nodes
 func (companies *Companies) ReadAllCompanies(language string) ([]Company, error) {
 	query := fmt.Sprintf(`{
-				companies(func: eq(companyIsActive, true)) {
+				companies(func: eq(companyIsActive, true)) @filter(has(companyName)) {
 					uid
 					companyName: companyName@%v
 					companyIri

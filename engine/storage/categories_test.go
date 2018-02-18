@@ -248,7 +248,10 @@ func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 		test.Fail()
 	}
 
-	createdSecondCompany, _ := storage.Companies.CreateCompany(Company{Name: "Second test company for category"}, "en")
+	createdSecondCompany, err := storage.Companies.CreateCompany(Company{Name: "Second test company for category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	defer storage.Companies.DeleteCompany(createdSecondCompany)
 

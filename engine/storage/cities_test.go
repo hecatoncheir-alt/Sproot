@@ -20,7 +20,7 @@ func TestIntegrationCityCanBeCreated(test *testing.T) {
 	}
 }
 
-func TestIntegrationCitiesCanBeReadedAll(test *testing.T) {
+func TestIntegrationAllCitiesCanBeRead(test *testing.T) {
 	once.Do(prepareStorage)
 
 	cityForTest := City{Name: "Test city"}

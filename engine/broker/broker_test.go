@@ -2,38 +2,36 @@ package broker
 
 import (
 	"encoding/json"
-	"github.com/hecatoncheir/Sproot/configuration"
 	"log"
-	"sync"
 	"testing"
+
+	"github.com/google/uuid"
+
+	"github.com/hecatoncheir/Hecatoncheir/broker"
+	"github.com/hecatoncheir/Hecatoncheir/configuration"
 )
 
-var broker *Broker
-var once sync.Once
+func TestBrokerCanConnectToNSQ(test *testing.T) {
+	bro := broker.New()
+	uuidOfTopic := uuid.New().String()
 
-func SetUp() {
 	config, err := configuration.GetConfiguration()
 	if err != nil {
 		log.Println(err)
 	}
 
-	broker = New()
-	err = broker.Connect(config.Development.Broker.Host, config.Development.Broker.Port)
+	err = bro.Connect(config.Development.Broker.Host, config.Development.Broker.Port)
 	if err != nil {
+		log.Println("Need started NSQ")
 		log.Println(err)
 	}
-}
-
-func TestBrokerCanConnectToNSQ(test *testing.T) {
-	once.Do(SetUp)
 
 	message, err := json.Marshal(map[string]string{"test key": "test value"})
 
-	broker.Producer.Publish("test", message)
+	bro.Producer.Publish(uuidOfTopic, message)
+	defer bro.Producer.Stop()
 
-	config, _ := configuration.GetConfiguration()
-
-	items, err := broker.ListenTopic("test", config.Development.Channel)
+	items, err := bro.ListenTopic(uuidOfTopic, "Sproot")
 	if err != nil {
 		test.Error(err)
 	}
@@ -48,25 +46,38 @@ func TestBrokerCanConnectToNSQ(test *testing.T) {
 }
 
 func TestBrokerCanSendMessageToNSQ(test *testing.T) {
-	var err error
-	once.Do(SetUp)
+	bro := broker.New()
+	uuidOfTopic := uuid.New().String()
 
-	message, err := json.Marshal(map[string]string{"test key": "test value"})
+	config, err := configuration.GetConfiguration()
+	if err != nil {
+		log.Println(err)
+	}
 
-	items, err := broker.ListenTopic("test", "test")
+	err = bro.Connect(config.Development.Broker.Host, config.Development.Broker.Port)
+	if err != nil {
+		log.Println("Need started NSQ")
+		log.Println(err)
+	}
+
+	item := map[string]string{"Name": "test item"}
+
+	items, err := bro.ListenTopic(uuidOfTopic, "Sproot")
 	if err != nil {
 		test.Error(err)
 	}
 
-	err = broker.WriteToTopic("test", message)
+	err = bro.WriteToTopic(uuidOfTopic, item)
 	if err != nil {
 		test.Error(err)
 	}
+
+	defer bro.Producer.Stop()
 
 	for item := range items {
 		data := map[string]string{}
 		json.Unmarshal(item, &data)
-		if data["test key"] == "test value" {
+		if data["Name"] == "test item" {
 			break
 		}
 	}

@@ -170,11 +170,19 @@ func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
 	priceValue := 123.0
 
 	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: priceValue, DateTime: priceData})
+	defer storage.Prices.DeletePrice(createdPrice)
+
 	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	defer storage.Products.DeleteProduct(createdProduct)
 
 	storage.Prices.AddProductToPrice(createdPrice.ID, createdProduct.ID)
 
-	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	createdCity, err := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer storage.Cities.DeleteCity(createdCity)
 
 	storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
 

@@ -123,7 +123,7 @@ var (
 // ReadALlCities is a method for get all nodes
 func (cities *Cities) ReadAllCities(language string) ([]City, error) {
 	query := fmt.Sprintf(`{
-				cities(func: eq(cityIsActive, true)) {
+				cities(func: eq(cityIsActive, true)) @filter(has(cityName)) {
 					uid
 					cityName: cityName@%v
 					cityIsActive

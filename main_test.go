@@ -10,6 +10,8 @@ import (
 )
 
 func TestIntegrationEventOfParseRequestCanBeSendToBroker(test *testing.T) {
+	test.Skip()
+
 	puffer := engine.New()
 
 	config, err := configuration.GetConfiguration()

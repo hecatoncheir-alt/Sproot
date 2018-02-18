@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+
 	"github.com/hecatoncheir/Sproot/configuration"
 	"github.com/hecatoncheir/Sproot/engine"
 	"github.com/hecatoncheir/Sproot/engine/broker"
 	"github.com/hecatoncheir/Sproot/engine/storage"
-	"log"
 )
 
 func main() {
@@ -66,28 +67,28 @@ func handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(topic string, bro *
 	//
 	//request.PageInstruction = instructions[0].PagesInstruction[0]
 
-	supportedLanguages := []string{"ru"}
+	//supportedLanguages := []string{"ru"}
 
-	for _, language := range supportedLanguages {
-		allCompanies, err := storage.Companies.ReadAllCompanies(language)
-		if err != nil {
-			log.Println(err)
-		}
-
-		for _, company := range allCompanies {
-
-			for _, category := range company.Categories {
-
-				cities, err := storage.Cities.ReadAllCities(language)
-				if err != nil {
-					log.Println(err)
-				}
-
-			}
-
-		}
-
-	}
+	//for _, language := range supportedLanguages {
+	//	allCompanies, err := storage.Companies.ReadAllCompanies(language)
+	//	if err != nil {
+	//		log.Println(err)
+	//	}
+	//
+	//	for _, company := range allCompanies {
+	//
+	//		for _, category := range company.Categories {
+	//
+	//			cities, err := storage.Cities.ReadAllCities(language)
+	//			if err != nil {
+	//				log.Println(err)
+	//			}
+	//
+	//		}
+	//
+	//	}
+	//
+	//}
 
 	//eventJSON, err := json.Marshal(request)
 	//if err != nil {
