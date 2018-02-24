@@ -1,9 +1,10 @@
 package configuration
 
 import (
-	"github.com/prometheus/common/log"
 	"os"
 	"strconv"
+
+	"github.com/prometheus/common/log"
 )
 
 type Configuration struct {

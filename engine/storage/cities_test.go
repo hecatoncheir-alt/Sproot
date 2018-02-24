@@ -25,10 +25,18 @@ func TestIntegrationAllCitiesCanBeRead(test *testing.T) {
 
 	cityForTest := City{Name: "Test city"}
 	createdCity, err := storage.Cities.CreateCity(cityForTest, "en")
+	if err != nil {
+		test.Fail()
+	}
+
 	defer storage.Cities.DeleteCity(createdCity)
 
 	otherCityForTest := City{Name: "Other test city"}
 	otherCreatedCity, err := storage.Cities.CreateCity(otherCityForTest, "en")
+	if err != nil {
+		test.Fail()
+	}
+
 	defer storage.Cities.DeleteCity(otherCreatedCity)
 
 	citiesFromStore, err := storage.Cities.ReadAllCities("en")
@@ -67,8 +75,8 @@ func TestIntegrationCitiesCanBeReadByName(test *testing.T) {
 		test.Fail()
 	}
 
-	if len(citiesFromStore) > 1 {
-		test.Fail()
+	if len(citiesFromStore) > 1 || len(citiesFromStore) < 1 {
+		test.Fatal()
 	}
 
 	if citiesFromStore[0].Name != createdCity.Name {

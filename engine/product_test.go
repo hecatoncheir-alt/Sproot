@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"encoding/json"
 	"github.com/hecatoncheir/Sproot/configuration"
 	"github.com/hecatoncheir/Sproot/engine/storage"
 	"testing"
@@ -54,7 +53,7 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	testProductOfCompany := ProductOfCompany{
+	product := ProductOfCompany{
 		Name:             "Смартфон Samsung Galaxy S8 64Gb Черный бриллиант",
 		IRI:              "http://www.mvideo.ru//products/smartfon-samsung-galaxy-s8-64gb-chernyi-brilliant-30027818",
 		PreviewImageLink: "img.mvideo.ru/Pdb/30027818m.jpg",
@@ -75,14 +74,6 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 			Name: createdCategory.Name},
 	}
 
-	productWithPriceJSON, err := json.Marshal(testProductOfCompany)
-	if err != nil {
-		test.Error(err)
-	}
-
-	product := ProductOfCompany{}
-	json.Unmarshal([]byte(productWithPriceJSON), &product)
-
 	productFromStorage, err := product.UpdateInStorage(engine.Storage)
 	if err != nil {
 		test.Error(err)
@@ -95,7 +86,7 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 	defer engine.Storage.Prices.DeletePrice(productFromStorage.Prices[0])
 	defer engine.Storage.Products.DeleteProduct(productFromStorage)
 
-	products, err := engine.Storage.Products.ReadProductsByName(testProductOfCompany.Name, "ru")
+	products, err := engine.Storage.Products.ReadProductsByName(product.Name, "ru")
 	if err != nil {
 		test.Error(err)
 	}
@@ -193,7 +184,7 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	testProductOfCompany := ProductOfCompany{
+	product := ProductOfCompany{
 		Name:             "Смартфон Samsung Galaxy S8 64Gb Черный бриллиант",
 		IRI:              "http://www.mvideo.ru//products/smartfon-samsung-galaxy-s8-64gb-chernyi-brilliant-30027818",
 		PreviewImageLink: "img.mvideo.ru/Pdb/30027818m.jpg",
@@ -214,14 +205,6 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 			Name: createdCategory.Name},
 	}
 
-	productWithPriceJSON, err := json.Marshal(testProductOfCompany)
-	if err != nil {
-		test.Error(err)
-	}
-
-	product := ProductOfCompany{}
-	json.Unmarshal([]byte(productWithPriceJSON), &product)
-
 	productFromStorage, err := product.UpdateInStorage(engine.Storage)
 	if err != nil {
 		test.Error(err)
@@ -232,9 +215,8 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 	}
 
 	defer engine.Storage.Prices.DeletePrice(productFromStorage.Prices[0])
-	defer engine.Storage.Products.DeleteProduct(productFromStorage)
 
-	products, err := engine.Storage.Products.ReadProductsByName(testProductOfCompany.Name, "ru")
+	products, err := engine.Storage.Products.ReadProductsByName(product.Name, "ru")
 	if err != nil {
 		test.Error(err)
 	}
@@ -355,7 +337,7 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 		test.Error(err)
 	}
 
-	testProductOfCompany := ProductOfCompany{
+	product := ProductOfCompany{
 		Name:             "Смартфон Samsung Galaxy S8 64Gb Черный бриллиант",
 		IRI:              "http://www.mvideo.ru//products/smartfon-samsung-galaxy-s8-64gb-chernyi-brilliant-30027818",
 		PreviewImageLink: "img.mvideo.ru/Pdb/30027818m.jpg",
@@ -376,14 +358,6 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 			Name: createdCategory.Name},
 	}
 
-	productWithPriceJSON, err := json.Marshal(testProductOfCompany)
-	if err != nil {
-		test.Error(err)
-	}
-
-	product := ProductOfCompany{}
-	json.Unmarshal([]byte(productWithPriceJSON), &product)
-
 	productFromStorage, err := product.UpdateInStorage(engine.Storage)
 	if err != nil {
 		test.Error(err)
@@ -394,7 +368,6 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 	}
 
 	defer engine.Storage.Prices.DeletePrice(productFromStorage.Prices[0])
-	defer engine.Storage.Products.DeleteProduct(productFromStorage)
 
 	categoryWithProducts, err := engine.Storage.Categories.ReadCategoryByID(createdCategory.ID, "ru")
 	if err != nil {
@@ -414,7 +387,7 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 		test.Fail()
 	}
 
-	products, err := engine.Storage.Products.ReadProductsByName(testProductOfCompany.Name, "ru")
+	products, err := engine.Storage.Products.ReadProductsByName(product.Name, "ru")
 	if err != nil {
 		test.Error(err)
 	}
@@ -445,10 +418,5 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 
 	if products[0].Categories[0].ID != createdCategory.ID {
 		test.Fail()
-	}
-
-	_, err = engine.Storage.Cities.DeleteCity(createdCity)
-	if err != nil {
-		test.Error(err)
 	}
 }

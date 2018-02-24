@@ -262,6 +262,10 @@ func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 
 	updatedCategory, _ = storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
 
+	if len(updatedCategory.Companies) != 2 {
+		test.Fatal()
+	}
+
 	if updatedCategory.Companies[0].ID != createdFirstCompany.ID {
 		test.Fail()
 	}
@@ -278,6 +282,7 @@ func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 		test.Fail()
 	}
 }
+
 func TestIntegrationCompanyCanBeRemovedFromCategory(test *testing.T) {
 	once.Do(prepareStorage)
 
