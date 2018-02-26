@@ -51,51 +51,67 @@ func main() {
 
 // TODO
 func handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(topic string, bro *broker.Broker, storage *storage.Storage) {
-	//request := engine.InstructionOfCompany{
-	//	Language: "ru",
-	//	Company: engine.CompanyData{
-	//		ID: createdCompany.ID},
-	//	Category: engine.CategoryData{
-	//		ID: createdCategory.ID},
-	//	City: engine.CityData{
-	//		ID: createdCity.ID}}
-	//
-	//instructions, err :=storage.Instructions.ReadAllInstructionsForCompany(createdCompany.ID, "ru")
-	//if err != nil {
-	//	log.Println(err)
-	//}
-	//
-	//request.PageInstruction = instructions[0].PagesInstruction[0]
+	supportedLanguages := []string{"ru"}
 
-	//supportedLanguages := []string{"ru"}
+	for _, language := range supportedLanguages {
+		allCompanies, err := storage.Companies.ReadAllCompanies(language)
+		if err != nil {
+			log.Println(err)
+		}
 
-	//for _, language := range supportedLanguages {
-	//	allCompanies, err := storage.Companies.ReadAllCompanies(language)
-	//	if err != nil {
-	//		log.Println(err)
-	//	}
-	//
-	//	for _, company := range allCompanies {
-	//
-	//		for _, category := range company.Categories {
-	//
-	//			cities, err := storage.Cities.ReadAllCities(language)
-	//			if err != nil {
-	//				log.Println(err)
-	//			}
-	//
-	//		}
-	//
-	//	}
-	//
-	//}
+		for _, company := range allCompanies {
 
-	//eventJSON, err := json.Marshal(request)
-	//if err != nil {
-	//	log.Println(err)
-	//}
-	//
-	//bro.WriteToTopic(topic, eventJSON)
+			for _, category := range company.Categories {
+
+				cities, err := storage.Cities.ReadAllCities(language)
+				if err != nil {
+					log.Println(err)
+				}
+
+				for _, city := range cities {
+
+					instructions, err := storage.Instructions.ReadAllInstructionsForCompany(company.ID, language)
+					if err != nil {
+						log.Println(err)
+					}
+
+					for _, instruction := range instructions {
+
+						request := engine.InstructionOfCompany{
+							Language: language,
+							Company: engine.CompanyData{
+								ID:   company.ID,
+								Name: company.Name,
+								IRI:  company.IRI},
+							Category: engine.CategoryData{
+								ID:   category.ID,
+								Name: category.Name},
+							City: engine.CityData{
+								ID:   city.ID,
+								Name: city.Name},
+							PageInstruction: instruction.PagesInstruction[0],
+						}
+
+						data, err := json.Marshal(request)
+						if err != nil {
+							log.Println(err)
+						}
+
+						err = bro.WriteToTopic(topic, map[string]interface{}{
+							"Message": "Need products of category of company",
+							"Data":    string(data)})
+
+						if err != nil {
+							log.Println(err)
+						}
+					}
+
+				}
+			}
+
+		}
+
+	}
 }
 
 func handlesProductOfCategoryOfCompanyReadyEvent(productOfCategoryOfCompanyData string, storage *storage.Storage) {

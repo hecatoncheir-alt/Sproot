@@ -2,11 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"testing"
+
 	"github.com/hecatoncheir/Sproot/configuration"
 	"github.com/hecatoncheir/Sproot/engine"
 	"github.com/hecatoncheir/Sproot/engine/storage"
-	"testing"
 )
 
 func TestIntegrationEventOfParseRequestCanBeSendToBroker(test *testing.T) {
@@ -76,7 +76,6 @@ func TestIntegrationEventOfParseRequestCanBeSendToBroker(test *testing.T) {
 
 	messages, err := puffer.Broker.ListenTopic(config.Development.Channel, config.Development.Channel)
 	for message := range messages {
-		fmt.Println(string(message))
 
 		data := map[string]string{}
 		json.Unmarshal(message, &data)
@@ -85,10 +84,26 @@ func TestIntegrationEventOfParseRequestCanBeSendToBroker(test *testing.T) {
 			test.Fail()
 		}
 
-		request := engine.ProductOfCompany{}
-		json.Unmarshal(message, &request)
+		request := engine.InstructionOfCompany{}
+		json.Unmarshal([]byte(data["Data"]), &request)
 
 		if request.Language != "ru" {
+			test.Fail()
+		}
+
+		if request.Company.Name != createdCompany.Name {
+			test.Fail()
+		}
+
+		if request.Category.Name != createdCategory.Name {
+			test.Fail()
+		}
+
+		if request.City.Name != createdCity.Name {
+			test.Fail()
+		}
+
+		if request.PageInstruction.ID != pageInstruction.ID {
 			test.Fail()
 		}
 

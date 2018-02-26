@@ -54,7 +54,7 @@ func GetConfiguration() (Configuration, error) {
 
 	developmentParserChannel := os.Getenv("Development-Parser-Channel")
 	if developmentParserChannel == "" {
-		configuration.Development.Channel = "Sproot"
+		configuration.Development.Channel = "test"
 	} else {
 		configuration.Development.Channel = developmentParserChannel
 	}
