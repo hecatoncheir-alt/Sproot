@@ -49,7 +49,6 @@ func main() {
 	}
 }
 
-// TODO
 func handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(topic string, bro *broker.Broker, storage *storage.Storage) {
 	supportedLanguages := []string{"ru"}
 
