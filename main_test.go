@@ -237,4 +237,14 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 	if category.Products[0].Name != nameOfProduct {
 		test.Fail()
 	}
+
+	products, err := puffer.Storage.Products.ReadProductsByName(nameOfProduct, "ru")
+
+	if len(products) != 1 {
+		test.Fail()
+	}
+
+	if products[0].Name != nameOfProduct {
+		test.Fail()
+	}
 }
