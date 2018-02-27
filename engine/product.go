@@ -29,7 +29,10 @@ type PriceOfProduct struct {
 func (product *ProductOfCompany) UpdateInStorage(store *storage.Storage) (storage.Product, error) {
 	products, err := store.Products.ReadProductsByName(product.Name, product.Language)
 
-	var productFromStorage = storage.Product{}
+	productFromStorage := storage.Product{
+		Name:             product.Name,
+		IRI:              product.IRI,
+		PreviewImageLink: product.PreviewImageLink}
 
 	if products != nil {
 		for _, productByName := range products {
@@ -53,19 +56,22 @@ func (product *ProductOfCompany) UpdateInStorage(store *storage.Storage) (storag
 			IRI:              product.IRI,
 			PreviewImageLink: product.PreviewImageLink}
 
-		productFromStorage, err = store.Products.CreateProduct(productForStorage, product.Language)
+		productInStorage, err := store.Products.CreateProduct(productForStorage, product.Language)
 		if err != nil {
-			return productFromStorage, err
+			return productInStorage, err
 		}
 
-		err = store.Products.AddCategoryToProduct(productFromStorage.ID, product.Category.ID)
+		productFromStorage.ID = productInStorage.ID
+		productFromStorage.IsActive = productInStorage.IsActive
+
+		err = store.Products.AddCategoryToProduct(productInStorage.ID, product.Category.ID)
 		if err != nil {
-			return productFromStorage, err
+			return productInStorage, err
 		}
 
-		err = store.Products.AddCompanyToProduct(productFromStorage.ID, product.Company.ID)
+		err = store.Products.AddCompanyToProduct(productInStorage.ID, product.Company.ID)
 		if err != nil {
-			return productFromStorage, err
+			return productInStorage, err
 		}
 	}
 

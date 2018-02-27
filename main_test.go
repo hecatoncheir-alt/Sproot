@@ -184,6 +184,36 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 		json.Unmarshal(message, &data)
 
 		if data["Message"] == "Need products of category of company" {
+
+			request := engine.InstructionOfCompany{}
+			json.Unmarshal([]byte(data["Data"]), &request)
+
+			product := engine.ProductOfCompany{
+				Language: request.Language,
+				Name:     "Test product name",
+				Price: engine.PriceOfProduct{
+					Value: "1200",
+					City: engine.CityData{
+						ID:   request.City.ID,
+						Name: request.City.Name},
+				},
+				Company: engine.CompanyData{
+					ID:   request.Company.ID,
+					Name: request.Company.Name},
+				Category: engine.CategoryData{
+					ID:   request.Category.ID,
+					Name: request.Category.Name},
+			}
+
+			productJSON, err := json.Marshal(product)
+			if err != nil {
+				test.Fail()
+			}
+
+			err = puffer.Broker.WriteToTopic(config.Development.Channel, map[string]interface{}{
+				"Message": "Product of category of company ready",
+				"Data":    string(productJSON)})
+
 			continue
 		}
 
@@ -231,7 +261,7 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 	}
 
 	if len(category.Products) == 0 {
-		test.Fail()
+		test.Fatal()
 	}
 
 	if category.Products[0].Name != nameOfProduct {
@@ -245,6 +275,16 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 	}
 
 	if products[0].Name != nameOfProduct {
+		test.Fail()
+	}
+
+	_, err = puffer.Storage.Products.DeleteProduct(products[0])
+	if err != nil {
+		test.Fail()
+	}
+
+	_, err = puffer.Storage.Prices.DeletePrice(products[0].Prices[0])
+	if err != nil {
 		test.Fail()
 	}
 }
