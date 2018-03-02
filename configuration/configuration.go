@@ -4,7 +4,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/prometheus/common/log"
+	"log"
 )
 
 type Configuration struct {

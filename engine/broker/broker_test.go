@@ -7,12 +7,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/hecatoncheir/Hecatoncheir/broker"
-	"github.com/hecatoncheir/Hecatoncheir/configuration"
+	"github.com/hecatoncheir/Sproot/configuration"
 )
 
 func TestBrokerCanConnectToNSQ(test *testing.T) {
-	bro := broker.New()
+	bro := New()
 	uuidOfTopic := uuid.New().String()
 
 	config, err := configuration.GetConfiguration()
@@ -31,7 +30,7 @@ func TestBrokerCanConnectToNSQ(test *testing.T) {
 	bro.Producer.Publish(uuidOfTopic, message)
 	defer bro.Producer.Stop()
 
-	items, err := bro.ListenTopic(uuidOfTopic, "Sproot")
+	items, err := bro.ListenTopic(uuidOfTopic, config.Development.Channel)
 	if err != nil {
 		test.Error(err)
 	}
@@ -46,7 +45,7 @@ func TestBrokerCanConnectToNSQ(test *testing.T) {
 }
 
 func TestBrokerCanSendMessageToNSQ(test *testing.T) {
-	bro := broker.New()
+	bro := New()
 	uuidOfTopic := uuid.New().String()
 
 	config, err := configuration.GetConfiguration()
