@@ -28,7 +28,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	channel, err := puffer.Broker.ListenTopic(config.ApiVersion, config.Production.Channel)
+	channel, err := puffer.Broker.ListenTopic(config.APIVersion, config.Production.Channel)
 	if err != nil {
 		log.Fatal(err)
 	}

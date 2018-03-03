@@ -48,7 +48,7 @@ func (entity *Company) ParseAll(instructions []InstructionOfCompany) error {
 
 	for _, instruction := range instructions {
 		message := map[string]interface{}{"Message": "Need products of category of company", "Data": instruction}
-		err := entity.Broker.WriteToTopic(entity.Configuration.ApiVersion, message)
+		err := entity.Broker.WriteToTopic(entity.Configuration.APIVersion, message)
 		if err != nil {
 			return err
 		}
