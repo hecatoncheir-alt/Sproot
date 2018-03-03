@@ -45,14 +45,14 @@ func GetConfiguration() (Configuration, error) {
 		configuration.ApiVersion = apiVersion
 	}
 
-	productionParserChannel := os.Getenv("Production-Parser-Channel")
+	productionParserChannel := os.Getenv("Production-Channel")
 	if productionParserChannel == "" {
 		configuration.Production.Channel = "Sproot"
 	} else {
 		configuration.Production.Channel = productionParserChannel
 	}
 
-	developmentParserChannel := os.Getenv("Development-Parser-Channel")
+	developmentParserChannel := os.Getenv("Development-Channel")
 	if developmentParserChannel == "" {
 		configuration.Development.Channel = "test"
 	} else {
