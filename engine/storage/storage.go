@@ -7,8 +7,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	dataBaseClient "github.com/dgraph-io/dgraph/client"
-	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
+	dataBaseClient "github.com/dgraph-io/dgo"
+	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
 )
 
 // Storage is a object with database resource

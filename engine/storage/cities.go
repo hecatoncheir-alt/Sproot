@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
+	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
 )
 
 // City is a structure of prices in database

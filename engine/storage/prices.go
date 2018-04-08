@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	dataBaseAPI "github.com/dgraph-io/dgraph/protos/api"
+
 	"log"
 	"time"
+
+	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
 )
 
 // Price is a structure of prices in database
