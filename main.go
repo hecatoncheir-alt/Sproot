@@ -34,16 +34,16 @@ func main() {
 	}
 
 	for event := range channel {
-		data := map[string]string{}
+		data := broker.EventData{}
 		json.Unmarshal(event, &data)
 
-		log.Println(fmt.Sprintf("Received message: '%v'", data["Message"]))
+		log.Println(fmt.Sprintf("Received message: '%v'", data.Message))
 
-		if data["Message"] != "Product of category of company ready" {
-			go handlesProductOfCategoryOfCompanyReadyEvent(data["Data"], puffer.Storage)
+		if data.Message == "Product of category of company ready" {
+			go handlesProductOfCategoryOfCompanyReadyEvent(data.Details.(string), puffer.Storage)
 		}
 
-		if data["Message"] != "Products of categories of companies must be parsed" {
+		if data.Message == "Products of categories of companies must be parsed" {
 			go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Production.Channel, puffer.Broker, puffer.Storage)
 		}
 	}

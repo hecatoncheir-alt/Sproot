@@ -9,6 +9,13 @@ import (
 	nsq "github.com/bitly/go-nsq"
 )
 
+// EventData is a struct of event for receive from socket server
+type EventData struct {
+	Message  string
+	Details  interface{}
+	ClientID string
+}
+
 // New constructor for Broker
 func New() *Broker {
 	broker := Broker{}
