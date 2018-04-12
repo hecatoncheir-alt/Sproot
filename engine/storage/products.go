@@ -9,6 +9,8 @@ import (
 	"fmt"
 
 	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
+	"text/template"
+	"bytes"
 )
 
 var (
@@ -90,6 +92,198 @@ func (products *Products) SetUp() (err error) {
 	}
 
 	return nil
+}
+
+func (products *Products) ReadTotalCountOfProductsByName(productName, language string) (int, error) {
+	type Variables struct {
+		ProductName, Language     string
+		CurrentPage, ItemsPerPage int
+	}
+
+	variables := Variables{
+		ProductName: productName,
+		Language:    language}
+
+	totalQueryTemplate, err := template.New("totalQuery").Parse(`{
+				total(func: regexp(productName@{{.Language}}, /{{.ProductName}}/))
+				@filter(eq(productIsActive, true) AND has(productName)) {
+					count: count(uid)
+				}
+			}`)
+
+	if err != nil {
+		log.Println(err)
+		return 0, err
+	}
+
+	totalQueryBuf := bytes.Buffer{}
+
+	err = totalQueryTemplate.Execute(&totalQueryBuf, variables)
+	if err != nil {
+		log.Println(err)
+		return 0, ErrProductsByNameCanNotBeFound
+	}
+
+	transaction := products.storage.Client.NewTxn()
+	response, err := transaction.Query(context.Background(), totalQueryBuf.String())
+	if err != nil {
+		log.Println(err)
+		return 0, ErrProductsByNameCanNotBeFound
+	}
+
+	type productsCountInStorage struct {
+		Total []map[string]int `json:"total"`
+	}
+
+	var foundedProducts productsCountInStorage
+	err = json.Unmarshal(response.GetJson(), &foundedProducts)
+	if err != nil {
+		log.Println(err)
+		return 0, ErrProductsByNameCanNotBeFound
+	}
+
+	return foundedProducts.Total[0]["count"], nil
+}
+
+type ProductsByNameForPage struct {
+	Products           []Product
+	CurrentPage        int
+	CountProductOnPage int
+	TotalProductsFound int
+	SearchedByName     string
+	Language           string
+}
+
+func (products *Products) ReadProductsByNameWithPagination(productName, language string, currentPage, itemsPerPage int) (*ProductsByNameForPage, error) {
+
+	type Variables struct {
+		ProductName, Language             string
+		CurrentPage, ItemsPerPage, Offset int
+	}
+
+	productsByPageTemplate, err := template.New("productsByPage").Parse(`{
+				products(func: regexp(productName@{{.Language}}, /{{.ProductName}}/), first: {{.ItemsPerPage}}, offset: {{.Offset}})
+				@filter(eq(productIsActive, true) AND has(productName)) {
+					uid
+					productName: productName@{{.Language}}
+					productIri
+					previewImageLink
+					productIsActive
+					belongs_to_category @filter(eq(categoryIsActive, true)) {
+						uid
+						categoryName: categoryName@{{.Language}}
+						categoryIsActive
+						belongs_to_company @filter(eq(companyIsActive, true)) {
+							uid
+							companyName: companyName@{{.Language}}
+							has_category @filter(eq(categoryIsActive, true)) {
+								uid
+								categoryName: categoryName@{{.Language}}
+								categoryIsActive
+								belong_to_company @filter(eq(companyIsActive, true)){
+									uid
+									companyName: companyName@{{.Language}}
+									companyIsActive
+								}
+							}
+						}
+					}
+					belongs_to_company @filter(eq(companyIsActive, true)) {
+						uid
+						companyName: companyName@{{.Language}}
+						has_category @filter(eq(categoryIsActive, true)) {
+							uid
+							categoryName: categoryName@{{.Language}}
+							categoryIsActive
+							belong_to_company @filter(eq(companyIsActive, true)){
+								uid
+								companyName: companyName@{{.Language}}
+								companyIsActive
+							}
+						}
+					}
+					has_price @filter(eq(priceIsActive, true)) {
+						uid
+						priceValue
+						priceDateTime
+						priceCity
+						priceIsActive
+						belongs_to_product @filter(eq(productIsActive, true)) {
+							uid
+							productName: productName@{{.Language}}
+							productIri
+							previewImageLink
+							productIsActive
+							has_price @filter(eq(priceIsActive, true)) {
+								uid
+								priceValue
+								priceDateTime
+								priceCity
+								priceIsActive
+							}
+						}
+						belongs_to_city @filter(eq(cityIsActive, true)) {
+							uid
+							cityName: cityName@{{.Language}}
+							cityIsActive
+						}
+					}
+				}
+			}`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, ErrProductsByNameCanNotBeFound
+	}
+
+	variables := Variables{
+		ProductName:  productName,
+		ItemsPerPage: itemsPerPage,
+		CurrentPage:  currentPage,
+		Offset:       currentPage*itemsPerPage - itemsPerPage,
+		Language:     language}
+
+	productsByPageBuf := bytes.Buffer{}
+
+	err = productsByPageTemplate.Execute(&productsByPageBuf, variables)
+	if err != nil {
+		log.Println(err)
+		return nil, ErrProductsByNameCanNotBeFound
+	}
+
+	transaction := products.storage.Client.NewTxn()
+	response, err := transaction.Query(context.Background(), productsByPageBuf.String())
+	if err != nil {
+		log.Println(err)
+		return nil, ErrProductsByNameCanNotBeFound
+	}
+
+	type productsInStorage struct {
+		AllProductsFoundedByName []Product `json:"products"`
+	}
+
+	var foundedProducts productsInStorage
+	err = json.Unmarshal(response.GetJson(), &foundedProducts)
+	if err != nil {
+		log.Println(err)
+		return nil, ErrProductsByNameCanNotBeFound
+	}
+
+	if len(foundedProducts.AllProductsFoundedByName) == 0 {
+		return nil, ErrProductsByNameNotFound
+	}
+
+	totalCountOfProducts, err := products.ReadTotalCountOfProductsByName(productName, language)
+
+	foundedProductsByNameForPage := ProductsByNameForPage{
+		Products:           foundedProducts.AllProductsFoundedByName,
+		CurrentPage:        currentPage,
+		CountProductOnPage: len(foundedProducts.AllProductsFoundedByName),
+		SearchedByName:     productName,
+		TotalProductsFound: totalCountOfProducts,
+		Language:           language}
+
+	return &foundedProductsByNameForPage, nil
 }
 
 // ReadProductsByName is a method for get all nodes by product name

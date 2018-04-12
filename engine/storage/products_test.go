@@ -266,3 +266,110 @@ func TestIntegrationProductCanHasPrice(test *testing.T) {
 		test.Fail()
 	}
 }
+
+func TestIntegrationProductsTotalCountCanBeReturned(test *testing.T) {
+	once.Do(prepareStorage)
+
+	createdProduct1, _ := storage.Products.CreateProduct(Product{Name: "Первый тестовый продукт"}, "ru")
+	defer storage.Products.DeleteProduct(createdProduct1)
+
+	createdProduct2, _ := storage.Products.CreateProduct(Product{Name: "Второй тестовый продукт"}, "ru")
+	defer storage.Products.DeleteProduct(createdProduct2)
+
+	createdProduct3, _ := storage.Products.CreateProduct(Product{Name: "Третий тестовый продукт"}, "ru")
+	defer storage.Products.DeleteProduct(createdProduct3)
+
+	createdProduct4, _ := storage.Products.CreateProduct(Product{Name: "Четвёртый тестовый продукт"}, "ru")
+	defer storage.Products.DeleteProduct(createdProduct4)
+
+	createdProduct5, _ := storage.Products.CreateProduct(Product{Name: "Пятый тестовый продукт"}, "ru")
+	defer storage.Products.DeleteProduct(createdProduct5)
+
+	counterOfFoundedProducts, err := storage.Products.ReadTotalCountOfProductsByName("тестовый", "ru")
+	if err != nil {
+		test.Error(err)
+	}
+
+	if counterOfFoundedProducts == 0 {
+		test.Errorf("Expected 5, actual: %v", counterOfFoundedProducts)
+	}
+}
+
+func TestIntegrationProductCanBeSearchedByNameWithPaginationAndCounter(test *testing.T) {
+	once.Do(prepareStorage)
+
+	createdProduct1, _ := storage.Products.CreateProduct(Product{Name: "Первый тестовый продукт"}, "ru")
+	defer storage.Products.DeleteProduct(createdProduct1)
+
+	createdProduct2, _ := storage.Products.CreateProduct(Product{Name: "Второй тестовый продукт"}, "ru")
+	defer storage.Products.DeleteProduct(createdProduct2)
+
+	createdProduct3, _ := storage.Products.CreateProduct(Product{Name: "Третий тестовый продукт"}, "ru")
+	defer storage.Products.DeleteProduct(createdProduct3)
+
+	createdProduct4, _ := storage.Products.CreateProduct(Product{Name: "Четвёртый тестовый продукт"}, "ru")
+	defer storage.Products.DeleteProduct(createdProduct4)
+
+	createdProduct5, _ := storage.Products.CreateProduct(Product{Name: "Пятый тестовый продукт"}, "ru")
+	defer storage.Products.DeleteProduct(createdProduct5)
+
+	foundedProductsForFirstPage, err := storage.Products.ReadProductsByNameWithPagination("тестовый", "ru", 1, 2)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if foundedProductsForFirstPage.TotalProductsFound != 5 {
+		test.Errorf("Expected 5 products, actual: %v", foundedProductsForFirstPage.TotalProductsFound)
+	}
+
+	if foundedProductsForFirstPage.CountProductOnPage != 2 {
+		test.Errorf("Expected 2 products on one page, actual: %v", foundedProductsForFirstPage.CountProductOnPage)
+	}
+
+	if foundedProductsForFirstPage.CurrentPage != 1 {
+		test.Errorf("Expected page 1, actual: %v", foundedProductsForFirstPage.CurrentPage)
+	}
+
+	if foundedProductsForFirstPage.Products[0].Name != "Первый тестовый продукт" {
+		test.Errorf("Expected \"Первый тестовый продукт\", actual: %v", foundedProductsForFirstPage.Products[0].Name)
+	}
+
+	if foundedProductsForFirstPage.Products[1].Name != "Второй тестовый продукт" {
+		test.Errorf("Expected \"Второй тестовый продукт\", actual: %v", foundedProductsForFirstPage.Products[1].Name)
+	}
+
+	foundedProductsForFirstPage, err = storage.Products.ReadProductsByNameWithPagination("тестовый", "ru", 2, 2)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if foundedProductsForFirstPage.Products[0].Name != "Третий тестовый продукт" {
+		test.Errorf("Expected \"Третий тестовый продукт\", actual: %v", foundedProductsForFirstPage.Products[0].Name)
+	}
+
+	if foundedProductsForFirstPage.Products[1].Name != "Четвёртый тестовый продукт" {
+		test.Errorf("Expected \"Четвёртый тестовый продукт\", actual: %v", foundedProductsForFirstPage.Products[1].Name)
+	}
+
+	foundedProductsForFirstPage, err = storage.Products.ReadProductsByNameWithPagination("тестовый", "ru", 3, 2)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if foundedProductsForFirstPage.CurrentPage != 3 {
+		test.Errorf("Expected page 3, actual: %v", foundedProductsForFirstPage.CurrentPage)
+	}
+
+	if foundedProductsForFirstPage.CountProductOnPage != 1 {
+		test.Errorf("Expected 1 product on one page, actual: %v", foundedProductsForFirstPage.CountProductOnPage)
+	}
+
+	if len(foundedProductsForFirstPage.Products) != 1 {
+		test.Errorf("Expected one product. actual: %v", len(foundedProductsForFirstPage.Products))
+	}
+
+	if foundedProductsForFirstPage.Products[0].Name != "Пятый тестовый продукт" {
+		test.Errorf("Expected \"Пятый тестовый продукт\", actual: %v", foundedProductsForFirstPage.Products[0].Name)
+	}
+
+}
