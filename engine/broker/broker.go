@@ -12,7 +12,7 @@ import (
 // EventData is a struct of event for receive from socket server
 type EventData struct {
 	Message  string
-	Details  interface{}
+	Data     string
 	ClientID string
 }
 

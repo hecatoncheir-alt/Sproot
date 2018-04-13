@@ -39,14 +39,27 @@ func main() {
 
 		log.Println(fmt.Sprintf("Received message: '%v'", data.Message))
 
+		if data.Message == "Need items by name" {
+			details := storage.ProductsByNameForPage{}
+			json.Unmarshal([]byte(data.Data), &details)
+			go handlesProductsByNameAndPagination(details, config.Production.Channel, puffer.Broker, puffer.Storage)
+
+		}
+
 		if data.Message == "Product of category of company ready" {
-			go handlesProductOfCategoryOfCompanyReadyEvent(data.Details.(string), puffer.Storage)
+			go handlesProductOfCategoryOfCompanyReadyEvent(data.Data, puffer.Storage)
 		}
 
 		if data.Message == "Products of categories of companies must be parsed" {
 			go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Production.Channel, puffer.Broker, puffer.Storage)
 		}
 	}
+}
+
+func handlesProductsByNameAndPagination(details storage.ProductsByNameForPage, topic string, bro *broker.Broker, storage *storage.Storage) {
+	// TODO
+	fmt.Println(details)
+	fmt.Println(details.CurrentPage)
 }
 
 func handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(topic string, bro *broker.Broker, storage *storage.Storage) {

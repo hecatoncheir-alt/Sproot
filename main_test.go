@@ -125,7 +125,7 @@ func TestIntegrationEventOfParseRequestCanBeSendToBroker(test *testing.T) {
 //         main_test.go:310: company already exist
 //         main_test.go:318: category already exist
 //         main_test.go:330: city already exist
-// rename Data to Details
+// rename Data to Data
 func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 	test.Skip()
 	puffer := engine.New()

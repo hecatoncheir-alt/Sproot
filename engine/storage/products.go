@@ -150,7 +150,7 @@ type ProductsByNameForPage struct {
 	CurrentPage        int
 	CountProductOnPage int
 	TotalProductsFound int
-	SearchedByName     string
+	SearchedName       string
 	Language           string
 }
 
@@ -279,7 +279,7 @@ func (products *Products) ReadProductsByNameWithPagination(productName, language
 		Products:           foundedProducts.AllProductsFoundedByName,
 		CurrentPage:        currentPage,
 		CountProductOnPage: len(foundedProducts.AllProductsFoundedByName),
-		SearchedByName:     productName,
+		SearchedName:       productName,
 		TotalProductsFound: totalCountOfProducts,
 		Language:           language}
 
