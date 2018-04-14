@@ -9,6 +9,7 @@ import (
 	"github.com/hecatoncheir/Sproot/engine"
 	"github.com/hecatoncheir/Sproot/engine/broker"
 	"github.com/hecatoncheir/Sproot/engine/storage"
+	"github.com/hecatoncheir/Initial/engine/socket"
 )
 
 func main() {
@@ -42,7 +43,7 @@ func main() {
 		if data.Message == "Need items by name" {
 			details := storage.ProductsByNameForPage{}
 			json.Unmarshal([]byte(data.Data), &details)
-			go handlesProductsByNameAndPagination(details, config.Production.Channel, puffer.Broker, puffer.Storage)
+			go handlesProductsByNameAndPagination(details, data.ClientID, config.APIVersion, puffer.Broker, puffer.Storage)
 
 		}
 
@@ -56,10 +57,47 @@ func main() {
 	}
 }
 
-func handlesProductsByNameAndPagination(details storage.ProductsByNameForPage, topic string, bro *broker.Broker, storage *storage.Storage) {
-	// TODO
-	fmt.Println(details)
-	fmt.Println(details.CurrentPage)
+func handlesProductsByNameAndPagination(details storage.ProductsByNameForPage, clientID string, topic string, bro *broker.Broker, store *storage.Storage) {
+	productsForPage, err := store.Products.ReadProductsByNameWithPagination(details.SearchedName, details.Language, details.CurrentPage, details.TotalProductsOnOnePage)
+
+	if err != nil && err != storage.ErrProductsByNameNotFound {
+		log.Println(err)
+	}
+
+	if err != nil && err == storage.ErrProductsByNameNotFound {
+		data, err := json.Marshal(productsForPage)
+		if err != nil {
+			log.Println(err)
+		}
+
+		event := socket.EventData{
+			Message:  "Items by name not found",
+			Data:     string(data),
+			ClientID: clientID}
+
+		err = bro.WriteToTopic(topic, event)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
+	if err == nil {
+		data, err := json.Marshal(productsForPage)
+		if err != nil {
+			log.Println(err)
+		}
+
+		event := socket.EventData{
+			Message:  "Items by name ready",
+			Data:     string(data),
+			ClientID: clientID}
+
+		err = bro.WriteToTopic(topic, event)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
 }
 
 func handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(topic string, bro *broker.Broker, storage *storage.Storage) {
