@@ -162,7 +162,12 @@ func (products *Products) ReadProductsByNameWithPagination(productName, language
 	}
 
 	productsByPageTemplate, err := template.New("productsByPage").Parse(`{
-				products(func: regexp(productName@{{.Language}}, /{{.ProductName}}/), first: {{.ItemsPerPage}}, offset: {{.Offset}})
+				all as counters(func: regexp(productName@{{.Language}}, /{{.ProductName}}/))
+				@filter(eq(productIsActive, true) AND has(productName)){
+					total: count(uid)
+				}
+
+				products(func: uid(all), first: {{.ItemsPerPage}}, offset: {{.Offset}})
 				@filter(eq(productIsActive, true) AND has(productName)) {
 					uid
 					productName: productName@{{.Language}}
@@ -259,7 +264,8 @@ func (products *Products) ReadProductsByNameWithPagination(productName, language
 	}
 
 	type productsInStorage struct {
-		AllProductsFoundedByName []Product `json:"products"`
+		Total                    []map[string]int `json:"counters"`
+		AllProductsFoundedByName []Product        `json:"products"`
 	}
 
 	var foundedProducts productsInStorage
@@ -269,14 +275,12 @@ func (products *Products) ReadProductsByNameWithPagination(productName, language
 		return nil, ErrProductsByNameCanNotBeFound
 	}
 
-	totalCountOfProducts, err := products.ReadTotalCountOfProductsByName(productName, language)
-
 	foundedProductsByNameForPage := ProductsByNameForPage{
 		Products:               foundedProducts.AllProductsFoundedByName,
 		CurrentPage:            currentPage,
 		TotalProductsOnOnePage: len(foundedProducts.AllProductsFoundedByName),
 		SearchedName:           productName,
-		TotalProductsFound:     totalCountOfProducts,
+		TotalProductsFound:     foundedProducts.Total[0]["total"],
 		Language:               language}
 
 	if len(foundedProducts.AllProductsFoundedByName) == 0 {
