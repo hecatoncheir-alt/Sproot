@@ -269,10 +269,6 @@ func (products *Products) ReadProductsByNameWithPagination(productName, language
 		return nil, ErrProductsByNameCanNotBeFound
 	}
 
-	if len(foundedProducts.AllProductsFoundedByName) == 0 {
-		return nil, ErrProductsByNameNotFound
-	}
-
 	totalCountOfProducts, err := products.ReadTotalCountOfProductsByName(productName, language)
 
 	foundedProductsByNameForPage := ProductsByNameForPage{
@@ -282,6 +278,10 @@ func (products *Products) ReadProductsByNameWithPagination(productName, language
 		SearchedName:           productName,
 		TotalProductsFound:     totalCountOfProducts,
 		Language:               language}
+
+	if len(foundedProducts.AllProductsFoundedByName) == 0 {
+		return &foundedProductsByNameForPage, ErrProductsByNameNotFound
+	}
 
 	return &foundedProductsByNameForPage, nil
 }

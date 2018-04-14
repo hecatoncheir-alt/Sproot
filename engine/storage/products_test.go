@@ -271,19 +271,19 @@ func TestIntegrationProductsTotalCountCanBeReturned(test *testing.T) {
 	once.Do(prepareStorage)
 
 	createdProduct1, _ := storage.Products.CreateProduct(Product{Name: "Первый тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct1)
+	//defer storage.Products.DeleteProduct(createdProduct1)
 
 	createdProduct2, _ := storage.Products.CreateProduct(Product{Name: "Второй тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct2)
+	//defer storage.Products.DeleteProduct(createdProduct2)
 
 	createdProduct3, _ := storage.Products.CreateProduct(Product{Name: "Третий тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct3)
+	//defer storage.Products.DeleteProduct(createdProduct3)
 
 	createdProduct4, _ := storage.Products.CreateProduct(Product{Name: "Четвёртый тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct4)
+	//defer storage.Products.DeleteProduct(createdProduct4)
 
 	createdProduct5, _ := storage.Products.CreateProduct(Product{Name: "Пятый тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct5)
+	//defer storage.Products.DeleteProduct(createdProduct5)
 
 	counterOfFoundedProducts, err := storage.Products.ReadTotalCountOfProductsByName("тестовый", "ru")
 	if err != nil {
