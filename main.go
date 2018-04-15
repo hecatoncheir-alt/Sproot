@@ -9,7 +9,6 @@ import (
 	"github.com/hecatoncheir/Sproot/engine"
 	"github.com/hecatoncheir/Sproot/engine/broker"
 	"github.com/hecatoncheir/Sproot/engine/storage"
-	"github.com/hecatoncheir/Initial/engine/socket"
 )
 
 func main() {
@@ -70,7 +69,7 @@ func handlesProductsByNameAndPagination(details storage.ProductsByNameForPage, c
 			log.Println(err)
 		}
 
-		event := socket.EventData{
+		event := broker.EventData{
 			Message:  "Items by name not found",
 			Data:     string(data),
 			ClientID: clientID}
@@ -87,7 +86,7 @@ func handlesProductsByNameAndPagination(details storage.ProductsByNameForPage, c
 			log.Println(err)
 		}
 
-		event := socket.EventData{
+		event := broker.EventData{
 			Message:  "Items by name ready",
 			Data:     string(data),
 			ClientID: clientID}
