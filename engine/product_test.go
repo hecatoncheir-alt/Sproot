@@ -139,6 +139,7 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 	}
 }
 
+// TODO: for real tests
 // TODO check tests
 // ok      github.com/hecatoncheir/Sproot/configuration    0.042s
 // --- FAIL: TestIntegrationNewPriceWithExistedProductCanBeCreated (0.51s)

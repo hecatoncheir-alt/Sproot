@@ -8,6 +8,7 @@ import (
 
 	"github.com/hecatoncheir/Sproot/configuration"
 	"github.com/hecatoncheir/Sproot/engine"
+	"github.com/hecatoncheir/Sproot/engine/broker"
 	"github.com/hecatoncheir/Sproot/engine/storage"
 )
 
@@ -81,9 +82,9 @@ func TestIntegrationEventOfParseRequestCanBeSendToBroker(test *testing.T) {
 		test.Error(err)
 	}
 
-	go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Development.Channel, puffer.Broker, puffer.Storage)
+	go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Development.SprootTopic, puffer.Broker, puffer.Storage)
 
-	messages, err := puffer.Broker.ListenTopic(config.Development.Channel, config.Development.Channel)
+	messages, err := puffer.Broker.ListenTopic(config.Development.SprootTopic, config.APIVersion)
 	for message := range messages {
 
 		data := map[string]string{}
@@ -189,10 +190,10 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 		test.Error(err)
 	}
 
-	go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Development.Channel, puffer.Broker, puffer.Storage)
+	go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Development.SprootTopic, puffer.Broker, puffer.Storage)
 
 	nameOfProduct := ""
-	messages, err := puffer.Broker.ListenTopic(config.Development.Channel, config.Development.Channel)
+	messages, err := puffer.Broker.ListenTopic(config.Development.SprootTopic, config.APIVersion)
 	for message := range messages {
 
 		data := map[string]string{}
@@ -225,9 +226,11 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 				test.Fail()
 			}
 
-			err = puffer.Broker.WriteToTopic(config.Development.Channel, map[string]interface{}{
-				"Message": "Product of category of company ready",
-				"Data":    string(productJSON)})
+			event := broker.EventData{
+				Message: "Product of category of company ready",
+				Data:    string(productJSON)}
+
+			err = puffer.Broker.WriteToTopic(config.Development.SprootTopic, event)
 
 			continue
 		}
@@ -366,11 +369,11 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 		test.Error(err)
 	}
 
-	go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Development.Channel, puffer.Broker, puffer.Storage)
+	go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Development.SprootTopic, puffer.Broker, puffer.Storage)
 
 	eventCount := 0
 	nameOfProduct := ""
-	messages, err := puffer.Broker.ListenTopic(config.Development.Channel, config.Development.Channel)
+	messages, err := puffer.Broker.ListenTopic(config.Development.SprootTopic, config.APIVersion)
 	for message := range messages {
 
 		data := map[string]string{}
@@ -404,9 +407,11 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 				test.Fail()
 			}
 
-			err = puffer.Broker.WriteToTopic(config.Development.Channel, map[string]interface{}{
-				"Message": "Product of category of company ready",
-				"Data":    string(productJSON)})
+			event := broker.EventData{
+				Message: "Product of category of company ready",
+				Data:    string(productJSON)}
+
+			err = puffer.Broker.WriteToTopic(config.Development.SprootTopic, event)
 
 			continue
 		}
@@ -422,7 +427,7 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 
 		handlesProductOfCategoryOfCompanyReadyEvent(data["Data"], puffer.Storage)
 
-		go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Development.Channel, puffer.Broker, puffer.Storage)
+		go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Development.SprootTopic, puffer.Broker, puffer.Storage)
 
 		eventCount++
 		if eventCount == 2 {

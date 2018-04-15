@@ -6,14 +6,15 @@ import (
 	"log"
 	"strconv"
 
-	nsq "github.com/bitly/go-nsq"
+	"github.com/bitly/go-nsq"
 )
 
 // EventData is a struct of event for receive from socket server
 type EventData struct {
-	Message  string
-	Data     string
-	ClientID string
+	Message    string
+	Data       string
+	APIVersion string
+	ClientID   string
 }
 
 // New constructor for Broker
@@ -59,7 +60,7 @@ func (broker *Broker) Connect(host string, port int) error {
 }
 
 // WriteToTopic method for publish message to topic
-func (broker *Broker) WriteToTopic(topic string, message interface{}) error {
+func (broker *Broker) WriteToTopic(topic string, message EventData) error {
 	event, err := json.Marshal(message)
 	if err != nil {
 		return err

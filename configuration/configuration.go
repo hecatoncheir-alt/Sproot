@@ -12,8 +12,10 @@ type Configuration struct {
 	APIVersion string
 
 	Production struct {
-		Channel string
-		Broker  struct {
+		SprootTopic  string
+		InitialTopic string
+
+		Broker struct {
 			Host string
 			Port int
 		}
@@ -24,8 +26,10 @@ type Configuration struct {
 	}
 
 	Development struct {
-		Channel string
-		Broker  struct {
+		SprootTopic  string
+		InitialTopic string
+
+		Broker struct {
 			Host string
 			Port int
 		}
@@ -42,23 +46,37 @@ func GetConfiguration() (Configuration, error) {
 
 	apiVersion := os.Getenv("API-Version")
 	if apiVersion == "" {
-		configuration.APIVersion = "v1"
+		configuration.APIVersion = "1.0.0"
 	} else {
 		configuration.APIVersion = apiVersion
 	}
 
-	productionParserChannel := os.Getenv("Production-Channel")
-	if productionParserChannel == "" {
-		configuration.Production.Channel = "Sproot"
+	productionSprootChannel := os.Getenv("Production-Sproot-Channel")
+	if productionSprootChannel == "" {
+		configuration.Production.SprootTopic = "Sproot"
 	} else {
-		configuration.Production.Channel = productionParserChannel
+		configuration.Production.SprootTopic = productionSprootChannel
 	}
 
-	developmentParserChannel := os.Getenv("Development-Channel")
-	if developmentParserChannel == "" {
-		configuration.Development.Channel = "test"
+	developmentSprootChannel := os.Getenv("Development-Sproot-Channel")
+	if developmentSprootChannel == "" {
+		configuration.Development.SprootTopic = "DevSproot"
 	} else {
-		configuration.Development.Channel = developmentParserChannel
+		configuration.Development.SprootTopic = developmentSprootChannel
+	}
+
+	productionInitialChannel := os.Getenv("Production-Initial-Channel")
+	if productionSprootChannel == "" {
+		configuration.Production.InitialTopic = "Initial"
+	} else {
+		configuration.Production.InitialTopic = productionInitialChannel
+	}
+
+	developmentInitialChannel := os.Getenv("Development-Initial-Channel")
+	if developmentInitialChannel == "" {
+		configuration.Development.InitialTopic = "DevInitial"
+	} else {
+		configuration.Development.InitialTopic = developmentInitialChannel
 	}
 
 	productionBrokerHostFromEnvironment := os.Getenv("Production-Broker-Host")

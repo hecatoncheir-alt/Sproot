@@ -30,7 +30,7 @@ func TestBrokerCanConnectToNSQ(test *testing.T) {
 	bro.Producer.Publish(uuidOfTopic, message)
 	defer bro.Producer.Stop()
 
-	items, err := bro.ListenTopic(uuidOfTopic, config.Development.Channel)
+	items, err := bro.ListenTopic(uuidOfTopic, config.Development.SprootTopic)
 	if err != nil {
 		test.Error(err)
 	}
@@ -59,7 +59,7 @@ func TestBrokerCanSendMessageToNSQ(test *testing.T) {
 		log.Println(err)
 	}
 
-	item := map[string]string{"Name": "test item"}
+	item := EventData{Message: "test item"}
 
 	items, err := bro.ListenTopic(uuidOfTopic, "Sproot")
 	if err != nil {
@@ -74,9 +74,9 @@ func TestBrokerCanSendMessageToNSQ(test *testing.T) {
 	defer bro.Producer.Stop()
 
 	for item := range items {
-		data := map[string]string{}
+		data := EventData{}
 		json.Unmarshal(item, &data)
-		if data["Name"] == "test item" {
+		if data.Message == "test item" {
 			break
 		}
 	}

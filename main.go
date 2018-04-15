@@ -28,7 +28,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	channel, err := puffer.Broker.ListenTopic(config.APIVersion, config.Production.Channel)
+	channel, err := puffer.Broker.ListenTopic(config.Production.SprootTopic, config.APIVersion)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,12 +37,16 @@ func main() {
 		data := broker.EventData{}
 		json.Unmarshal(event, &data)
 
+		if data.APIVersion != config.APIVersion {
+			continue
+		}
+
 		log.Println(fmt.Sprintf("Received message: '%v'", data.Message))
 
 		if data.Message == "Need items by name" {
 			details := storage.ProductsByNameForPage{}
 			json.Unmarshal([]byte(data.Data), &details)
-			go handlesProductsByNameAndPagination(details, data.ClientID, config.APIVersion, puffer.Broker, puffer.Storage)
+			go handlesProductsByNameAndPagination(details, data.ClientID, data.APIVersion, config.Production.InitialTopic, puffer.Broker, puffer.Storage)
 
 		}
 
@@ -51,12 +55,12 @@ func main() {
 		}
 
 		if data.Message == "Products of categories of companies must be parsed" {
-			go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Production.Channel, puffer.Broker, puffer.Storage)
+			go handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(config.Production.SprootTopic, puffer.Broker, puffer.Storage)
 		}
 	}
 }
 
-func handlesProductsByNameAndPagination(details storage.ProductsByNameForPage, clientID string, topic string, bro *broker.Broker, store *storage.Storage) {
+func handlesProductsByNameAndPagination(details storage.ProductsByNameForPage, clientID, APIVersion string, topic string, bro *broker.Broker, store *storage.Storage) {
 	productsForPage, err := store.Products.ReadProductsByNameWithPagination(details.SearchedName, details.Language, details.CurrentPage, details.TotalProductsOnOnePage)
 
 	if err != nil && err != storage.ErrProductsByNameNotFound {
@@ -70,9 +74,10 @@ func handlesProductsByNameAndPagination(details storage.ProductsByNameForPage, c
 		}
 
 		event := broker.EventData{
-			Message:  "Items by name not found",
-			Data:     string(data),
-			ClientID: clientID}
+			Message:    "Items by name not found",
+			Data:       string(data),
+			APIVersion: APIVersion,
+			ClientID:   clientID}
 
 		err = bro.WriteToTopic(topic, event)
 		if err != nil {
@@ -87,9 +92,10 @@ func handlesProductsByNameAndPagination(details storage.ProductsByNameForPage, c
 		}
 
 		event := broker.EventData{
-			Message:  "Items by name ready",
-			Data:     string(data),
-			ClientID: clientID}
+			Message:    "Items by name ready",
+			Data:       string(data),
+			APIVersion: APIVersion,
+			ClientID:   clientID}
 
 		err = bro.WriteToTopic(topic, event)
 		if err != nil {
@@ -146,9 +152,11 @@ func handlesProductsOfCategoriesOfCompaniesMustBeParsedEvent(topic string, bro *
 							log.Println(err)
 						}
 
-						err = bro.WriteToTopic(topic, map[string]interface{}{
-							"Message": "Need products of category of company",
-							"Data":    string(data)})
+						event := broker.EventData{
+							Message: "Need products of category of company",
+							Data:    string(data)}
+
+						err = bro.WriteToTopic(topic, event)
 
 						if err != nil {
 							log.Println(err)

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"github.com/hecatoncheir/Sproot/configuration"
 	"github.com/hecatoncheir/Sproot/engine/broker"
 	"github.com/hecatoncheir/Sproot/engine/storage"
@@ -47,8 +48,16 @@ type InstructionOfCompany struct {
 func (entity *Company) ParseAll(instructions []InstructionOfCompany) error {
 
 	for _, instruction := range instructions {
-		message := map[string]interface{}{"Message": "Need products of category of company", "Data": instruction}
-		err := entity.Broker.WriteToTopic(entity.Configuration.APIVersion, message)
+		data, err := json.Marshal(instruction)
+		if err != nil {
+			return err
+		}
+
+		message := broker.EventData{
+			Message: "Need products of category of company",
+			Data:    string(data)}
+
+		err = entity.Broker.WriteToTopic(entity.Configuration.APIVersion, message)
 		if err != nil {
 			return err
 		}
