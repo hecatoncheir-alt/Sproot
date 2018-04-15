@@ -8,9 +8,10 @@ import (
 	"errors"
 	"fmt"
 
-	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
-	"text/template"
 	"bytes"
+	"text/template"
+
+	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
 )
 
 var (
@@ -162,7 +163,7 @@ func (products *Products) ReadProductsByNameWithPagination(productName, language
 	}
 
 	productsByPageTemplate, err := template.New("productsByPage").Parse(`{
-				all as counters(func: regexp(productName@{{.Language}}, /{{.ProductName}}/))
+				all as counters(func: regexp(productName@{{.Language}}, /{{.ProductName}}/i))
 				@filter(eq(productIsActive, true) AND has(productName)){
 					total: count(uid)
 				}
