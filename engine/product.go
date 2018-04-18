@@ -87,6 +87,11 @@ func (product *ProductOfCompany) UpdateInStorage(store *storage.Storage) (storag
 		return productFromStorage, err
 	}
 
+	err = store.Prices.AddCompanyToPrice(priceFromStorage.ID, product.Company.ID)
+	if err != nil {
+		return productFromStorage, err
+	}
+
 	err = store.Prices.AddProductToPrice(priceFromStorage.ID, productFromStorage.ID)
 	if err != nil {
 		return productFromStorage, err

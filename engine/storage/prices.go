@@ -14,12 +14,13 @@ import (
 
 // Price is a structure of prices in database
 type Price struct {
-	ID       string    `json:"uid"`
-	Value    float64   `json:"priceValue, omitempty"`
-	DateTime time.Time `json:"priceDateTime, omitempty"`
-	IsActive bool      `json:"priceIsActive, omitempty"`
-	Cities   []City    `json:"belongs_to_city, omitempty"`
-	Products []Product `json:"belongs_to_product, omitempty"`
+	ID        string    `json:"uid"`
+	Value     float64   `json:"priceValue, omitempty"`
+	DateTime  time.Time `json:"priceDateTime, omitempty"`
+	IsActive  bool      `json:"priceIsActive, omitempty"`
+	Cities    []City    `json:"belongs_to_city, omitempty"`
+	Products  []Product `json:"belongs_to_product, omitempty"`
+	Companies []Company `json:"belongs_to_company, omitempty"`
 }
 
 // NewPricesResourceForStorage is a constructor of Prices resource
@@ -39,6 +40,7 @@ func (prices *Prices) SetUp() (err error) {
 		priceDateTime: dateTime @index(day) .
 		priceIsActive: bool @index(bool) .
 		belongs_to_city: uid @count .
+		belongs_to_product: uid @count .
 		belongs_to_product: uid @count .
 	`
 	operation := &dataBaseAPI.Operation{Schema: schema}
@@ -138,8 +140,19 @@ func (prices *Prices) ReadPriceByID(priceID, language string) (Price, error) {
 						cityName: cityName@%v
 						cityIsActive
 					}
+					belongs_to_company @filter(eq(companyIsActive, true)){
+						uid
+						companyName: companyName@%v
+						companyIri
+						companyIsActive
+						has_category @filter(eq(categoryIsActive, true)) {
+							uid
+							categoryName: categoryName@%v
+							categoryIsActive
+						}
+					}
 				}
-			}`, priceID, language, language)
+			}`, priceID, language, language, language, language)
 
 	transaction := prices.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), query)
@@ -195,6 +208,28 @@ func (prices *Prices) AddProductToPrice(priceID, productID string) error {
 	_, err = transaction.Mutate(context.Background(), &mutation)
 	if err != nil {
 		return ErrProductCanNotBeAddedToPrice
+	}
+
+	return nil
+}
+
+// ErrCompanyCanNotBeAddedToPrice means that the company can't be added to price
+var ErrCompanyCanNotBeAddedToPrice = errors.New("company can not be added to price")
+
+// AddCompanyToPrice method for set quad of predicate about price and product
+func (prices *Prices) AddCompanyToPrice(priceID, companyID string) error {
+	var err error
+	var mutation dataBaseAPI.Mutation
+
+	forPricePredicate := fmt.Sprintf(`<%s> <%s> <%s> .`, priceID, "belongs_to_company", companyID)
+	mutation = dataBaseAPI.Mutation{
+		SetNquads: []byte(forPricePredicate),
+		CommitNow: true}
+
+	transaction := prices.storage.Client.NewTxn()
+	_, err = transaction.Mutate(context.Background(), &mutation)
+	if err != nil {
+		return ErrCompanyCanNotBeAddedToPrice
 	}
 
 	return nil
@@ -285,6 +320,10 @@ func (prices *Prices) ExportJSON() ([]byte, error) {
 					belongs_to_city {
 						uid
 						cityIsActive
+					}
+					belongs_to_company {
+						uid
+						companyIsActive
 					}
 				}
 			}`)

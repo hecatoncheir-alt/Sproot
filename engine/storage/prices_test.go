@@ -114,6 +114,29 @@ func TestIntegrationProductCanBeAddedToPrice(test *testing.T) {
 	}
 }
 
+func TestIntegrationCompanyCanBeAddedToPrice(test *testing.T) {
+	once.Do(prepareStorage)
+
+	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
+	dateTime, _ := time.Parse(time.RFC3339, exampleDateTime)
+	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
+	defer storage.Prices.DeletePrice(createdPrice)
+
+	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	defer storage.Companies.DeactivateCompany(createdCompany)
+
+	err := storage.Prices.AddCompanyToPrice(createdPrice.ID, createdCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedPrice, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+
+	if updatedPrice.Companies[0].ID != createdCompany.ID {
+		test.Fail()
+	}
+}
+
 func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
 	once.Do(prepareStorage)
 
