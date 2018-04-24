@@ -307,10 +307,7 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 	}
 }
 
-//--- FAIL: TestIntegrationCompaniesCanBeExportedToJSON (0.40s)
-//        companies_test.go:600: Expected category of company has one product, but actual 0
 func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
-	test.Skip()
 	puffer := engine.New()
 
 	config, err := configuration.GetConfiguration()
