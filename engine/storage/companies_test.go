@@ -570,27 +570,43 @@ func TestIntegrationCompaniesCanBeExportedToJSON(test *testing.T) {
 		test.Fail()
 	}
 
-	if exportedCompanies.Companies[0].Name != createdCompany.Name {
+	var exportedCompany Company
+
+	for _, company := range exportedCompanies.Companies {
+		if company.ID == createdCompany.ID {
+			exportedCompany = company
+		}
+	}
+
+	if exportedCompany.Name != createdCompany.Name {
 		test.Fail()
 	}
 
-	if exportedCompanies.Companies[0].Categories[0].Name != createdCategory.Name {
+	if len(exportedCompany.Categories) == 0 {
+		test.Fatalf("Expected company has one category, but actual 0")
+	}
+
+	if exportedCompany.Categories[0].Name != createdCategory.Name {
 		test.Fail()
 	}
 
-	if len(exportedCompanies.Companies[0].Categories[0].Products) > 1 {
+	if len(exportedCompany.Categories[0].Products) > 1 {
 		test.Fatal()
 	}
 
-	if exportedCompanies.Companies[0].Categories[0].Products[0].Name != createdProduct.Name {
+	if len(exportedCompany.Categories[0].Products) == 0 {
+		test.Fatalf("Expected category of company has one product, but actual 0")
+	}
+
+	if exportedCompany.Categories[0].Products[0].Name != createdProduct.Name {
 		test.Fail()
 	}
 
-	if exportedCompanies.Companies[0].Categories[0].Products[0].Prices[0].Value != createdPrice.Value {
+	if exportedCompany.Categories[0].Products[0].Prices[0].Value != createdPrice.Value {
 		test.Fail()
 	}
 
-	if exportedCompanies.Companies[0].Categories[0].Products[0].Prices[0].Cities[0].Name != createdCity.Name {
+	if exportedCompany.Categories[0].Products[0].Prices[0].Cities[0].Name != createdCity.Name {
 		test.Fail()
 	}
 }

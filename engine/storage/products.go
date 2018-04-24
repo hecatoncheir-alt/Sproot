@@ -77,7 +77,7 @@ func NewProductsResourceForStorage(storage *Storage) *Products {
 // SetUp is a method of Products resource for prepare database client and schema.
 func (products *Products) SetUp() (err error) {
 	schema := `
-		productName: string @index(term, trigram) .
+		productName: string @lang @index(term, trigram) .
 		productIri: string @index(term) .
 		productImageLink: string @index(term) .
 		productIsActive: bool @index(bool) .

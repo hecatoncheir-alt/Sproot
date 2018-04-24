@@ -30,7 +30,7 @@ type Cities struct {
 // SetUp is a method of Cities resource for prepare database client and schema.
 func (cities *Cities) SetUp() (err error) {
 	schema := `
-		cityName: string @index(term) .
+		cityName: string @lang @index(term) .
 		cityIsActive: bool @index(bool) .
 	`
 	operation := &dataBaseAPI.Operation{Schema: schema}

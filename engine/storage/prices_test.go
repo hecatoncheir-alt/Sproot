@@ -123,7 +123,7 @@ func TestIntegrationCompanyCanBeAddedToPrice(test *testing.T) {
 	defer storage.Prices.DeletePrice(createdPrice)
 
 	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeactivateCompany(createdCompany)
+	defer storage.Companies.DeleteCompany(createdCompany)
 
 	err := storage.Prices.AddCompanyToPrice(createdPrice.ID, createdCompany.ID)
 	if err != nil {

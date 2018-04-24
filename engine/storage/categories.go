@@ -73,7 +73,7 @@ func NewCategoriesResourceForStorage(storage *Storage) *Categories {
 // SetUp is a method of Categories resource for prepare database client and schema.
 func (categories *Categories) SetUp() (err error) {
 	schema := `
-		categoryName: string @index(term) .
+		categoryName: string @lang @index(term).
 		categoryIsActive: bool @index(bool) .
 		belongs_to_company: uid .
 		has_product: uid .
@@ -110,9 +110,8 @@ func (categories *Categories) CreateCategory(category Category, language string)
 	}
 
 	mutation := &dataBaseAPI.Mutation{
-		SetJson:             encodedCategory,
-		CommitNow:           true,
-		IgnoreIndexConflict: true}
+		SetJson:   encodedCategory,
+		CommitNow: true}
 
 	assigned, err := transaction.Mutate(context.Background(), mutation)
 	if err != nil {
@@ -130,7 +129,12 @@ func (categories *Categories) CreateCategory(category Category, language string)
 		return category, err
 	}
 
-	return category, nil
+	createdCategory, err := categories.ReadCategoryByID(category.ID, language)
+	if err != nil {
+		return category, err
+	}
+
+	return createdCategory, nil
 }
 
 // AddLanguageOfCategoryName is a method for add predicate "categoryName" for companyName value with new language

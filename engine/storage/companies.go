@@ -75,7 +75,7 @@ func NewCompaniesResourceForStorage(storage *Storage) *Companies {
 // SetUp is a method of Companies resource for prepare database client and schema.
 func (companies *Companies) SetUp() (err error) {
 	schema := `
-		companyName: string @index(term) .
+		companyName: string @lang @index(term) .
 		companyIsActive: bool @index(bool) .
 		has_category: uid @count .
 	`
