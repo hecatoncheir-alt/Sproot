@@ -293,27 +293,35 @@ func (products *Products) ReadProductsByNameWithPagination(productName, language
 
 // ReadProductsByName is a method for get all nodes by product name
 func (products *Products) ReadProductsByName(productName, language string) ([]Product, error) {
-	query := fmt.Sprintf(`{
-				products(func: regexp(productName@%v, /%s/)) @filter(eq(productIsActive, true) AND has(productName)) {
+
+	variables := struct {
+		ProductName, Language string
+	}{
+		ProductName: productName,
+		Language:    language}
+
+	productsByNameTemplate, err := template.New("productsByName").Parse(`{
+				products(func: regexp(productName@{{.Language}}, /{{.ProductName}}/)) 
+				@filter(eq(productIsActive, true) AND has(productName)) {
 					uid
-					productName: productName@%v
+					productName: productName@{{.Language}}
 					productIri
 					previewImageLink
 					productIsActive
 					belongs_to_category @filter(eq(categoryIsActive, true)) {
 						uid
-						categoryName: categoryName@%v
+						categoryName: categoryName@{{.Language}}
 						categoryIsActive
 						belongs_to_company @filter(eq(companyIsActive, true)) {
 							uid
-							companyName: companyName@%v
+							companyName: companyName@{{.Language}}
 							has_category @filter(eq(categoryIsActive, true)) {
 								uid
-								categoryName: categoryName@%v
+								categoryName: categoryName@{{.Language}}
 								categoryIsActive
 								belong_to_company @filter(eq(companyIsActive, true)){
 									uid
-									companyName: companyName@%v
+									companyName: companyName@{{.Language}}
 									companyIsActive
 								}
 							}
@@ -321,14 +329,14 @@ func (products *Products) ReadProductsByName(productName, language string) ([]Pr
 					}
 					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
-						companyName: companyName@%v
+						companyName: companyName@{{.Language}}
 						has_category @filter(eq(categoryIsActive, true)) {
 							uid
-							categoryName: categoryName@%v
+							categoryName: categoryName@{{.Language}}
 							categoryIsActive
 							belong_to_company @filter(eq(companyIsActive, true)){
 								uid
-								companyName: companyName@%v
+								companyName: companyName@{{.Language}}
 								companyIsActive
 							}
 						}
@@ -339,9 +347,13 @@ func (products *Products) ReadProductsByName(productName, language string) ([]Pr
 						priceDateTime
 						priceCity
 						priceIsActive
+						belongs_to_company @filter(eq(companyIsActive, true)) {
+							uid
+							companyName: companyName@{{.Language}}
+						}
 						belongs_to_product @filter(eq(productIsActive, true)) {
 							uid
-							productName: productName@%v
+							productName: productName@{{.Language}}
 							productIri
 							previewImageLink
 							productIsActive
@@ -351,19 +363,36 @@ func (products *Products) ReadProductsByName(productName, language string) ([]Pr
 								priceDateTime
 								priceCity
 								priceIsActive
+								belongs_to_company @filter(eq(companyIsActive, true)) {
+									uid
+									companyName: companyName@{{.Language}}
+								}
 							}
 						}
 						belongs_to_city @filter(eq(cityIsActive, true)) {
 							uid
-							cityName: cityName@%v
+							cityName: cityName@{{.Language}}
 							cityIsActive
 						}
 					}
 				}
-			}`, language, productName, language, language, language, language, language, language, language, language, language, language)
+			}`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	productsByNameQueryBuf := bytes.Buffer{}
+
+	err = productsByNameTemplate.Execute(&productsByNameQueryBuf, variables)
+	if err != nil {
+		log.Println(err)
+		return nil, ErrProductsByNameCanNotBeFound
+	}
 
 	transaction := products.storage.Client.NewTxn()
-	response, err := transaction.Query(context.Background(), query)
+	response, err := transaction.Query(context.Background(), productsByNameQueryBuf.String())
 	if err != nil {
 		log.Println(err)
 		return nil, ErrProductsByNameCanNotBeFound

@@ -41,7 +41,7 @@ func (prices *Prices) SetUp() (err error) {
 		priceIsActive: bool @index(bool) .
 		belongs_to_city: uid @count .
 		belongs_to_product: uid @count .
-		belongs_to_product: uid @count .
+		belongs_to_company: uid @count .
 	`
 	operation := &dataBaseAPI.Operation{Schema: schema}
 
@@ -216,7 +216,7 @@ func (prices *Prices) AddProductToPrice(priceID, productID string) error {
 // ErrCompanyCanNotBeAddedToPrice means that the company can't be added to price
 var ErrCompanyCanNotBeAddedToPrice = errors.New("company can not be added to price")
 
-// AddCompanyToPrice method for set quad of predicate about price and product
+// AddCompanyToPrice method for set quad of predicate about price and company
 func (prices *Prices) AddCompanyToPrice(priceID, companyID string) error {
 	var err error
 	var mutation dataBaseAPI.Mutation

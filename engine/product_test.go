@@ -139,6 +139,7 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 	}
 }
 
+// TODO: CHECK FIRST!
 // TODO: for real tests
 // TODO check tests
 // ok      github.com/hecatoncheir/Sproot/configuration    0.042s
@@ -269,6 +270,10 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 	}
 
 	if products[0].Prices[0].Value != 46990 {
+		test.Fail()
+	}
+
+	if products[0].Prices[0].Companies[0].ID != createdCompany.ID {
 		test.Fail()
 	}
 
