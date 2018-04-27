@@ -233,6 +233,12 @@ func (products *Products) ReadProductsByNameWithPagination(productName, language
 							cityName: cityName@{{.Language}}
 							cityIsActive
 						}
+						belongs_to_company @filter(eq(companyIsActive, true)) {
+							uid
+							companyName: companyName@{{.Language}}
+							companyIri
+							companyIsActive
+						}
 					}
 				}
 			}`)
@@ -330,6 +336,8 @@ func (products *Products) ReadProductsByName(productName, language string) ([]Pr
 					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
 						companyName: companyName@{{.Language}}
+						companyIri
+						companyIsActive
 						has_category @filter(eq(categoryIsActive, true)) {
 							uid
 							categoryName: categoryName@{{.Language}}
@@ -345,11 +353,12 @@ func (products *Products) ReadProductsByName(productName, language string) ([]Pr
 						uid
 						priceValue
 						priceDateTime
-						priceCity
 						priceIsActive
 						belongs_to_company @filter(eq(companyIsActive, true)) {
 							uid
 							companyName: companyName@{{.Language}}
+							companyIri
+							companyIsActive
 						}
 						belongs_to_product @filter(eq(productIsActive, true)) {
 							uid
@@ -361,11 +370,12 @@ func (products *Products) ReadProductsByName(productName, language string) ([]Pr
 								uid
 								priceValue
 								priceDateTime
-								priceCity
 								priceIsActive
 								belongs_to_company @filter(eq(companyIsActive, true)) {
 									uid
 									companyName: companyName@{{.Language}}
+									companyIri
+									companyIsActive
 								}
 							}
 						}
@@ -412,6 +422,8 @@ func (products *Products) ReadProductsByName(productName, language string) ([]Pr
 	if len(foundedProducts.AllProductsFoundedByName) == 0 {
 		return nil, ErrProductsByNameNotFound
 	}
+
+	fmt.Println(foundedProducts.AllProductsFoundedByName)
 
 	return foundedProducts.AllProductsFoundedByName, nil
 }
