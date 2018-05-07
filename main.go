@@ -61,7 +61,7 @@ func main() {
 }
 
 func handlesProductsByNameAndPagination(details storage.ProductsByNameForPage, clientID, APIVersion string, topic string, bro *broker.Broker, store *storage.Storage) {
-	productsForPage, err := store.Products.ReadProductsByNameWithPagination(details.SearchedName, details.Language, details.CurrentPage, details.TotalProductsOnOnePage)
+	productsForPage, err := store.Products.ReadProductsByNameWithPagination(details.SearchedName, details.Language, details.CurrentPage, details.TotalProductsForOnePage)
 
 	if err != nil && err != storage.ErrProductsByNameNotFound {
 		log.Println(err)

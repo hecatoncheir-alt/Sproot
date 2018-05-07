@@ -147,12 +147,12 @@ func (products *Products) ReadTotalCountOfProductsByName(productName, language s
 }
 
 type ProductsByNameForPage struct {
-	Products               []Product
-	CurrentPage            int
-	TotalProductsOnOnePage int
-	TotalProductsFound     int
-	SearchedName           string
-	Language               string
+	Products                []Product
+	CurrentPage             int
+	TotalProductsForOnePage int
+	TotalProductsFound      int
+	SearchedName            string
+	Language                string
 }
 
 func (products *Products) ReadProductsByNameWithPagination(productName, language string, currentPage, itemsPerPage int) (*ProductsByNameForPage, error) {
@@ -283,12 +283,12 @@ func (products *Products) ReadProductsByNameWithPagination(productName, language
 	}
 
 	foundedProductsByNameForPage := ProductsByNameForPage{
-		Products:               foundedProducts.AllProductsFoundedByName,
-		CurrentPage:            currentPage,
-		TotalProductsOnOnePage: len(foundedProducts.AllProductsFoundedByName),
-		SearchedName:           productName,
-		TotalProductsFound:     foundedProducts.Total[0]["total"],
-		Language:               language}
+		Products:                foundedProducts.AllProductsFoundedByName,
+		CurrentPage:             currentPage,
+		TotalProductsForOnePage: itemsPerPage,
+		SearchedName:            productName,
+		TotalProductsFound:      foundedProducts.Total[0]["total"],
+		Language:                language}
 
 	if len(foundedProducts.AllProductsFoundedByName) == 0 {
 		return &foundedProductsByNameForPage, ErrProductsByNameNotFound

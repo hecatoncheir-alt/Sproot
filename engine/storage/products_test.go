@@ -322,8 +322,8 @@ func TestIntegrationProductCanBeSearchedByNameWithPaginationAndCounter(test *tes
 		test.Errorf("Expected 5 products, actual: %v", foundedProductsForFirstPage.TotalProductsFound)
 	}
 
-	if foundedProductsForFirstPage.TotalProductsOnOnePage != 2 {
-		test.Errorf("Expected 2 products on one page, actual: %v", foundedProductsForFirstPage.TotalProductsOnOnePage)
+	if foundedProductsForFirstPage.TotalProductsForOnePage != 2 {
+		test.Errorf("Expected 2 products on one page, actual: %v", foundedProductsForFirstPage.TotalProductsForOnePage)
 	}
 
 	if foundedProductsForFirstPage.CurrentPage != 1 {
@@ -360,8 +360,8 @@ func TestIntegrationProductCanBeSearchedByNameWithPaginationAndCounter(test *tes
 		test.Errorf("Expected page 3, actual: %v", foundedProductsForFirstPage.CurrentPage)
 	}
 
-	if foundedProductsForFirstPage.TotalProductsOnOnePage != 1 {
-		test.Errorf("Expected 1 product on one page, actual: %v", foundedProductsForFirstPage.TotalProductsOnOnePage)
+	if len(foundedProductsForFirstPage.Products) != 1 {
+		test.Errorf("Expected 1 product for one page, actual: %v", len(foundedProductsForFirstPage.Products))
 	}
 
 	if len(foundedProductsForFirstPage.Products) != 1 {
