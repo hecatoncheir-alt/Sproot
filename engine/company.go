@@ -2,8 +2,9 @@ package engine
 
 import (
 	"encoding/json"
-	"github.com/hecatoncheir/Sproot/configuration"
-	"github.com/hecatoncheir/Sproot/engine/broker"
+
+	"github.com/hecatoncheir/Broker"
+	"github.com/hecatoncheir/Configuration"
 	"github.com/hecatoncheir/Sproot/engine/storage"
 )
 

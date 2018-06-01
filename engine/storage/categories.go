@@ -53,8 +53,8 @@ var (
 
 // Category is a structure of Categories in database
 type Category struct {
-	ID        string    `json:"uid, omitempty"`
-	Name      string    `json:"categoryName, omitempty"`
+	ID        string    `json:"uid,omitempty"`
+	Name      string    `json:"categoryName,omitempty"`
 	IsActive  bool      `json:"categoryIsActive, omitempty"`
 	Companies []Company `json:"belongs_to_company, omitempty"`
 	Products  []Product `json:"has_product, omitempty"`

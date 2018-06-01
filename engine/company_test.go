@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/hecatoncheir/Sproot/configuration"
+	"github.com/hecatoncheir/Configuration"
 	"github.com/hecatoncheir/Sproot/engine/storage"
 )
 

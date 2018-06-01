@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hecatoncheir/Sproot/configuration"
+	"github.com/hecatoncheir/Configuration"
 	"github.com/hecatoncheir/Sproot/engine/storage"
 )
 
@@ -152,7 +152,7 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 // FAIL
 // FAIL    github.com/hecatoncheir/Sproot/engine   5.185s
 func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
-	test.Skip()
+	//test.Skip()
 	engine := New()
 
 	config, err := configuration.GetConfiguration()
@@ -165,13 +165,13 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	companyForTest := storage.Company{Name: "М.Видео", IRI: "http://www.mvideo.ru/"}
+	companyForTest := storage.Company{Name: "М.ВИДЕО", IRI: "http://www.mvideo.ru/"}
 	createdCompany, err := engine.Storage.Companies.CreateCompany(companyForTest, "ru")
 	if err != nil {
 		test.Error(err)
 	}
 
-	defer engine.Storage.Companies.DeleteCompany(createdCompany)
+	//defer engine.Storage.Companies.DeleteCompany(createdCompany)
 
 	categoryForTest := storage.Category{Name: "Смартфоны"}
 	createdCategory, err := engine.Storage.Categories.CreateCategory(categoryForTest, "ru")
@@ -179,7 +179,7 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer engine.Storage.Categories.DeleteCategory(createdCategory)
+	//defer engine.Storage.Categories.DeleteCategory(createdCategory)
 
 	err = engine.Storage.Categories.AddCompanyToCategory(createdCategory.ID, createdCompany.ID)
 	if err != nil {
@@ -191,10 +191,10 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer engine.Storage.Cities.DeleteCity(createdCity)
+	//defer engine.Storage.Cities.DeleteCity(createdCity)
 
 	productForTest := storage.Product{
-		Name:             "Смартфон Samsung Galaxy S8 64Gb Черный бриллиант",
+		Name:             "Смартфон Samsung Galaxy S8 64Gb черный бриллиант",
 		IRI:              "http://www.mvideo.ru//products/smartfon-samsung-galaxy-s8-64gb-chernyi-brilliant-30027818",
 		PreviewImageLink: "img.mvideo.ru/Pdb/30027818m.jpg"}
 
@@ -203,7 +203,7 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer engine.Storage.Products.DeleteProduct(createdProduct)
+	//defer engine.Storage.Products.DeleteProduct(createdProduct)
 
 	err = engine.Storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
 	if err != nil {
@@ -221,11 +221,11 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 	}
 
 	product := ProductOfCompany{
-		Name:             "Смартфон Samsung Galaxy S8 64Gb Черный бриллиант",
+		Name:             "Смартфон Samsung Galaxy S8 64Gb черный бриллиант",
 		IRI:              "http://www.mvideo.ru//products/smartfon-samsung-galaxy-s8-64gb-chernyi-brilliant-30027818",
 		PreviewImageLink: "img.mvideo.ru/Pdb/30027818m.jpg",
 		Price: PriceOfProduct{
-			Value:    "46990",
+			Value:    "49000",
 			DateTime: parseTime,
 			City: CityData{
 				ID:   createdCity.ID,
@@ -250,7 +250,7 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Fatal()
 	}
 
-	defer engine.Storage.Prices.DeletePrice(productFromStorage.Prices[0])
+	//defer engine.Storage.Prices.DeletePrice(productFromStorage.Prices[0])
 
 	products, err := engine.Storage.Products.ReadProductsByName(product.Name, "ru")
 	if err != nil {
@@ -269,7 +269,7 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Fatal()
 	}
 
-	if products[0].Prices[0].Value != 46990 {
+	if products[0].Prices[0].Value != 46991 {
 		test.Fail()
 	}
 
