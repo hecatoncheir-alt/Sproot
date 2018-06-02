@@ -58,7 +58,7 @@ type Product struct {
 	Name             string     `json:"productName, omitempty"`
 	IRI              string     `json:"productIri, omitempty"`
 	PreviewImageLink string     `json:"previewImageLink, omitempty"`
-	IsActive         bool       `json:"productIsActive, omitempty"`
+	IsActive         bool       `json:"productIsActive"`
 	Categories       []Category `json:"belongs_to_category, omitempty"`
 	Companies        []Company  `json:"belongs_to_company, omitempty"`
 	Prices           []Price    `json:"has_price, omitempty"`
@@ -515,29 +515,34 @@ func (products *Products) DeleteProduct(product Product) (string, error) {
 
 // ReadProductByID is a method for get all nodes of products by ID
 func (products *Products) ReadProductByID(productID, language string) (Product, error) {
-	product := Product{ID: productID}
 
-	query := fmt.Sprintf(`{
-				products(func: uid("%s")) @filter(has(productName)) {
+	variables := struct {
+		ProductID, Language string
+	}{
+		ProductID: productID,
+		Language:  language}
+
+	queryTemplate, err := template.New("ReadProductByID").Parse(`{
+				products(func: uid("{{.ProductID}}")) @filter(has(productName)) {
 					uid
-					productName: productName@%v
+					productName: productName@{{.Language}}
 					productIri
 					previewImageLink
 					productIsActive
 					belongs_to_category @filter(eq(categoryIsActive, true)) {
 						uid
-						categoryName: categoryName@%v
+						categoryName: categoryName@{{.Language}}
 						categoryIsActive
 						belongs_to_company @filter(eq(companyIsActive, true)) {
 							uid
-							companyName: companyName@%v
+							companyName: companyName@{{.Language}}
 							has_category @filter(eq(categoryIsActive, true)) {
 								uid
-								categoryName: categoryName@%v
+								categoryName: categoryName@{{.Language}}
 								categoryIsActive
 								belong_to_company @filter(eq(companyIsActive, true)){
 									uid
-									companyName: companyName@%v
+									companyName: companyName@{{.Language}}
 									companyIsActive
 								}
 							}
@@ -545,14 +550,14 @@ func (products *Products) ReadProductByID(productID, language string) (Product, 
 					}
 					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
-						companyName: companyName@%v
+						companyName: companyName@{{.Language}}
 						has_category @filter(eq(categoryIsActive, true)) {
 							uid
-							categoryName: categoryName@%v
+							categoryName: categoryName@{{.Language}}
 							categoryIsActive
 							belong_to_company @filter(eq(companyIsActive, true)){
 								uid
-								companyName: companyName@%v
+								companyName: companyName@{{.Language}}
 								companyIsActive
 							}
 						}
@@ -565,7 +570,7 @@ func (products *Products) ReadProductByID(productID, language string) (Product, 
 						priceIsActive
 						belongs_to_product @filter(eq(productIsActive, true)) {
 							uid
-							productName: productName@%v
+							productName: productName@{{.Language}}
 							productIri
 							previewImageLink
 							productIsActive
@@ -579,15 +584,24 @@ func (products *Products) ReadProductByID(productID, language string) (Product, 
 						}
 						belongs_to_city @filter(eq(cityIsActive, true)) {
 							uid
-							cityName: cityName@%v
+							cityName: cityName@{{.Language}}
 							cityIsActive
 						}
 					}
 				}
-			}`, productID, language, language, language, language, language, language, language, language, language, language)
+			}`)
+
+	product := Product{ID: productID}
+	if err != nil {
+		log.Println(err)
+		return product, ErrProductByIDCanNotBeFound
+	}
+
+	queryBuf := bytes.Buffer{}
+	err = queryTemplate.Execute(&queryBuf, variables)
 
 	transaction := products.storage.Client.NewTxn()
-	response, err := transaction.Query(context.Background(), query)
+	response, err := transaction.Query(context.Background(), queryBuf.String())
 	if err != nil {
 		log.Println(err)
 		return product, ErrProductByIDCanNotBeFound

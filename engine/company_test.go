@@ -9,10 +9,7 @@ import (
 )
 
 func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
-	config, err := configuration.GetConfiguration()
-	if err != nil {
-		test.Error(err)
-	}
+	config := configuration.New()
 
 	store := storage.New(config.Development.Database.Host, config.Development.Database.Port)
 	store.SetUp()

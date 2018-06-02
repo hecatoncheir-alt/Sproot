@@ -1,48 +1,24 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"text/template"
 
 	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
 )
 
 var (
-	// ErrCategoryCanNotBeCreated means that the category can't be added to database
-	ErrCategoryCanNotBeCreated = errors.New("category can't be created")
-
-	// ErrCategoryAlreadyExist means that the category is in the database already
-	ErrCategoryAlreadyExist = errors.New("category already exist")
-
-	// ErrCategoriesByNameCanNotBeFound means that the category can't be found in database
-	ErrCategoriesByNameCanNotBeFound = errors.New("categories by name can not be found")
-
-	// ErrCategoriesByNameNotFound means than the categories does not exist in database
-	ErrCategoriesByNameNotFound = errors.New("categories by name not found")
-
-	// ErrCategoryByIDCanNotBeFound means that the category can't be found in database
-	ErrCategoryByIDCanNotBeFound = errors.New("category by id can not be found")
-
-	// ErrCategoryDoesNotExist means than the categories does not exist in database
-	ErrCategoryDoesNotExist = errors.New("categories by id not found")
-
-	// ErrCategoryCanNotBeWithoutID means that category can't be found in storage for make some operation
-	ErrCategoryCanNotBeWithoutID = errors.New("category can not be without id")
 
 	// ErrCategoryCanNotBeUpdated means that category can't be updated
 	ErrCategoryCanNotBeUpdated = errors.New("category can not be updated")
 
 	// ErrCategoryCanNotBeDeactivate means that the category can't be deactivate in database
 	ErrCategoryCanNotBeDeactivate = errors.New("category can't be deactivate")
-
-	// ErrCategoryCanNotBeDeleted means that the category can't be removed from database
-	ErrCategoryCanNotBeDeleted = errors.New("category can't be deleted")
-
-	// ErrCompanyCanNotBeAddedToCategory means that the company can't be added to category
-	ErrCompanyCanNotBeAddedToCategory = errors.New("company can not be added to category")
 
 	// ErrCompanyCanNotBeRemovedFromCategory means that the company can't be removed from database
 	ErrCompanyCanNotBeRemovedFromCategory = errors.New("company can not be removed from category")
@@ -55,9 +31,9 @@ var (
 type Category struct {
 	ID        string    `json:"uid,omitempty"`
 	Name      string    `json:"categoryName,omitempty"`
-	IsActive  bool      `json:"categoryIsActive, omitempty"`
-	Companies []Company `json:"belongs_to_company, omitempty"`
-	Products  []Product `json:"has_product, omitempty"`
+	IsActive  bool      `json:"categoryIsActive"`
+	Companies []Company `json:"belongs_to_company,omitempty"`
+	Products  []Product `json:"has_product,omitempty"`
 }
 
 // Categories is resource os storage for CRUD operations
@@ -88,6 +64,17 @@ func (categories *Categories) SetUp() (err error) {
 
 	return nil
 }
+
+var (
+	// ErrCategoriesByNameNotFound means than the categories does not exist in database
+	ErrCategoriesByNameNotFound = errors.New("categories by name not found")
+
+	// ErrCategoryCanNotBeCreated means that the category can't be added to database
+	ErrCategoryCanNotBeCreated = errors.New("category can't be created")
+
+	// ErrCategoryAlreadyExist means that the category is in the database already
+	ErrCategoryAlreadyExist = errors.New("category already exist")
+)
 
 // CreateCategory make category and save it to storage
 func (categories *Categories) CreateCategory(category Category, language string) (Category, error) {
@@ -154,50 +141,76 @@ func (categories *Categories) AddLanguageOfCategoryName(categoryID, name, langua
 	return nil
 }
 
+var (
+	// ErrCategoriesByNameCanNotBeFound means that the category can't be found in database
+	ErrCategoriesByNameCanNotBeFound = errors.New("categories by name can not be found")
+)
+
 // ReadCategoriesByName is a method for get all nodes by categories name
 func (categories *Categories) ReadCategoriesByName(categoryName, language string) ([]Category, error) {
-	query := fmt.Sprintf(`{
-				categories(func: eq(categoryName@%v, "%v")) @filter(eq(categoryIsActive, true)) {
-			uid
-					categoryName: categoryName@%v
+
+	variables := struct {
+		CategoryName string
+		Language     string
+	}{
+		CategoryName: categoryName,
+		Language:     language}
+
+	queryTemplate, err := template.New("ReadCategoriesByName").Parse(`{
+				categories(func: eq(categoryName@{{.Language}}, "{{.CategoryName}}"))
+				@filter(eq(categoryIsActive, true)) {
+					uid
+					categoryName: categoryName@{{.Language}}
 					categoryIsActive
 					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
-						companyName: companyName@%v
+						companyName: companyName@{{.Language}}
 						companyIsActive
 						has_category @filter(eq(categoryIsActive, true)) {
 							uid
-							categoryName: categoryName@%v
+							categoryName: categoryName@{{.Language}}
 							categoryIsActive
 							belong_to_company @filter(eq(companyIsActive, true)) {
 								uid
-								companyName: companyName@%v
+								companyName: companyName@{{.Language}}
 								companyIsActive
 							}
 						}
 					}
 					has_product @filter(eq(productIsActive, true)) {
 						uid
-						productName: productName@%v
+						productName: productName@{{.Language}}
 						productIri
 						previewImageLink
 						productIsActive
 						belongs_to_category @filter(eq(categoryIsActive, true)) {
 							uid
-							categoryName: categoryName@%v
+							categoryName: categoryName@{{.Language}}
 							categoryIsActive
 						}
 						belongs_to_company @filter(eq(companyIsActive, true)) {
 							uid
-							companyName: companyName@%v
+							companyName: companyName@{{.Language}}
 							companyIsActive
 						}
 					}
 				}
-			}`, language, categoryName, language, language, language, language, language, language, language)
+			}`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, ErrCategoriesByNameCanNotBeFound
+	}
+
+	queryBuf := bytes.Buffer{}
+	err = queryTemplate.Execute(&queryBuf, variables)
+	if err != nil {
+		log.Println(err)
+		return nil, ErrCategoriesByNameCanNotBeFound
+	}
 
 	transaction := categories.storage.Client.NewTxn()
-	response, err := transaction.Query(context.Background(), query)
+	response, err := transaction.Query(context.Background(), queryBuf.String())
 	if err != nil {
 		log.Println(err)
 		return nil, ErrCategoriesByNameCanNotBeFound
@@ -221,52 +234,80 @@ func (categories *Categories) ReadCategoriesByName(categoryName, language string
 	return foundedCategories.AllCategoriesFoundedByName, nil
 }
 
+var (
+	// ErrCategoryByIDCanNotBeFound means that the category can't be found in database
+	ErrCategoryByIDCanNotBeFound = errors.New("category by id can not be found")
+
+	// ErrCategoryDoesNotExist means than the categories does not exist in database
+	ErrCategoryDoesNotExist = errors.New("categories by id not found")
+)
+
 // ReadCategoryByID is a method for get all nodes of categories by ID
 func (categories *Categories) ReadCategoryByID(categoryID, language string) (Category, error) {
-	category := Category{ID: categoryID}
 
-	query := fmt.Sprintf(`{
-				categories(func: uid("%s")) @filter(has(categoryName)) {
+	variables := struct {
+		CategoryID string
+		Language   string
+	}{
+		CategoryID: categoryID,
+		Language:   language}
+
+	queryTemplate, err := template.New("ReadCategoryByID").Parse(`{
+				categories(func: uid("{{.CategoryID}}")) @filter(has(categoryName)) {
 					uid
-					categoryName: categoryName@%v
+					categoryName: categoryName@{{.Language}}
 					categoryIsActive
 					belongs_to_company @filter(eq(companyIsActive, true)) {
 						uid
-						companyName: companyName@%v
+						companyName: companyName@{{.Language}}
 						companyIsActive
 						has_category @filter(eq(categoryIsActive, true)) {
 							uid
-							categoryName: categoryName@%v
+							categoryName: categoryName@{{.Language}}
 							categoryIsActive
 							belong_to_company @filter(eq(companyIsActive, true)) {
 								uid
-								companyName: companyName@%v
+								companyName: companyName@{{.Language}}
 								companyIsActive
 							}
 						}
 					}
 					has_product @filter(eq(productIsActive, true)) {
 						uid
-						productName: productName@%v
+						productName: productName@{{.Language}}
 						productIri
 						previewImageLink
 						productIsActive
 						belongs_to_category @filter(eq(categoryIsActive, true)) {
 							uid
-							categoryName: categoryName@%v
+							categoryName: categoryName@{{.Language}}
 							categoryIsActive
 						}
 						belongs_to_company @filter(eq(companyIsActive, true)) {
 							uid
-							companyName: companyName@%v
+							companyName: companyName@{{.Language}}
 							companyIsActive
 						}
 					}
 				}
-			}`, categoryID, language, language, language, language, language, language, language)
+			}`)
+
+	category := Category{ID: categoryID}
+
+	if err != nil {
+		log.Println(err)
+		return category, ErrCategoryByIDCanNotBeFound
+	}
+
+	queryBuf := bytes.Buffer{}
+	err = queryTemplate.Execute(&queryBuf, variables)
+	if err != nil {
+		log.Println(err)
+		return category, ErrCategoryByIDCanNotBeFound
+	}
 
 	transaction := categories.storage.Client.NewTxn()
-	response, err := transaction.Query(context.Background(), query)
+	response, err := transaction.Query(context.Background(), queryBuf.String())
 	if err != nil {
 		log.Println(err)
 		return category, ErrCategoryByIDCanNotBeFound
@@ -345,6 +386,14 @@ func (categories *Categories) DeactivateCategory(category Category) (string, err
 	return updatedCategory.ID, nil
 }
 
+var (
+	// ErrCategoryCanNotBeWithoutID means that category can't be found in storage for make some operation
+	ErrCategoryCanNotBeWithoutID = errors.New("category can not be without id")
+
+	// ErrCategoryCanNotBeDeleted means that the category can't be removed from database
+	ErrCategoryCanNotBeDeleted = errors.New("category can't be deleted")
+)
+
 // DeleteCategory method for remove category from database
 func (categories *Categories) DeleteCategory(category Category) (string, error) {
 
@@ -370,6 +419,11 @@ func (categories *Categories) DeleteCategory(category Category) (string, error) 
 
 	return category.ID, nil
 }
+
+var (
+	// ErrCompanyCanNotBeAddedToCategory means that the company can't be added to category
+	ErrCompanyCanNotBeAddedToCategory = errors.New("company can not be added to category")
+)
 
 // AddCompanyToCategory method for set quad of predicate about category and company
 func (categories *Categories) AddCompanyToCategory(categoryID, companyID string) error {

@@ -13,8 +13,8 @@ import (
 // City is a structure of prices in database
 type City struct {
 	ID       string `json:"uid"`
-	Name     string `json:"cityName, omitempty"`
-	IsActive bool   `json:"cityIsActive, omitempty"`
+	Name     string `json:"cityName,omitempty"`
+	IsActive bool   `json:"cityIsActive,omitempty"`
 }
 
 // NewCitiesResourceForStorage is a constructor of Prices resource

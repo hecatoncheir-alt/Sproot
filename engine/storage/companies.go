@@ -7,59 +7,20 @@ import (
 	"fmt"
 	"log"
 
+	"bytes"
 	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
-)
-
-var (
-	// ErrCompanyCanNotBeWithoutID means that company can't be found in storage for make some operation
-	ErrCompanyCanNotBeWithoutID = errors.New("company can not be without id")
-
-	// ErrCompanyCanNotBeDeactivate means that the company can't be deactivate in database
-	ErrCompanyCanNotBeDeactivate = errors.New("company can't be deactivated")
-
-	// ErrCompaniesByNameCanNotBeFound means that the companies can't be found in database
-	ErrCompaniesByNameCanNotBeFound = errors.New("companies by name can not be found")
-
-	// ErrCompaniesByNameNotFound means than the companies does not exist in database
-	ErrCompaniesByNameNotFound = errors.New("companies by name not found")
-
-	// ErrCompanyCanNotBeCreated means that the company can't be added to database
-	ErrCompanyCanNotBeCreated = errors.New("company can't be created")
-
-	// ErrCompanyAlreadyExist means that the company is in the database already
-	ErrCompanyAlreadyExist = errors.New("company already exist")
-
-	// ErrCompanyByIDCanNotBeFound means that the company can't be found in database
-	ErrCompanyByIDCanNotBeFound = errors.New("company by id can not be found")
-
-	// ErrCompanyCanNotBeUpdated means that company can't be updated
-	ErrCompanyCanNotBeUpdated = errors.New("company can not be updated")
-
-	// ErrCompanyDoesNotExist means than the company does not exist in database
-	ErrCompanyDoesNotExist = errors.New("company by id not found")
-
-	// ErrCompanyCanNotBeDeleted means that the company can't be removed from database
-	ErrCompanyCanNotBeDeleted = errors.New("company can't be deleted")
-
-	// ErrCategoryCanNotBeAddedToCompany means that the category can't be added to company
-	ErrCategoryCanNotBeAddedToCompany = errors.New("category can not be added to company")
-
-	// ErrCategoryCanNotBeRemovedFromCompany means that the company can't be removed from database
-	ErrCategoryCanNotBeRemovedFromCompany = errors.New("category can not be removed from company")
-
-	// ErrProductCanNotBeAddedToCompany means that the product can't be added to company
-	ErrProductCanNotBeAddedToCompany = errors.New("product can not be added to company")
+	"text/template"
 )
 
 // Company is a structure of Categories in database
 /* Для того что бы продукт принадлежащий компании отображался в категории принадлежащей
 компании нужно иметь корректные данные belongs_to_company и belongs_to_category на гранях продукта */
 type Company struct {
-	ID         string     `json:"uid, omitempty"`
-	IRI        string     `json:"companyIri, omitempty"`
-	Name       string     `json:"companyName, omitempty"`
-	Categories []Category `json:"has_category, omitempty"`
-	IsActive   bool       `json:"companyIsActive, omitempty"`
+	ID         string     `json:"uid,omitempty"`
+	IRI        string     `json:"companyIri,omitempty"`
+	Name       string     `json:"companyName,omitempty"`
+	Categories []Category `json:"has_category,omitempty"`
+	IsActive   bool       `json:"companyIsActive"`
 }
 
 // Companies is resource of storage for CRUD operations
@@ -89,6 +50,17 @@ func (companies *Companies) SetUp() (err error) {
 
 	return nil
 }
+
+var (
+	// ErrCompaniesByNameNotFound means than the companies does not exist in database
+	ErrCompaniesByNameNotFound = errors.New("companies by name not found")
+
+	// ErrCompanyCanNotBeCreated means that the company can't be added to database
+	ErrCompanyCanNotBeCreated = errors.New("company can't be created")
+
+	// ErrCompanyAlreadyExist means that the company is in the database already
+	ErrCompanyAlreadyExist = errors.New("company already exist")
+)
 
 // CreateCompany make category and save it to storage
 func (companies *Companies) CreateCompany(company Company, language string) (Company, error) {
@@ -150,6 +122,11 @@ func (companies *Companies) AddLanguageOfCompanyName(companyID, name, language s
 	return nil
 }
 
+var (
+	// ErrCompaniesByNameCanNotBeFound means that the companies can't be found in database
+	ErrCompaniesByNameCanNotBeFound = errors.New("companies by name can not be found")
+)
+
 // ReadAllCompanies is a method for get all nodes
 func (companies *Companies) ReadAllCompanies(language string) ([]Company, error) {
 	query := fmt.Sprintf(`{
@@ -193,40 +170,47 @@ func (companies *Companies) ReadAllCompanies(language string) ([]Company, error)
 
 // ReadCompaniesByName is a method for get all nodes by categories name
 func (companies *Companies) ReadCompaniesByName(companyName, language string) ([]Company, error) {
-	query := fmt.Sprintf(`{
-				companies(func: eq(companyName@%v, "%v")) @filter(eq(companyIsActive, true)) {
+	variables := struct {
+		CompanyName string
+		Language    string
+	}{
+		CompanyName: companyName,
+		Language:    language}
+
+	queryTemplate, err := template.New("ReadCompaniesByName").Parse(`{
+				companies(func: eq(companyName@{{.Language}}, "{{.CompanyName}}")) @filter(eq(companyIsActive, true)) {
 					uid
-					companyName: companyName@%v
+					companyName: companyName@{{.Language}}
 					companyIri
 					companyIsActive
 					has_category @filter(eq(categoryIsActive, true)) {
 						uid
-						categoryName: categoryName@%v
+						categoryName: categoryName@{{.Language}}
 						categoryIsActive
 						belongs_to_company @filter(eq(companyIsActive, true)) {
 							uid
-							companyName: companyName@%v
+							companyName: companyName@{{.Language}}
 							companyIsActive
 							has_category @filter(eq(categoryIsActive, true)) {
 								uid
-								categoryName: categoryName@%v
+								categoryName: categoryName@{{.Language}}
 								categoryIsActive
 							}
 						}
 						has_product @filter(eq(productIsActive, true)) { #TODO: belongs_to_company mast be an companyID
 							uid
-							productName: productName@%v
+							productName: productName@{{.Language}}
 							productIri
 							previewImageLink
 							productIsActive
 							belongs_to_category @filter(eq(categoryIsActive, true)) {
 								uid
-								categoryName: categoryName@%v
+								categoryName: categoryName@{{.Language}}
 								categoryIsActive
 							}
 							belongs_to_company @filter(eq(companyIsActive, true)) {
 								uid
-								companyName: companyName@%v
+								companyName: companyName@{{.Language}}
 								companyIsActive
 							}
 							has_price @filter(eq(priceIsActive, true)) {
@@ -237,7 +221,7 @@ func (companies *Companies) ReadCompaniesByName(companyName, language string) ([
 								priceIsActive
 								belongs_to_product @filter(eq(productIsActive, true)) {
 									uid
-									productName: productName@%v
+									productName: productName@{{.Language}}
 									productIri
 									previewImageLink
 									productIsActive
@@ -251,17 +235,25 @@ func (companies *Companies) ReadCompaniesByName(companyName, language string) ([
 								}
 								belongs_to_city @filter(eq(cityIsActive, true)) {
 									uid
-									cityName: cityName@%v
+									cityName: cityName@{{.Language}}
 									cityIsActive
 								}
 							}
 						}
 					}
 				}
-			}`, language, companyName, language, language, language, language, language, language, language, language, language)
+			}`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, ErrCompaniesByNameCanNotBeFound
+	}
+
+	queryBuf := bytes.Buffer{}
+	err = queryTemplate.Execute(&queryBuf, variables)
 
 	transaction := companies.storage.Client.NewTxn()
-	response, err := transaction.Query(context.Background(), query)
+	response, err := transaction.Query(context.Background(), queryBuf.String())
 	if err != nil {
 		log.Println(err)
 		return nil, ErrCompaniesByNameCanNotBeFound
@@ -285,6 +277,17 @@ func (companies *Companies) ReadCompaniesByName(companyName, language string) ([
 	return foundedCompanies.AllCompaniesFoundedByName, nil
 }
 
+var (
+	// ErrCompanyCanNotBeWithoutID means that company can't be found in storage for make some operation
+	ErrCompanyCanNotBeWithoutID = errors.New("company can not be without id")
+
+	// ErrCompanyByIDCanNotBeFound means that the company can't be found in database
+	ErrCompanyByIDCanNotBeFound = errors.New("company by id can not be found")
+
+	// ErrCompanyDoesNotExist means than the company does not exist in database
+	ErrCompanyDoesNotExist = errors.New("company by id not found")
+)
+
 // ReadCompanyByID is a method for get all nodes of categories by ID
 func (companies *Companies) ReadCompanyByID(companyID, language string) (Company, error) {
 	company := Company{ID: companyID}
@@ -293,40 +296,47 @@ func (companies *Companies) ReadCompanyByID(companyID, language string) (Company
 		return company, ErrCompanyCanNotBeWithoutID
 	}
 
-	query := fmt.Sprintf(`{
-				companies(func: uid("%s")) @filter(has(companyName)) {
+	variables := struct {
+		CompanyID string
+		Language  string
+	}{
+		CompanyID: companyID,
+		Language:  language}
+
+	queryTemplate, err := template.New("ReadCompanyByID").Parse(`{
+				companies(func: uid("{{.CompanyID}}")) @filter(has(companyName)) {
 					uid
-					companyName: companyName@%v
+					companyName: companyName@{{.Language}}
 					companyIri
 					companyIsActive
 					has_category @filter(eq(categoryIsActive, true)) {
 						uid
-						categoryName: categoryName@%v
+						categoryName: categoryName@{{.Language}}
 						categoryIsActive
 						belongs_to_company @filter(eq(companyIsActive, true)) {
 							uid
-							companyName: companyName@%v
+							companyName: companyName@{{.Language}}
 							companyIsActive
 							has_category @filter(eq(categoryIsActive, true)) {
 								uid
-								categoryName: categoryName@%v
+								categoryName: categoryName@{{.Language}}
 								categoryIsActive
 							}
 						}
-						has_product @filter(uid_in(belongs_to_company, %s) AND eq(productIsActive, true)) {
+						has_product @filter(uid_in(belongs_to_company, {{.CompanyID}}) AND eq(productIsActive, true)) {
 							uid
-							productName: productName@%v
+							productName: productName@{{.Language}}
 							productIri
 							previewImageLink
 							productIsActive
 							belongs_to_category @filter(eq(categoryIsActive, true)) {
 								uid
-								categoryName: categoryName@%v
+								categoryName: categoryName@{{.Language}}
 								categoryIsActive
 							}
 							belongs_to_company @filter(eq(companyIsActive, true)) {
 								uid
-								companyName: companyName@%v
+								companyName: companyName@{{.Language}}
 								companyIsActive
 							}
 							has_price @filter(eq(priceIsActive, true)) {
@@ -337,7 +347,7 @@ func (companies *Companies) ReadCompanyByID(companyID, language string) (Company
 								priceIsActive
 								belongs_to_product @filter(eq(productIsActive, true)) {
 									uid
-									productName: productName@%v
+									productName: productName@{{.Language}}
 									productIri
 									previewImageLink
 									productIsActive
@@ -351,17 +361,25 @@ func (companies *Companies) ReadCompanyByID(companyID, language string) (Company
 								}
 								belongs_to_city @filter(eq(cityIsActive, true)) {
 									uid
-									cityName: cityName@%v
+									cityName: cityName@{{.Language}}
 									cityIsActive
 								}
 							}
 						}
 					}
 				}
-			}`, companyID, language, language, language, language, companyID, language, language, language, language, language)
+			}`)
+
+	if err != nil {
+		log.Println(err)
+		return company, ErrCompanyByIDCanNotBeFound
+	}
+
+	queryBuf := bytes.Buffer{}
+	err = queryTemplate.Execute(&queryBuf, variables)
 
 	transaction := companies.storage.Client.NewTxn()
-	response, err := transaction.Query(context.Background(), query)
+	response, err := transaction.Query(context.Background(), queryBuf.String())
 	if err != nil {
 		log.Println(err)
 		return company, ErrCompanyByIDCanNotBeFound
@@ -386,6 +404,11 @@ func (companies *Companies) ReadCompanyByID(companyID, language string) (Company
 	return foundedCompanies.Companies[0], nil
 }
 
+var (
+	// ErrCompanyCanNotBeUpdated means that company can't be updated
+	ErrCompanyCanNotBeUpdated = errors.New("company can not be updated")
+)
+
 // UpdateCompany method for change company in storage
 func (companies *Companies) UpdateCompany(company Company) (Company, error) {
 	if company.ID == "" {
@@ -399,9 +422,8 @@ func (companies *Companies) UpdateCompany(company Company) (Company, error) {
 	}
 
 	mutation := dataBaseAPI.Mutation{
-		SetJson:             encodedCompany,
-		CommitNow:           true,
-		IgnoreIndexConflict: true}
+		SetJson:   encodedCompany,
+		CommitNow: true}
 
 	transaction := companies.storage.Client.NewTxn()
 	_, err = transaction.Mutate(context.Background(), &mutation)
@@ -418,6 +440,11 @@ func (companies *Companies) UpdateCompany(company Company) (Company, error) {
 
 	return updatedCompany, nil
 }
+
+var (
+	// ErrCompanyCanNotBeDeactivate means that the company can't be deactivate in database
+	ErrCompanyCanNotBeDeactivate = errors.New("company can't be deactivated")
+)
 
 // DeactivateCompany method for remove categories from database
 func (companies *Companies) DeactivateCompany(company Company) (string, error) {
@@ -449,6 +476,14 @@ func (companies *Companies) DeactivateCompany(company Company) (string, error) {
 	return company.ID, nil
 }
 
+var (
+	// ErrCategoryCanNotBeAddedToCompany means that the category can't be added to company
+	ErrCategoryCanNotBeAddedToCompany = errors.New("category can not be added to company")
+
+	// ErrCompanyCanNotBeDeleted means that the company can't be removed from database
+	ErrCompanyCanNotBeDeleted = errors.New("company can't be deleted")
+)
+
 // DeleteCompany method for remove company from database
 func (companies *Companies) DeleteCompany(company Company) (string, error) {
 
@@ -459,9 +494,8 @@ func (companies *Companies) DeleteCompany(company Company) (string, error) {
 	deleteCompanyData, _ := json.Marshal(map[string]string{"uid": company.ID})
 
 	mutation := dataBaseAPI.Mutation{
-		DeleteJson:          deleteCompanyData,
-		CommitNow:           true,
-		IgnoreIndexConflict: true}
+		DeleteJson: deleteCompanyData,
+		CommitNow:  true}
 
 	transaction := companies.storage.Client.NewTxn()
 
@@ -506,6 +540,11 @@ func (companies *Companies) AddCategoryToCompany(companyID, categoryID string) e
 	return nil
 }
 
+var (
+	// ErrCategoryCanNotBeRemovedFromCompany means that the company can't be removed from database
+	ErrCategoryCanNotBeRemovedFromCompany = errors.New("category can not be removed from company")
+)
+
 // RemoveCategoryFromCompany method for delete quad of predicate about company and category
 func (companies *Companies) RemoveCategoryFromCompany(companyID, categoryID string) error {
 	var err error
@@ -536,6 +575,11 @@ func (companies *Companies) RemoveCategoryFromCompany(companyID, categoryID stri
 
 	return nil
 }
+
+var (
+	// ErrProductCanNotBeAddedToCompany means that the product can't be added to company
+	ErrProductCanNotBeAddedToCompany = errors.New("product can not be added to company")
+)
 
 // AddProductToCompany method for set quad of predicate about company and product
 func (companies *Companies) AddProductToCompany(companyID, productID string) error {

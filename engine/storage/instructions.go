@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"log"
 
+	"bytes"
 	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
+	"text/template"
 )
 
 type PageInstruction struct {
@@ -28,7 +30,7 @@ type PageInstruction struct {
 type Instruction struct {
 	ID               string            `json:"uid, omitempty"`
 	Language         string            `json:"instructionLanguage, omitempty"`
-	IsActive         bool              `json:"instructionIsActive, omitempty"`
+	IsActive         bool              `json:"instructionIsActive"`
 	PagesInstruction []PageInstruction `json:"has_page, omitempty"`
 	Cities           []City            `json:"has_city, omitempty"`
 	Companies        []Company         `json:"has_company, omitempty"`
@@ -213,9 +215,15 @@ func (resource *Instructions) CreateInstructionForCompany(companyID, language st
 var ErrInstructionDoesNotExist = errors.New("instruction by id not found")
 
 func (resource *Instructions) ReadInstructionByID(instructionID, language string) (Instruction, error) {
+	variables := struct {
+		InstructionID string
+		Language      string
+	}{
+		InstructionID: instructionID,
+		Language:      language}
 
-	query := fmt.Sprintf(`{
-				instructions(func: uid("%s")) @filter(has(instructionLanguage)) {
+	queryTemplate, err := template.New("ReadInstructionByID").Parse(`{
+				instructions(func: uid("{{.InstructionID}}")) @filter(has(instructionLanguage)) {
 					uid
 					instructionLanguage
 					instructionIsActive
@@ -231,26 +239,34 @@ func (resource *Instructions) ReadInstructionByID(instructionID, language string
 					}
 					has_city @filter(eq(cityIsActive, true)) {
 						uid
-						cityName: cityName@%v
+						cityName: cityName@{{.Language}}
 						cityIsActive
 					}
 					has_company @filter(eq(companyIsActive, true)) {
 						uid
-						companyName: companyName@%v
+						companyName: companyName@{{.Language}}
 						companyIsActive
 					}
 					has_category @filter(eq(categoryIsActive, true)) {
 						uid
-						categoryName: categoryName@%v
+						categoryName: categoryName@{{.Language}}
 						categoryIsActive
 					}
 				}
-			}`, instructionID, language, language, language)
+			}`)
 
 	instruction := Instruction{ID: instructionID}
 
+	if err != nil {
+		log.Println(err)
+		return instruction, err
+	}
+
+	queryBuf := bytes.Buffer{}
+	err = queryTemplate.Execute(&queryBuf, variables)
+
 	transaction := resource.storage.Client.NewTxn()
-	response, err := transaction.Query(context.Background(), query)
+	response, err := transaction.Query(context.Background(), queryBuf.String())
 	if err != nil {
 		log.Println(err)
 		return instruction, err
@@ -406,8 +422,16 @@ var ErrInstructionsForCompanyDoesNotExist = errors.New("instructions can not be 
 
 func (resource *Instructions) ReadAllInstructionsForCompany(companyID, language string) ([]Instruction, error) {
 
-	query := fmt.Sprintf(`{
-				instructions(func: has(has_company)) @filter(eq(instructionIsActive, true) AND uid_in(has_company, %v)) {
+	variables := struct {
+		CompanyID string
+		Language  string
+	}{
+		CompanyID: companyID,
+		Language:  language}
+
+	queryTemplate, err := template.New("ReadAllInstructionsForCompany").Parse(`{
+				instructions(func: has(has_company))
+				@filter(eq(instructionIsActive, true) AND uid_in(has_company, {{.CompanyID}})) {
 					uid
 					instructionLanguage
 					instructionIsActive
@@ -423,24 +447,32 @@ func (resource *Instructions) ReadAllInstructionsForCompany(companyID, language 
 					}
 					has_company @filter(eq(companyIsActive, true)) {
 						uid
-						companyName: companyName@%v
+						companyName: companyName@{{.Language}}
 						companyIsActive
 					}
 					has_city @filter(eq(cityIsActive, true)) {
 						uid
-						cityName: cityName@%v
+						cityName: cityName@{{.Language}}
 						cityIsActive
 					}
 					has_category @filter(eq(categoryIsActive, true)) {
 						uid
-						categoryName: categoryName@%v
+						categoryName: categoryName@{{.Language}}
 						categoryIsActive
 					}
 				}
-			}`, companyID, language, language, language)
+			}`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	queryBuf := bytes.Buffer{}
+	err = queryTemplate.Execute(&queryBuf, variables)
 
 	transaction := resource.storage.Client.NewTxn()
-	response, err := transaction.Query(context.Background(), query)
+	response, err := transaction.Query(context.Background(), queryBuf.String())
 	if err != nil {
 		log.Println(err)
 		return nil, err

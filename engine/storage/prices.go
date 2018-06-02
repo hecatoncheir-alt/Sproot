@@ -9,7 +9,9 @@ import (
 	"log"
 	"time"
 
+	"bytes"
 	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
+	"text/template"
 )
 
 // Price is a structure of prices in database
@@ -17,7 +19,7 @@ type Price struct {
 	ID        string    `json:"uid"`
 	Value     float64   `json:"priceValue, omitempty"`
 	DateTime  time.Time `json:"priceDateTime, omitempty"`
-	IsActive  bool      `json:"priceIsActive, omitempty"`
+	IsActive  bool      `json:"priceIsActive"`
 	Cities    []City    `json:"belongs_to_city, omitempty"`
 	Products  []Product `json:"belongs_to_product, omitempty"`
 	Companies []Company `json:"belongs_to_company, omitempty"`
@@ -119,10 +121,15 @@ var ErrPriceDoesNotExist = errors.New("price by id not found")
 
 // ReadPriceByID is a method for get all nodes of prices by ID
 func (prices *Prices) ReadPriceByID(priceID, language string) (Price, error) {
-	price := Price{ID: priceID}
+	variables := struct {
+		PriceID  string
+		Language string
+	}{
+		PriceID:  priceID,
+		Language: language}
 
-	query := fmt.Sprintf(`{
-				prices(func: uid("%s")) @filter(has(priceValue)) {
+	queryTemplate, err := template.New("ReadPriceByID").Parse(`{
+				prices(func: uid("{{.PriceID}}")) @filter(has(priceValue)) {
 					uid
 					priceValue
 					priceDateTime
@@ -130,32 +137,41 @@ func (prices *Prices) ReadPriceByID(priceID, language string) (Price, error) {
 					priceIsActive
 					belongs_to_product @filter(eq(productIsActive, true)) {
 						uid
-						productName: productName@%v
+						productName: productName@{{.Language}}
 						productIri
 						previewImageLink
 						productIsActive
 					}
 					belongs_to_city @filter(eq(cityIsActive, true)) {
 						uid
-						cityName: cityName@%v
+						cityName: cityName@{{.Language}}
 						cityIsActive
 					}
 					belongs_to_company @filter(eq(companyIsActive, true)){
 						uid
-						companyName: companyName@%v
+						companyName: companyName@{{.Language}}
 						companyIri
 						companyIsActive
 						has_category @filter(eq(categoryIsActive, true)) {
 							uid
-							categoryName: categoryName@%v
+							categoryName: categoryName@{{.Language}}
 							categoryIsActive
 						}
 					}
 				}
-			}`, priceID, language, language, language, language)
+			}`)
+
+	price := Price{ID: priceID}
+	if err != nil {
+		log.Println(err)
+		return price, ErrPriceByIDCanNotBeFound
+	}
+
+	queryBuf := bytes.Buffer{}
+	err = queryTemplate.Execute(&queryBuf, variables)
 
 	transaction := prices.storage.Client.NewTxn()
-	response, err := transaction.Query(context.Background(), query)
+	response, err := transaction.Query(context.Background(), queryBuf.String())
 	if err != nil {
 		log.Println(err)
 		return price, ErrPriceByIDCanNotBeFound
