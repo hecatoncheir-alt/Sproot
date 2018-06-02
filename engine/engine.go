@@ -146,10 +146,7 @@ func (engine *Engine) productsByNameAndPaginationHandler(
 		logMessage := fmt.Sprintf("Output event found products: %v by name: %v",
 			len(productsForPage.Products), details.SearchedName)
 		logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
-		err = engine.Logger.Write(logEvent)
-		if err != nil {
-			log.Println(err)
-		}
+		go engine.Logger.Write(logEvent)
 
 		err = engine.Broker.WriteToTopic(outputTopic, event)
 		if err != nil {
@@ -165,12 +162,9 @@ func (engine *Engine) productOfCategoryOfCompanyReadyEventHandler(productOfCateg
 
 	logMessage := fmt.Sprintf("Input event with product: %v", product)
 	logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
-	err := engine.Logger.Write(logEvent)
-	if err != nil {
-		log.Println(err)
-	}
+	go engine.Logger.Write(logEvent)
 
-	_, err = product.UpdateInStorage(engine.Storage)
+	_, err := product.UpdateInStorage(engine.Storage)
 	if err != nil {
 		log.Println(err)
 	}
@@ -181,10 +175,7 @@ func (engine *Engine) productsOfCategoriesOfCompaniesMustBeParsedEventHandler(ou
 
 	logMessage := fmt.Sprintf("Input event for starting parse products of categories of companies")
 	logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
-	err := engine.Logger.Write(logEvent)
-	if err != nil {
-		log.Println(err)
-	}
+	go engine.Logger.Write(logEvent)
 
 	for _, language := range supportedLanguages {
 		allCompanies, err := engine.Storage.Companies.ReadAllCompanies(language)
@@ -203,7 +194,8 @@ func (engine *Engine) productsOfCategoriesOfCompaniesMustBeParsedEventHandler(ou
 
 				for _, city := range cities {
 
-					instructions, err := engine.Storage.Instructions.ReadAllInstructionsForCompany(company.ID, language)
+					instructions, err := engine.Storage.Instructions.ReadAllInstructionsForCompany(
+						company.ID, language)
 					if err != nil {
 						log.Println(err)
 					}
