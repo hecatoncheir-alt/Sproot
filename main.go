@@ -27,8 +27,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// TODO: Расставить логи при получении запроса с клиента.
-	// При получении данных от парсера. При отправки ответа на клиент.
-
 	puffer.SubscribeOnEvents(puffer.Configuration.Production.SprootTopic)
 }

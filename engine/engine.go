@@ -7,7 +7,9 @@ import (
 
 	"github.com/hecatoncheir/Broker"
 	"github.com/hecatoncheir/Configuration"
+	"github.com/hecatoncheir/Logger"
 	"github.com/hecatoncheir/Sproot/engine/storage"
+	"time"
 )
 
 // Engine is a main object of engine pkg
@@ -15,6 +17,7 @@ type Engine struct {
 	Configuration *configuration.Configuration
 	Storage       *storage.Storage
 	Broker        *broker.Broker
+	Logger        *logger.LogWriter
 }
 
 // New is a constructor for Engine
@@ -43,6 +46,10 @@ func (engine *Engine) SetUpBroker(host string, port int) error {
 	if err != nil {
 		return err
 	}
+
+	engine.Logger = logger.New(
+		engine.Configuration.APIVersion,
+		engine.Configuration.ServiceName, engine.Configuration.Production.LogunaTopic, bro)
 
 	return nil
 }
@@ -84,6 +91,14 @@ func (engine *Engine) SubscribeOnEvents(inputTopic string) {
 
 func (engine *Engine) productsByNameAndPaginationHandler(
 	details storage.ProductsByNameForPage, clientID, APIVersion string, outputTopic string) {
+
+	logMessage := fmt.Sprintf("Input event of search product by name: %v", details.SearchedName)
+	logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
+	err := engine.Logger.Write(logEvent)
+	if err != nil {
+		log.Println(err)
+	}
+
 	productsForPage, err := engine.Storage.Products.ReadProductsByNameWithPagination(
 		details.SearchedName, details.Language, details.CurrentPage, details.TotalProductsForOnePage)
 
@@ -93,6 +108,13 @@ func (engine *Engine) productsByNameAndPaginationHandler(
 
 	if err != nil && err == storage.ErrProductsByNameNotFound {
 		data, err := json.Marshal(productsForPage)
+		if err != nil {
+			log.Println(err)
+		}
+
+		logMessage := fmt.Sprintf("Output event no products found by name: %v", details.SearchedName)
+		logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
+		err = engine.Logger.Write(logEvent)
 		if err != nil {
 			log.Println(err)
 		}
@@ -121,6 +143,14 @@ func (engine *Engine) productsByNameAndPaginationHandler(
 			APIVersion: APIVersion,
 			ClientID:   clientID}
 
+		logMessage := fmt.Sprintf("Output event found products: %v by name: %v",
+			len(productsForPage.Products), details.SearchedName)
+		logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
+		err = engine.Logger.Write(logEvent)
+		if err != nil {
+			log.Println(err)
+		}
+
 		err = engine.Broker.WriteToTopic(outputTopic, event)
 		if err != nil {
 			log.Println(err)
@@ -133,7 +163,14 @@ func (engine *Engine) productOfCategoryOfCompanyReadyEventHandler(productOfCateg
 	product := ProductOfCompany{}
 	json.Unmarshal([]byte(productOfCategoryOfCompanyData), &product)
 
-	_, err := product.UpdateInStorage(engine.Storage)
+	logMessage := fmt.Sprintf("Input event with product: %v", product)
+	logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
+	err := engine.Logger.Write(logEvent)
+	if err != nil {
+		log.Println(err)
+	}
+
+	_, err = product.UpdateInStorage(engine.Storage)
 	if err != nil {
 		log.Println(err)
 	}
@@ -141,6 +178,13 @@ func (engine *Engine) productOfCategoryOfCompanyReadyEventHandler(productOfCateg
 
 func (engine *Engine) productsOfCategoriesOfCompaniesMustBeParsedEventHandler(outputTopic string) {
 	supportedLanguages := []string{"ru"}
+
+	logMessage := fmt.Sprintf("Input event for starting parse products of categories of companies")
+	logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
+	err := engine.Logger.Write(logEvent)
+	if err != nil {
+		log.Println(err)
+	}
 
 	for _, language := range supportedLanguages {
 		allCompanies, err := engine.Storage.Companies.ReadAllCompanies(language)
