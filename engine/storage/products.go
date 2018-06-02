@@ -423,8 +423,6 @@ func (products *Products) ReadProductsByName(productName, language string) ([]Pr
 		return nil, ErrProductsByNameNotFound
 	}
 
-	fmt.Println(foundedProducts.AllProductsFoundedByName)
-
 	return foundedProducts.AllProductsFoundedByName, nil
 }
 

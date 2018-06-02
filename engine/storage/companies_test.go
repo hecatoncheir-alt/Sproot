@@ -31,7 +31,9 @@ func TestIntegrationCompanyCanBeCreated(test *testing.T) {
 	}
 }
 
+// Must be run parallel with TestIntegrationNewPriceWithExistedProductCanBeCreated
 func TestIntegrationCompaniesAllCanBeRead(test *testing.T) {
+	test.Parallel()
 	once.Do(prepareStorage)
 
 	companyForTest := Company{Name: "Test company"}

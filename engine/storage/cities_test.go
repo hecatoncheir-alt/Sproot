@@ -20,7 +20,9 @@ func TestIntegrationCityCanBeCreated(test *testing.T) {
 	}
 }
 
+// Must be run parallel with TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct
 func TestIntegrationAllCitiesCanBeRead(test *testing.T) {
+	test.Parallel()
 	once.Do(prepareStorage)
 
 	cityForTest := City{Name: "Test city"}

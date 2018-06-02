@@ -14,7 +14,7 @@ import (
 type City struct {
 	ID       string `json:"uid"`
 	Name     string `json:"cityName,omitempty"`
-	IsActive bool   `json:"cityIsActive,omitempty"`
+	IsActive bool   `json:"cityIsActive"`
 }
 
 // NewCitiesResourceForStorage is a constructor of Prices resource
@@ -55,10 +55,12 @@ var (
 // CreateCity make category and save it to storage
 func (cities *Cities) CreateCity(city City, language string) (City, error) {
 	existsCities, err := cities.ReadCitiesByName(city.Name, language)
+
 	if err != nil && err != ErrCitiesByNameNotFound {
 		log.Println(err)
 		return city, ErrCityCanNotBeCreated
 	}
+
 	if existsCities != nil {
 		return existsCities[0], ErrCityAlreadyExist
 	}
@@ -120,7 +122,7 @@ var (
 	ErrCitiesByNameNotFound = errors.New("cities by name not found")
 )
 
-// ReadALlCities is a method for get all nodes
+// ReadAllCities is a method for get all nodes
 func (cities *Cities) ReadAllCities(language string) ([]City, error) {
 	query := fmt.Sprintf(`{
 				cities(func: eq(cityIsActive, true)) @filter(has(cityName)) {

@@ -10,19 +10,20 @@ import (
 	"time"
 
 	"bytes"
-	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
 	"text/template"
+
+	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
 )
 
 // Price is a structure of prices in database
 type Price struct {
 	ID        string    `json:"uid"`
-	Value     float64   `json:"priceValue, omitempty"`
-	DateTime  time.Time `json:"priceDateTime, omitempty"`
+	Value     float64   `json:"priceValue,omitempty"`
+	DateTime  time.Time `json:"priceDateTime,omitempty"`
 	IsActive  bool      `json:"priceIsActive"`
-	Cities    []City    `json:"belongs_to_city, omitempty"`
-	Products  []Product `json:"belongs_to_product, omitempty"`
-	Companies []Company `json:"belongs_to_company, omitempty"`
+	Cities    []City    `json:"belongs_to_city,omitempty"`
+	Products  []Product `json:"belongs_to_product,omitempty"`
+	Companies []Company `json:"belongs_to_company,omitempty"`
 }
 
 // NewPricesResourceForStorage is a constructor of Prices resource

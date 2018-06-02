@@ -8,22 +8,24 @@ import (
 	"log"
 
 	"bytes"
-	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
 	"text/template"
+
+	dataBaseAPI "github.com/dgraph-io/dgo/protos/api"
 )
 
+// PageInstruction is a structure for parser of products
 type PageInstruction struct {
-	ID                         string `json:"uid, omitempty"`
-	Path                       string `json:"path, omitempty"`
-	PageInPaginationSelector   string `json:"pageInPaginationSelector, omitempty"`
-	PreviewImageOfItemSelector string `json:"previewImageOfSelector, omitempty"`
-	PageParamPath              string `json:"pageParamPath, omitempty"`
-	CityParamPath              string `json:"cityParamPath, omitempty"`
-	ItemSelector               string `json:"itemSelector, omitempty"`
-	NameOfItemSelector         string `json:"nameOfItemSelector, omitempty"`
-	CityInCookieKey            string `json:"cityInCookieKey, omitempty"`
-	CityIDForCookie            string `json:"cityIdForCookie, omitempty"`
-	PriceOfItemSelector        string `json:"priceOfItemSelector, omitempty"`
+	ID                         string `json:"uid,omitempty"`
+	Path                       string `json:"path,omitempty"`
+	PageInPaginationSelector   string `json:"pageInPaginationSelector,omitempty"`
+	PreviewImageOfItemSelector string `json:"previewImageOfSelector,omitempty"`
+	PageParamPath              string `json:"pageParamPath,omitempty"`
+	CityParamPath              string `json:"cityParamPath,omitempty"`
+	ItemSelector               string `json:"itemSelector,omitempty"`
+	NameOfItemSelector         string `json:"nameOfItemSelector,omitempty"`
+	CityInCookieKey            string `json:"cityInCookieKey,omitempty"`
+	CityIDForCookie            string `json:"cityIdForCookie,omitempty"`
+	PriceOfItemSelector        string `json:"priceOfItemSelector,omitempty"`
 }
 
 // Instruction is a structure of instruction for parse
