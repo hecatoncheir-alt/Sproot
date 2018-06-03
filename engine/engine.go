@@ -56,34 +56,27 @@ func (engine *Engine) SetUpBroker(host string, port int) error {
 
 func (engine *Engine) SubscribeOnEvents(inputTopic string) {
 
-	channel, err := engine.Broker.ListenTopic(engine.Configuration.Production.SprootTopic, engine.Configuration.APIVersion)
+	channel, err := engine.Broker.ListenTopic(inputTopic, engine.Configuration.APIVersion)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for event := range channel {
-		data := broker.EventData{}
-		json.Unmarshal(event, &data)
+		log.Println(fmt.Sprintf("Received message: '%v'", event.Message))
 
-		if data.APIVersion != engine.Configuration.APIVersion {
-			continue
-		}
-
-		log.Println(fmt.Sprintf("Received message: '%v'", data.Message))
-
-		if data.Message == "Need items by name" {
+		if event.Message == "Need items by name" {
 			details := storage.ProductsByNameForPage{}
-			json.Unmarshal([]byte(data.Data), &details)
+			json.Unmarshal([]byte(event.Data), &details)
 
 			go engine.productsByNameAndPaginationHandler(
-				details, data.ClientID, data.APIVersion, engine.Configuration.Production.InitialTopic)
+				details, event.ClientID, event.APIVersion, engine.Configuration.Production.InitialTopic)
 		}
 
-		if data.Message == "Product of category of company ready" {
-			go engine.productOfCategoryOfCompanyReadyEventHandler(data.Data)
+		if event.Message == "Product of category of company ready" {
+			go engine.productOfCategoryOfCompanyReadyEventHandler(event.Data)
 		}
 
-		if data.Message == "Products of categories of companies must be parsed" {
+		if event.Message == "Products of categories of companies must be parsed" {
 			go engine.productsOfCategoriesOfCompaniesMustBeParsedEventHandler(engine.Configuration.Production.HecatoncheirTopic)
 		}
 	}

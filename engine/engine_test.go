@@ -86,17 +86,14 @@ func TestIntegrationEventOfParseRequestCanBeSendToBroker(test *testing.T) {
 	go puffer.productsOfCategoriesOfCompaniesMustBeParsedEventHandler(config.Development.SprootTopic)
 
 	messages, err := puffer.Broker.ListenTopic(config.Development.SprootTopic, config.APIVersion)
-	for message := range messages {
 
-		data := map[string]string{}
-		json.Unmarshal(message, &data)
-
-		if data["Message"] != "Need products of category of company" {
+	for event := range messages {
+		if event.Message != "Need products of category of company" {
 			test.Fail()
 		}
 
 		request := InstructionOfCompany{}
-		json.Unmarshal([]byte(data["Data"]), &request)
+		json.Unmarshal([]byte(event.Data), &request)
 
 		if request.Language != "ru" {
 			test.Fail()
@@ -186,15 +183,12 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 
 	nameOfProduct := ""
 	messages, err := puffer.Broker.ListenTopic(config.Development.SprootTopic, config.APIVersion)
-	for message := range messages {
+	for event := range messages {
 
-		data := map[string]string{}
-		json.Unmarshal(message, &data)
-
-		if data["Message"] == "Need products of category of company" {
+		if event.Message == "Need products of category of company" {
 
 			request := InstructionOfCompany{}
-			json.Unmarshal([]byte(data["Data"]), &request)
+			json.Unmarshal([]byte(event.Data), &request)
 
 			product := ProductOfCompany{
 				Language: request.Language,
@@ -227,12 +221,12 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 			continue
 		}
 
-		if data["Message"] != "Product of category of company ready" {
+		if event.Message != "Product of category of company ready" {
 			test.Fail()
 		}
 
 		request := ProductOfCompany{}
-		json.Unmarshal([]byte(data["Data"]), &request)
+		json.Unmarshal([]byte(event.Data), &request)
 
 		if request.Name == "" {
 			test.Fail()
@@ -260,7 +254,7 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 			test.Fail()
 		}
 
-		puffer.productOfCategoryOfCompanyReadyEventHandler(data["Data"])
+		puffer.productOfCategoryOfCompanyReadyEventHandler(event.Data)
 
 		break
 	}
@@ -364,15 +358,11 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 	eventCount := 0
 	nameOfProduct := ""
 	messages, err := puffer.Broker.ListenTopic(config.Development.SprootTopic, config.APIVersion)
-	for message := range messages {
-
-		data := map[string]string{}
-		json.Unmarshal(message, &data)
-
-		if data["Message"] == "Need products of category of company" {
+	for event := range messages {
+		if event.Message == "Need products of category of company" {
 
 			request := InstructionOfCompany{}
-			json.Unmarshal([]byte(data["Data"]), &request)
+			json.Unmarshal([]byte(event.Data), &request)
 
 			product := ProductOfCompany{
 				Language: request.Language,
@@ -406,16 +396,16 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 			continue
 		}
 
-		if data["Message"] != "Product of category of company ready" {
+		if event.Message != "Product of category of company ready" {
 			test.Fail()
 		}
 
 		request := ProductOfCompany{}
-		json.Unmarshal([]byte(data["Data"]), &request)
+		json.Unmarshal([]byte(event.Data), &request)
 
 		nameOfProduct = request.Name
 
-		puffer.productOfCategoryOfCompanyReadyEventHandler(data["Data"])
+		puffer.productOfCategoryOfCompanyReadyEventHandler(event.Data)
 
 		go puffer.productsOfCategoriesOfCompaniesMustBeParsedEventHandler(config.Development.SprootTopic)
 

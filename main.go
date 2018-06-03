@@ -27,5 +27,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	puffer.SubscribeOnEvents(puffer.Configuration.Production.SprootTopic)
+	puffer.SubscribeOnEvents(config.Production.SprootTopic)
 }
