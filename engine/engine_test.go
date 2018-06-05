@@ -22,8 +22,6 @@ func TestIntegrationEngineCanBeSetUp(test *testing.T) {
 
 func TestIntegrationEventOfParseRequestCanBeSendToBroker(test *testing.T) {
 
-	test.Skip("broker wtf connect")
-
 	config := configuration.New()
 	puffer := New(config)
 
@@ -120,8 +118,6 @@ func TestIntegrationEventOfParseRequestCanBeSendToBroker(test *testing.T) {
 }
 
 func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
-	test.Skip("broker wtf connect")
-
 	config := configuration.New()
 	puffer := New(config)
 
@@ -294,7 +290,6 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 }
 
 func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
-	test.Skip("broker wtf connect")
 
 	config := configuration.New()
 	puffer := New(config)

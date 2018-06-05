@@ -61,8 +61,10 @@ func (engine *Engine) SubscribeOnEvents(inputTopic string) {
 		log.Fatal(err)
 	}
 
+	fmt.Println("Subscribed on events")
+
 	for event := range channel {
-		log.Println(fmt.Sprintf("Received message: '%v'", event.Message))
+		log.Println(fmt.Sprintf("Received message: '%v' with data: %v", event.Message, event.Data))
 
 		if event.Message == "Need items by name" {
 			details := storage.ProductsByNameForPage{}
