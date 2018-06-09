@@ -22,7 +22,7 @@ func TestIntegrationCompanyCanBeCreated(test *testing.T) {
 		test.Fail()
 	}
 
-	if createdCompany.IsActive != true {
+	if !createdCompany.IsActive {
 		test.Fail()
 	}
 
@@ -205,7 +205,7 @@ func TestIntegrationCompanyCanBeDeactivate(test *testing.T) {
 		test.Error(err)
 	}
 
-	if deactivatedCompany.IsActive != false {
+	if deactivatedCompany.IsActive {
 		test.Fail()
 	}
 }
@@ -245,7 +245,14 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 
 	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
 
-	defer storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+
+	}()
 
 	createdFirstCategory, err :=
 		storage.Categories.CreateCategory(Category{Name: "First test category for company"}, "en")

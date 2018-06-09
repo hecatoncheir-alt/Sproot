@@ -104,7 +104,7 @@ func TestIntegrationInstructionCanBeCreated(test *testing.T) {
 		test.Fail()
 	}
 
-	if instruction.IsActive != true {
+	if !instruction.IsActive {
 		test.Fail()
 	}
 

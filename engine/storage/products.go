@@ -54,14 +54,14 @@ var (
 
 // Product is a structure of products in database
 type Product struct {
-	ID               string     `json:"uid, omitempty"`
-	Name             string     `json:"productName, omitempty"`
-	IRI              string     `json:"productIri, omitempty"`
-	PreviewImageLink string     `json:"previewImageLink, omitempty"`
+	ID               string     `json:"uid,omitempty"`
+	Name             string     `json:"productName,omitempty"`
+	IRI              string     `json:"productIri,omitempty"`
+	PreviewImageLink string     `json:"previewImageLink,omitempty"`
 	IsActive         bool       `json:"productIsActive"`
-	Categories       []Category `json:"belongs_to_category, omitempty"`
-	Companies        []Company  `json:"belongs_to_company, omitempty"`
-	Prices           []Price    `json:"has_price, omitempty"`
+	Categories       []Category `json:"belongs_to_category,omitempty"`
+	Companies        []Company  `json:"belongs_to_company,omitempty"`
+	Prices           []Price    `json:"has_price,omitempty"`
 }
 
 // Products is resource of storage for CRUD operations

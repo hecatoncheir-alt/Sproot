@@ -104,7 +104,7 @@ func TestIntegrationProductCanBeReadById(test *testing.T) {
 		test.Fail()
 	}
 
-	if productFromStore.IsActive == false {
+	if !productFromStore.IsActive {
 		test.Fail()
 	}
 

@@ -34,7 +34,7 @@ func (product *ProductOfCompany) UpdateInStorage(store *storage.Storage) (storag
 		IRI:              product.IRI,
 		PreviewImageLink: product.PreviewImageLink}
 
-	if products != nil {
+	if len(products) != 0 {
 		for _, productByName := range products {
 			for _, category := range productByName.Categories {
 				if category.ID == product.Category.ID {
@@ -42,7 +42,7 @@ func (product *ProductOfCompany) UpdateInStorage(store *storage.Storage) (storag
 					break
 				}
 			}
-			break
+			//break
 		}
 	}
 

@@ -13,7 +13,12 @@ func TestIntegrationCategoryCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	if createdCategory.ID == "" {
 		test.Fail()
@@ -48,7 +53,12 @@ func TestIntegrationCategoriesCanBeReadByName(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	categoriesFromStore, err = storage.Categories.ReadCategoriesByName(createdCategory.Name, ".")
 	if err != nil {
@@ -88,7 +98,12 @@ func TestIntegrationCategoryCanBeReadById(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	categoryFromStore, err = storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
 	if err != nil {
@@ -99,7 +114,7 @@ func TestIntegrationCategoryCanBeReadById(test *testing.T) {
 		test.Fail()
 	}
 
-	if categoryFromStore.IsActive == false {
+	if !categoryFromStore.IsActive {
 		test.Fail()
 	}
 
@@ -124,7 +139,12 @@ func TestIntegrationCategoryCanBeUpdated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	categoryForUpdate := Category{
 		ID:       createdCategory.ID,
@@ -170,7 +190,7 @@ func TestIntegrationCategoryCanBeDeactivate(test *testing.T) {
 		test.Error(err)
 	}
 
-	if categoryInStore.IsActive != true {
+	if !categoryInStore.IsActive {
 		test.Fail()
 	}
 
@@ -184,7 +204,7 @@ func TestIntegrationCategoryCanBeDeactivate(test *testing.T) {
 		test.Error(err)
 	}
 
-	if categoryInStore.IsActive != false {
+	if categoryInStore.IsActive {
 		test.Fail()
 	}
 }
@@ -227,7 +247,12 @@ func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 
 	createdFirstCompany, _ := storage.Companies.CreateCompany(Company{Name: "First test company for category"}, "en")
 
-	defer storage.Companies.DeleteCompany(createdFirstCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdFirstCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Categories.AddCompanyToCategory(createdCategory.ID, createdFirstCompany.ID)
 	if err != nil {
@@ -253,7 +278,12 @@ func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Companies.DeleteCompany(createdSecondCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdSecondCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Categories.AddCompanyToCategory(createdCategory.ID, createdSecondCompany.ID)
 	if err != nil {
@@ -295,15 +325,26 @@ func TestIntegrationCompanyCanBeRemovedFromCategory(test *testing.T) {
 
 	createdFirstCompany, _ := storage.Companies.CreateCompany(Company{Name: "First test company for category"}, "en")
 
-	defer storage.Companies.DeleteCompany(createdFirstCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdFirstCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
-	storage.Categories.AddCompanyToCategory(createdCategory.ID, createdFirstCompany.ID)
+	err = storage.Categories.AddCompanyToCategory(createdCategory.ID, createdFirstCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	createdSecondCompany, _ := storage.Companies.CreateCompany(Company{Name: "Second test company for category"}, "en")
 
 	defer storage.Companies.DeleteCompany(createdSecondCompany)
 
-	storage.Categories.AddCompanyToCategory(createdCategory.ID, createdSecondCompany.ID)
+	err = storage.Categories.AddCompanyToCategory(createdCategory.ID, createdSecondCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	updatedCategory, _ := storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
 

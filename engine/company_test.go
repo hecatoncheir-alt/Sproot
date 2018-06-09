@@ -12,22 +12,39 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 	config := configuration.New()
 
 	store := storage.New(config.Development.Database.Host, config.Development.Database.Port)
-	store.SetUp()
-
-	createdCompany, err := store.Companies.CreateCompany(storage.Company{Name: "Company test name"}, "en")
-	defer store.Companies.DeleteCompany(createdCompany)
+	err := store.SetUp()
 	if err != nil {
-		test.Error(err)
+		test.Fatalf(err.Error())
 	}
 
+	createdCompany, err := store.Companies.CreateCompany(storage.Company{Name: "Company test name"}, "en")
+	defer func() {
+		store.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
 	instruction, err := store.Instructions.CreateInstructionForCompany(createdCompany.ID, "en")
-	defer store.Instructions.DeleteInstruction(instruction)
+	defer func() {
+		store.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
 	if err != nil {
 		test.Error(err)
 	}
 
 	city, err := store.Cities.CreateCity(storage.City{Name: "Test city"}, "en")
-	defer store.Cities.DeleteCity(city)
+	defer func() {
+		store.Cities.DeleteCity(city)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
 	if err != nil {
 		test.Error(err)
 	}
@@ -44,7 +61,12 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 		PriceOfItemSelector:      ".product-price-current"}
 
 	page, _ := store.Instructions.CreatePageInstruction(mVideoPageInstruction)
-	defer store.Instructions.DeletePageInstruction(page)
+	defer func() {
+		_, err := store.Instructions.DeletePageInstruction(page)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	store.Instructions.AddPageInstructionToInstruction(instruction.ID, page.ID)
 

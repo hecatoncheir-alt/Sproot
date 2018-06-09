@@ -13,9 +13,7 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 	config := configuration.New()
 	engine := New(config)
 
-	var err error
-
-	err = engine.SetUpStorage(config.Development.Database.Host, config.Development.Database.Port)
+	err := engine.SetUpStorage(config.Development.Database.Host, config.Development.Database.Port)
 	if err != nil {
 		test.Error(err)
 	}
@@ -26,7 +24,12 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer engine.Storage.Companies.DeleteCompany(createdCompany)
+	defer func(){
+		_, err:=engine.Storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	categoryForTest := storage.Category{Name: "Смартфоны"}
 	createdCategory, err := engine.Storage.Categories.CreateCategory(categoryForTest, "ru")
@@ -34,7 +37,12 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer engine.Storage.Categories.DeleteCategory(createdCategory)
+	defer func(){
+		_, err :=engine.Storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = engine.Storage.Categories.AddCompanyToCategory(createdCategory.ID, createdCompany.ID)
 	if err != nil {
@@ -46,7 +54,12 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer engine.Storage.Cities.DeleteCity(createdCity)
+	defer func(){
+		_, err :=engine.Storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	parseTime, err := time.Parse(time.RFC3339, "2018-02-10T08:34:35.6055814Z")
 	if err != nil {
@@ -83,8 +96,19 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 		test.Fatal()
 	}
 
-	defer engine.Storage.Prices.DeletePrice(productFromStorage.Prices[0])
-	defer engine.Storage.Products.DeleteProduct(productFromStorage)
+	defer func() {
+		_, err := engine.Storage.Prices.DeletePrice(productFromStorage.Prices[0])
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	defer func() {
+		_, err := engine.Storage.Products.DeleteProduct(productFromStorage)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	products, err := engine.Storage.Products.ReadProductsByName(product.Name, "ru")
 	if err != nil {
@@ -135,7 +159,12 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer engine.Storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := engine.Storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	categoryForTest := storage.Category{Name: "Смартфоны"}
 	createdCategory, err := engine.Storage.Categories.CreateCategory(categoryForTest, "ru")
@@ -143,7 +172,12 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer engine.Storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := engine.Storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = engine.Storage.Categories.AddCompanyToCategory(createdCategory.ID, createdCompany.ID)
 	if err != nil {
@@ -155,7 +189,12 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer engine.Storage.Cities.DeleteCity(createdCity)
+	defer func() {
+		_, err := engine.Storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	productForTest := storage.Product{
 		Name:             "Смартфон Samsung Galaxy S8 64Gb черный бриллиант",
@@ -167,7 +206,12 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer engine.Storage.Products.DeleteProduct(createdProduct)
+	defer func() {
+		_, err := engine.Storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = engine.Storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
 	if err != nil {
@@ -214,7 +258,12 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		test.Fatal()
 	}
 
-	defer engine.Storage.Prices.DeletePrice(productFromStorage.Prices[0])
+	defer func() {
+		_, err := engine.Storage.Prices.DeletePrice(productFromStorage.Prices[0])
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	products, err := engine.Storage.Products.ReadProductsByName(product.Name, "ru")
 	if err != nil {
@@ -261,9 +310,7 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 	config := configuration.New()
 	engine := New(config)
 
-	var err error
-
-	err = engine.SetUpStorage(config.Development.Database.Host, config.Development.Database.Port)
+	err := engine.SetUpStorage(config.Development.Database.Host, config.Development.Database.Port)
 	if err != nil {
 		test.Error(err)
 	}
@@ -274,7 +321,12 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 		test.Error(err)
 	}
 
-	defer engine.Storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := engine.Storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	categoryForTest := storage.Category{Name: "Смартфоны"}
 	createdCategory, err := engine.Storage.Categories.CreateCategory(categoryForTest, "ru")
@@ -282,7 +334,12 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 		test.Error(err)
 	}
 
-	defer engine.Storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := engine.Storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = engine.Storage.Categories.AddCompanyToCategory(createdCategory.ID, createdCompany.ID)
 	if err != nil {
@@ -296,7 +353,12 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 		test.Error(err)
 	}
 
-	defer engine.Storage.Cities.DeleteCity(createdCity)
+	defer func() {
+		_, err := engine.Storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	productForTest := storage.Product{
 		Name:             "Смартфон Samsung Galaxy S8 64Gb Черный бриллиант",
@@ -308,7 +370,12 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 		test.Error(err)
 	}
 
-	defer engine.Storage.Products.DeleteProduct(createdProduct)
+	defer func() {
+		_, err := engine.Storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = engine.Storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
 	if err != nil {
@@ -372,7 +439,12 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 		test.Fatal()
 	}
 
-	defer engine.Storage.Prices.DeletePrice(productFromStorage.Prices[0])
+	defer func() {
+		_, err := engine.Storage.Prices.DeletePrice(productFromStorage.Prices[0])
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	categoryWithProducts, err := engine.Storage.Categories.ReadCategoryByID(createdCategory.ID, "ru")
 	if err != nil {

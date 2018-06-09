@@ -30,13 +30,13 @@ type PageInstruction struct {
 
 // Instruction is a structure of instruction for parse
 type Instruction struct {
-	ID               string            `json:"uid, omitempty"`
-	Language         string            `json:"instructionLanguage, omitempty"`
+	ID               string            `json:"uid,omitempty"`
+	Language         string            `json:"instructionLanguage,omitempty"`
 	IsActive         bool              `json:"instructionIsActive"`
-	PagesInstruction []PageInstruction `json:"has_page, omitempty"`
-	Cities           []City            `json:"has_city, omitempty"`
-	Companies        []Company         `json:"has_company, omitempty"`
-	Categories       []Category        `json:"has_category, omitempty"`
+	PagesInstruction []PageInstruction `json:"has_page,omitempty"`
+	Cities           []City            `json:"has_city,omitempty"`
+	Companies        []Company         `json:"has_company,omitempty"`
+	Categories       []Category        `json:"has_category,omitempty"`
 }
 
 // NewInstructionsResourceForStorage is a constructor of Prices resource

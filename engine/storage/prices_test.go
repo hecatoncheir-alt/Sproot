@@ -51,7 +51,7 @@ func TestIntegrationPriceCanBeReadById(test *testing.T) {
 		test.Fail()
 	}
 
-	if priceFromStore.IsActive == false {
+	if !priceFromStore.IsActive {
 		test.Fail()
 	}
 

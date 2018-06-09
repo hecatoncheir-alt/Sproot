@@ -25,9 +25,7 @@ func TestIntegrationEventOfParseRequestCanBeSendToBroker(test *testing.T) {
 	config := configuration.New()
 	puffer := New(config)
 
-	var err error
-
-	err = puffer.SetUpStorage(config.Development.Database.Host, config.Development.Database.Port)
+	err := puffer.SetUpStorage(config.Development.Database.Host, config.Development.Database.Port)
 	if err != nil {
 		test.Error(err)
 	}
@@ -84,36 +82,42 @@ func TestIntegrationEventOfParseRequestCanBeSendToBroker(test *testing.T) {
 	go puffer.productsOfCategoriesOfCompaniesMustBeParsedEventHandler(config.Development.SprootTopic)
 
 	messages, err := puffer.Broker.ListenTopic(config.Development.SprootTopic, config.APIVersion)
+	if err != nil {
+		test.Error(err)
+	}
 
 	for event := range messages {
 		if event.Message != "Need products of category of company" {
 			test.Fail()
 		}
 
-		request := InstructionOfCompany{}
-		json.Unmarshal([]byte(event.Data), &request)
+		if event.Message == "Need products of category of company" {
 
-		if request.Language != "ru" {
-			test.Fail()
+			request := InstructionOfCompany{}
+			json.Unmarshal([]byte(event.Data), &request)
+
+			if request.Language != "ru" {
+				test.Fail()
+			}
+
+			if request.Company.Name != createdCompany.Name {
+				test.Fail()
+			}
+
+			if request.Category.Name != createdCategory.Name {
+				test.Fail()
+			}
+
+			if request.City.Name != createdCity.Name {
+				test.Fail()
+			}
+
+			if request.PageInstruction.ID != pageInstruction.ID {
+				test.Fail()
+			}
+
+			break
 		}
-
-		if request.Company.Name != createdCompany.Name {
-			test.Fail()
-		}
-
-		if request.Category.Name != createdCategory.Name {
-			test.Fail()
-		}
-
-		if request.City.Name != createdCity.Name {
-			test.Fail()
-		}
-
-		if request.PageInstruction.ID != pageInstruction.ID {
-			test.Fail()
-		}
-
-		break
 	}
 }
 
@@ -179,6 +183,10 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 
 	nameOfProduct := ""
 	messages, err := puffer.Broker.ListenTopic(config.Development.SprootTopic, config.APIVersion)
+	if err != nil {
+		test.Error(err)
+	}
+
 	for event := range messages {
 
 		if event.Message == "Need products of category of company" {
@@ -213,6 +221,9 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 				Data:    string(productJSON)}
 
 			err = puffer.Broker.WriteToTopic(config.Development.SprootTopic, event)
+			if err != nil {
+				test.Error(err)
+			}
 
 			continue
 		}
@@ -257,6 +268,10 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 
 	category, err := puffer.Storage.Categories.ReadCategoryByID(createdCategory.ID, "ru")
 	if err != nil {
+		test.Error(err)
+	}
+
+	if err != nil {
 		test.Fail()
 	}
 
@@ -269,6 +284,9 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 	}
 
 	products, err := puffer.Storage.Products.ReadProductsByName(nameOfProduct, "ru")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(products) != 1 {
 		test.Fail()
@@ -353,6 +371,10 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 	eventCount := 0
 	nameOfProduct := ""
 	messages, err := puffer.Broker.ListenTopic(config.Development.SprootTopic, config.APIVersion)
+	if err != nil {
+		test.Error(err)
+	}
+
 	for event := range messages {
 		if event.Message == "Need products of category of company" {
 
