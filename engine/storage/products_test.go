@@ -254,7 +254,10 @@ func TestIntegrationProductCanHasPrice(test *testing.T) {
 	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
 	defer storage.Products.DeleteProduct(createdProduct)
 
-	storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
+	err := storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	productInStore, _ := storage.Products.ReadProductByID(createdProduct.ID, "en")
 

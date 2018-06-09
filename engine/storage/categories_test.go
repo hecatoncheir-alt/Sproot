@@ -238,10 +238,11 @@ func TestIntegrationCategoryCanBeDeleted(test *testing.T) {
 func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 	once.Do(prepareStorage)
 
-	var err error
-
 	createdCategory, err :=
 		storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	defer storage.Categories.DeleteCategory(createdCategory)
 

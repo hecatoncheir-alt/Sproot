@@ -127,6 +127,9 @@ func TestIntegrationCityCanBeDeleted(test *testing.T) {
 	cityForCreate := City{Name: "Moscow"}
 
 	createdCity, err := storage.Cities.CreateCity(cityForCreate, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	deletedCityID, err := storage.Cities.DeleteCity(createdCity)
 	if err != nil {

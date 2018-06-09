@@ -244,6 +244,9 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 	var err error
 
 	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	defer func() {
 

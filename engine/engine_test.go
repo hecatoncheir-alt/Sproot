@@ -409,6 +409,9 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 				Data:    string(productJSON)}
 
 			err = puffer.Broker.WriteToTopic(config.Development.SprootTopic, event)
+			if err != nil {
+				test.Error(err)
+			}
 
 			continue
 		}
@@ -446,6 +449,9 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 	}
 
 	products, err := puffer.Storage.Products.ReadProductsByName(nameOfProduct, "ru")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(products) != 1 {
 		test.Fail()

@@ -196,14 +196,20 @@ func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
 
 	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
 
-	storage.Prices.AddProductToPrice(createdPrice.ID, createdProduct.ID)
+	err := storage.Prices.AddProductToPrice(createdPrice.ID, createdProduct.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	createdCity, err := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
 	if err != nil {
 		test.Error(err)
 	}
 
-	storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+	err = storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	exportedJSON, err := storage.Prices.ExportJSON()
 	if err != nil {

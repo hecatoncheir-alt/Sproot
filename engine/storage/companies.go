@@ -251,6 +251,10 @@ func (companies *Companies) ReadCompaniesByName(companyName, language string) ([
 
 	queryBuf := bytes.Buffer{}
 	err = queryTemplate.Execute(&queryBuf, variables)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
 	transaction := companies.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), queryBuf.String())
@@ -377,6 +381,10 @@ func (companies *Companies) ReadCompanyByID(companyID, language string) (Company
 
 	queryBuf := bytes.Buffer{}
 	err = queryTemplate.Execute(&queryBuf, variables)
+	if err != nil {
+		log.Println(err)
+		return company, err
+	}
 
 	transaction := companies.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), queryBuf.String())
