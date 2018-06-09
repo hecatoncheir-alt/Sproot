@@ -8,6 +8,7 @@ import (
 	"github.com/hecatoncheir/Broker"
 	"github.com/hecatoncheir/Configuration"
 	"github.com/hecatoncheir/Logger"
+	"github.com/hecatoncheir/Sproot/engine/modeler"
 	"github.com/hecatoncheir/Sproot/engine/storage"
 	"time"
 )
@@ -18,6 +19,7 @@ type Engine struct {
 	Storage       *storage.Storage
 	Broker        *broker.Broker
 	Logger        *logger.LogWriter
+	Modeler       *modeler.Modeler
 }
 
 // New is a constructor for Engine
@@ -33,6 +35,9 @@ func (engine *Engine) SetUpStorage(host string, port int) error {
 	if err != nil {
 		return err
 	}
+
+	engine.Modeler = modeler.New(engine.Storage)
+	engine.Modeler.SetUp()
 
 	return nil
 }

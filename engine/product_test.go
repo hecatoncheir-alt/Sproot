@@ -24,8 +24,8 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer func(){
-		_, err:=engine.Storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := engine.Storage.Companies.DeleteCompany(createdCompany)
 		if err != nil {
 			test.Error(err)
 		}
@@ -37,8 +37,8 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer func(){
-		_, err :=engine.Storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := engine.Storage.Categories.DeleteCategory(createdCategory)
 		if err != nil {
 			test.Error(err)
 		}
@@ -54,8 +54,8 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer func(){
-		_, err :=engine.Storage.Cities.DeleteCity(createdCity)
+	defer func() {
+		_, err := engine.Storage.Cities.DeleteCity(createdCity)
 		if err != nil {
 			test.Error(err)
 		}
