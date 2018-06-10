@@ -266,6 +266,10 @@ func (resource *Instructions) ReadInstructionByID(instructionID, language string
 
 	queryBuf := bytes.Buffer{}
 	err = queryTemplate.Execute(&queryBuf, variables)
+	if err != nil {
+		log.Println(err)
+		return instruction, err
+	}
 
 	transaction := resource.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), queryBuf.String())
@@ -472,6 +476,10 @@ func (resource *Instructions) ReadAllInstructionsForCompany(companyID, language 
 
 	queryBuf := bytes.Buffer{}
 	err = queryTemplate.Execute(&queryBuf, variables)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
 	transaction := resource.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), queryBuf.String())

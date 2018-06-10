@@ -124,6 +124,9 @@ func TestIntegrationInstructionCanBeDeleted(test *testing.T) {
 	defer storage.Companies.DeleteCompany(company)
 
 	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	deletedInstructionID, err := storage.Instructions.DeleteInstruction(instruction)
 	if err != nil {
@@ -157,6 +160,9 @@ func TestIntegrationCityCanBeAddedToInstruction(test *testing.T) {
 	defer storage.Cities.DeleteCity(city)
 
 	err = storage.Instructions.AddCityToInstruction(instruction.ID, city.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
 
@@ -190,6 +196,9 @@ func TestIntegrationCityCanBeRemovedFromInstruction(test *testing.T) {
 	defer storage.Cities.DeleteCity(city)
 
 	err = storage.Instructions.AddCityToInstruction(instruction.ID, city.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
 
@@ -350,8 +359,17 @@ func TestIntegrationCategoryCanBeRemovedFromInstruction(test *testing.T) {
 
 	defer storage.Instructions.DeleteInstruction(instruction)
 
-	category, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
-	defer storage.Categories.DeleteCategory(category)
+	category, err := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(category)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
 
@@ -416,15 +434,33 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 	instruction, _ := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
 	defer storage.Instructions.DeleteInstruction(instruction)
 
-	category, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
-	defer storage.Categories.DeleteCategory(category)
+	category, err := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(category)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	storage.Companies.AddCategoryToCompany(company.ID, category.ID)
 
 	storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
 
-	city, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
-	defer storage.Cities.DeleteCity(city)
+	city, err := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Cities.DeleteCity(city)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	storage.Instructions.AddCityToInstruction(instruction.ID, city.ID)
 
@@ -440,7 +476,10 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 	createdPageInstruction, _ := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
 	defer storage.Instructions.DeletePageInstruction(createdPageInstruction)
 
-	storage.Instructions.AddPageInstructionToInstruction(instruction.ID, createdPageInstruction.ID)
+	err := storage.Instructions.AddPageInstructionToInstruction(instruction.ID, createdPageInstruction.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	instructionForCompany, err := storage.Instructions.ReadAllInstructionsForCompany(company.ID, "en")
 	if err != nil {
@@ -451,7 +490,10 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 		test.Fail()
 	}
 
-	storage.Companies.AddLanguageOfCompanyName(company.ID, "Тестовая компания", "ru")
+	err = storage.Companies.AddLanguageOfCompanyName(company.ID, "Тестовая компания", "ru")
+	if err != nil {
+		test.Error(err)
+	}
 
 	secondInstruction, _ := storage.Instructions.CreateInstructionForCompany(company.ID, "ru")
 	defer storage.Instructions.DeleteInstruction(secondInstruction)
@@ -459,7 +501,10 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 	secondCity, _ := storage.Cities.CreateCity(City{Name: "Тестовый город"}, "ru")
 	defer storage.Cities.DeleteCity(secondCity)
 
-	storage.Instructions.AddCityToInstruction(secondInstruction.ID, secondCity.ID)
+	err = storage.Instructions.AddCityToInstruction(secondInstruction.ID, secondCity.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	instructionForCompany, err = storage.Instructions.ReadAllInstructionsForCompany(company.ID, "ru")
 	if err != nil {

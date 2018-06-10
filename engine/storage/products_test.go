@@ -249,12 +249,15 @@ func TestIntegrationProductCanHasPrice(test *testing.T) {
 	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
 	defer storage.Cities.DeleteCity(createdCity)
 
-	storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+	err := storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
 	defer storage.Products.DeleteProduct(createdProduct)
 
-	err := storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
+	err = storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
 	if err != nil {
 		test.Error(err)
 	}

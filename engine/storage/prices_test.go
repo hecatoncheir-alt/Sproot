@@ -39,8 +39,16 @@ func TestIntegrationPriceCanBeReadById(test *testing.T) {
 
 	priceForCreate := Price{Value: 21.440, DateTime: dateTime}
 	createdPrice, err := storage.Prices.CreatePrice(priceForCreate)
+	if err != nil {
+		test.Fail()
+	}
 
-	defer storage.Prices.DeletePrice(createdPrice)
+	defer func() {
+		_, err := storage.Prices.DeletePrice(createdPrice)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	priceFromStore, err := storage.Prices.ReadPriceByID(createdPrice.ID, ".")
 	if err != nil {

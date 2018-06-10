@@ -596,7 +596,11 @@ func (products *Products) ReadProductByID(productID, language string) (Product, 
 	}
 
 	queryBuf := bytes.Buffer{}
-	err = queryTemplate.Execute(&queryBuf, variables)
+	execErr := queryTemplate.Execute(&queryBuf, variables)
+	if  execErr!= nil {
+		log.Println(execErr)
+		return product,execErr
+	}
 
 	transaction := products.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), queryBuf.String())

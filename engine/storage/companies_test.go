@@ -259,8 +259,16 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 
 	createdFirstCategory, err :=
 		storage.Categories.CreateCategory(Category{Name: "First test category for company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	defer storage.Categories.DeleteCategory(createdFirstCategory)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdFirstCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Companies.AddCategoryToCompany(createdCompany.ID, createdFirstCategory.ID)
 	if err != nil {
@@ -283,6 +291,9 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 
 	createdSecondCategory, err :=
 		storage.Categories.CreateCategory(Category{Name: "Second test category for company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	defer storage.Categories.DeleteCategory(createdSecondCategory)
 
@@ -390,7 +401,12 @@ func TestIntegrationProductCanBeAddedToCompany(test *testing.T) {
 
 	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
 
-	defer storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	createdCategory, _ :=
 		storage.Categories.CreateCategory(Category{Name: "Test category for company"}, "en")
@@ -438,6 +454,9 @@ func TestIntegrationProductCanBeAddedToCompany(test *testing.T) {
 	storage.Categories.AddProductToCategory(createdCategory.ID, createdProductForCategory.ID)
 
 	updatedCompany, err = storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(updatedCompany.Categories[0].Products) < 1 || len(updatedCompany.Categories[0].Products) > 1 {
 		test.Fatal()
@@ -500,6 +519,9 @@ func TestIntegrationCompaniesCanBeAddedFromExportedJSON(test *testing.T) {
 	}
 
 	err = storage.Companies.ImportJSON(exportedJSON)
+	if err != nil {
+		test.Error(err)
+	}
 
 	importedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID, "en")
 

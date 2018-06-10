@@ -170,6 +170,10 @@ func (prices *Prices) ReadPriceByID(priceID, language string) (Price, error) {
 
 	queryBuf := bytes.Buffer{}
 	err = queryTemplate.Execute(&queryBuf, variables)
+	if err != nil {
+		log.Println(err)
+		return price, err
+	}
 
 	transaction := prices.storage.Client.NewTxn()
 	response, err := transaction.Query(context.Background(), queryBuf.String())
