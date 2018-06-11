@@ -476,7 +476,7 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 	createdPageInstruction, _ := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
 	defer storage.Instructions.DeletePageInstruction(createdPageInstruction)
 
-	err := storage.Instructions.AddPageInstructionToInstruction(instruction.ID, createdPageInstruction.ID)
+	err = storage.Instructions.AddPageInstructionToInstruction(instruction.ID, createdPageInstruction.ID)
 	if err != nil {
 		test.Error(err)
 	}

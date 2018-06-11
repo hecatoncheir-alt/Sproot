@@ -470,34 +470,87 @@ func TestIntegrationProductCanBeAddedToCompany(test *testing.T) {
 func TestIntegrationCompaniesCanBeAddedFromExportedJSON(test *testing.T) {
 	once.Do(prepareStorage)
 
-	createdCategory, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
-	defer storage.Categories.DeleteCategory(createdCategory)
+	createdCategory, err := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	storage.Companies.AddCategoryToCompany(createdCompany.ID, createdCategory.ID)
 
-	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
-	defer storage.Products.DeleteProduct(createdProduct)
+	createdProduct, err := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	storage.Products.AddCompanyToProduct(createdProduct.ID, createdCompany.ID)
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
-	storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
+	err = storage.Products.AddCompanyToProduct(createdProduct.ID, createdCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	err = storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
 	priceData, _ := time.Parse(time.RFC3339, exampleDateTime)
 	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 132.3, DateTime: priceData})
-	defer storage.Prices.DeletePrice(createdPrice)
+	defer func() {
+		_, err := storage.Prices.DeletePrice(createdPrice)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
 
-	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
-	defer storage.Cities.DeleteCity(createdCity)
+	createdCity, err := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+	defer func() {
+		_, err = storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
-	updatedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID, "en")
+	err = storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedCompany, err := storage.Companies.ReadCompanyByID(createdCompany.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	all := allExportedCompanies{Language: "en"}
 	all.Companies = append(all.Companies, updatedCompany)
@@ -507,11 +560,26 @@ func TestIntegrationCompaniesCanBeAddedFromExportedJSON(test *testing.T) {
 		test.Error(err)
 	}
 
-	storage.Categories.DeleteCategory(createdCategory)
-	storage.Companies.DeleteCompany(createdCompany)
-	storage.Products.DeleteProduct(createdProduct)
-	storage.Prices.DeletePrice(createdPrice)
-	storage.Cities.DeleteCity(createdCity)
+	_, err = storage.Categories.DeleteCategory(createdCategory)
+	if err != nil {
+		test.Error(err)
+	}
+	_, err = storage.Companies.DeleteCompany(createdCompany)
+	if err != nil {
+		test.Error(err)
+	}
+	_, err = storage.Products.DeleteProduct(createdProduct)
+	if err != nil {
+		test.Error(err)
+	}
+	_, err = storage.Prices.DeletePrice(createdPrice)
+	if err != nil {
+		test.Error(err)
+	}
+	_, err = storage.Cities.DeleteCity(createdCity)
+	if err != nil {
+		test.Error(err)
+	}
 
 	_, err = storage.Companies.ReadCompanyByID(createdCompany.ID, "en")
 	if err != ErrCompanyDoesNotExist {
@@ -565,16 +633,44 @@ func TestIntegrationCompaniesCanBeExportedToJSON(test *testing.T) {
 
 	storage.Companies.AddCategoryToCompany(createdCompany.ID, createdCategory.ID)
 
-	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
-	defer storage.Products.DeleteProduct(createdProduct)
+	createdProduct, err := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	storage.Products.AddCompanyToProduct(createdProduct.ID, createdCompany.ID)
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
-	storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
+	err = storage.Products.AddCompanyToProduct(createdProduct.ID, createdCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
-	createdOtherProduct, _ := storage.Products.CreateProduct(Product{Name: "Other test product"}, "en")
-	defer storage.Products.DeleteProduct(createdOtherProduct)
-	storage.Products.AddCategoryToProduct(createdOtherProduct.ID, createdCategory.ID)
+	err = storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	createdOtherProduct, err := storage.Products.CreateProduct(Product{Name: "Other test product"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdOtherProduct)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	err = storage.Products.AddCategoryToProduct(createdOtherProduct.ID, createdCategory.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
 	priceData, _ := time.Parse(time.RFC3339, exampleDateTime)
