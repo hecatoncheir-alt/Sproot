@@ -208,7 +208,7 @@ func (products *Products) ReadProductsByNameWithPagination(productName, language
 							}
 						}
 					}
-					has_price @filter(eq(priceIsActive, true)) {
+					has_price @filter(eq(priceIsActive, true)) (orderdesc: priceDateTime) {
 						uid
 						priceValue
 						priceDateTime
@@ -560,7 +560,7 @@ func (products *Products) ReadProductByID(productID, language string) (Product, 
 							}
 						}
 					}
-					has_price @filter(eq(priceIsActive, true)) {
+					has_price @filter(eq(priceIsActive, true)) (orderasc: priceDateTime) {
 						uid
 						priceValue
 						priceDateTime
@@ -597,9 +597,9 @@ func (products *Products) ReadProductByID(productID, language string) (Product, 
 
 	queryBuf := bytes.Buffer{}
 	execErr := queryTemplate.Execute(&queryBuf, variables)
-	if  execErr!= nil {
+	if execErr != nil {
 		log.Println(execErr)
-		return product,execErr
+		return product, execErr
 	}
 
 	transaction := products.storage.Client.NewTxn()

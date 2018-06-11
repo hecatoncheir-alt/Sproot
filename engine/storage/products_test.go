@@ -377,5 +377,79 @@ func TestIntegrationProductCanBeSearchedByNameWithPaginationAndCounter(test *tes
 	if foundedProductsForFirstPage.Products[0].Name != "Пятый тестовый продукт" {
 		test.Errorf("Expected \"Пятый тестовый продукт\", actual: %v", foundedProductsForFirstPage.Products[0].Name)
 	}
+}
 
+func TestPricesOfProductMustBeSortedByDate(test *testing.T) {
+	once.Do(prepareStorage)
+
+	createdProduct1, _ := storage.Products.CreateProduct(Product{Name: "Первый тестовый продукт"}, "ru")
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct1)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
+	dateTime, err := time.Parse(time.RFC3339, exampleDateTime)
+	if err != nil {
+		test.Error(err)
+	}
+
+	createdPrice, err := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Prices.DeletePrice(createdPrice)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	err = storage.Products.AddPriceToProduct(createdProduct1.ID, createdPrice.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	exampleSecondDateTime := "2017-06-01T16:27:18.543653798Z"
+	secondDateTime, err := time.Parse(time.RFC3339, exampleSecondDateTime)
+	if err != nil {
+		test.Error(err)
+	}
+
+	createdSecondPrice, err := storage.Prices.CreatePrice(Price{Value: 124, DateTime: secondDateTime})
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Prices.DeletePrice(createdSecondPrice)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	err = storage.Products.AddPriceToProduct(createdProduct1.ID, createdSecondPrice.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	foundedProductsForFirstPage, err := storage.Products.ReadProductsByNameWithPagination("тестовый", "ru", 1, 1)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if len(foundedProductsForFirstPage.Products) != 1 {
+		test.Fatalf(err.Error())
+	}
+
+	if len(foundedProductsForFirstPage.Products[0].Prices) != 2 {
+		test.Fatalf(err.Error())
+	}
+
+	if foundedProductsForFirstPage.Products[0].Prices[0].Value != 124 {
+		test.Fatalf(err.Error())
+	}
 }
