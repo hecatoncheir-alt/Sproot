@@ -153,9 +153,8 @@ func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
 	}
 
 	all := allPrices{}
-
-	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
-	priceData, _ := time.Parse(time.RFC3339, exampleDateTime)
+	// exampleDateTime := "2017-05-01T16:27:18.543653798Z"
+	priceData := time.Now().UTC()
 	priceValue := 123.0
 
 	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: priceValue, DateTime: priceData, IsActive: true})
@@ -178,7 +177,10 @@ func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
 		test.Error(err)
 	}
 
-	priceFromStorage, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+	priceFromStorage, err := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if priceFromStorage.ID != createdPrice.ID {
 		test.Fail()
@@ -188,7 +190,10 @@ func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
 		test.Fail()
 	}
 
-	if priceFromStorage.DateTime != priceData {
+	encodedFormattedPrice := priceData.Format(time.RFC3339)
+	formattedPrice, err := time.Parse(time.RFC3339, encodedFormattedPrice)
+
+	if priceFromStorage.DateTime != formattedPrice {
 		test.Fail()
 	}
 }
@@ -285,6 +290,45 @@ func TestIntegrationCityCanBeAddedToPrice(test *testing.T) {
 	updatedPrice, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
 
 	if updatedPrice.Cities[0].ID != createdCity.ID {
+		test.Fail()
+	}
+}
+
+func TestPriceDateTimeCanBeMarshalingRight(test *testing.T) {
+	test.Skip("WTF with parse or unmarshal...")
+	once.Do(prepareStorage)
+
+	timeOfParse, err := time.Parse(time.RFC3339, "2018-06-16T14:08:11.7295653Z")
+	if err != nil {
+		test.Error(err)
+	}
+
+	price := Price{
+		ID:       "0",
+		Value:    100,
+		DateTime: timeOfParse}
+
+	priceInStorage, err := storage.Prices.CreatePrice(price)
+	if err != nil {
+		test.Error(err)
+	}
+
+	priceFromStorage, err := storage.Prices.ReadPriceByID(priceInStorage.ID, ".")
+	if err != nil {
+		test.Error(err)
+	}
+
+	_, err = storage.Prices.DeletePrice(priceInStorage)
+	if err != nil {
+		test.Error(err)
+	}
+
+	encodedPrice, err := json.Marshal(priceFromStorage)
+	if err != nil {
+		test.Error(err)
+	}
+
+	if string(encodedPrice) != timeOfParse.Format(time.RFC3339) {
 		test.Fail()
 	}
 }

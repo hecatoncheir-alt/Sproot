@@ -26,6 +26,29 @@ type Price struct {
 	Companies []Company `json:"belongs_to_company,omitempty"`
 }
 
+// func (price *Price) MarshalJSON() ([]byte, error) {
+// 	type priceStructureForMarshal struct {
+// 		ID        string    `json:"uid"`
+// 		Value     float64   `json:"priceValue,omitempty"`
+// 		DateTime  string    `json:"priceDateTime,omitempty"`
+// 		IsActive  bool      `json:"priceIsActive"`
+// 		Cities    []City    `json:"belongs_to_city,omitempty"`
+// 		Products  []Product `json:"belongs_to_product,omitempty"`
+// 		Companies []Company `json:"belongs_to_company,omitempty"`
+// 	}
+
+// 	priceForMarshal := priceStructureForMarshal{
+// 		ID:        price.ID,
+// 		Value:     price.Value,
+// 		DateTime:  price.DateTime.Format(time.RFC3339),
+// 		IsActive:  price.IsActive,
+// 		Cities:    price.Cities,
+// 		Products:  price.Products,
+// 		Companies: price.Companies}
+
+// 	return json.Marshal(priceForMarshal)
+// }
+
 // NewPricesResourceForStorage is a constructor of Prices resource
 func NewPricesResourceForStorage(storage *Storage) *Prices {
 	return &Prices{storage: storage}
@@ -83,7 +106,13 @@ func (prices *Prices) CreatePrice(price Price) (Price, error) {
 
 	price.ID = assigned.Uids["blank-0"]
 
-	return price, nil
+	priceFromStorage, err := prices.ReadPriceByID(price.ID, ".")
+	if err != nil {
+		log.Println(err)
+		return priceFromStorage, err
+	}
+
+	return priceFromStorage, nil
 }
 
 // ErrPriceCanNotBeDeleted means that the price can't be deleted from database
