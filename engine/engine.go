@@ -37,7 +37,7 @@ func (engine *Engine) SetUpStorage(host string, port int) error {
 	}
 
 	engine.Modeler = modeler.New(engine.Storage)
-	engine.Modeler.SetUp()
+	engine.Modeler.SetUpAll()
 
 	return nil
 }

@@ -23,6 +23,7 @@ type PageInstruction struct {
 	CityParamPath              string `json:"cityParamPath,omitempty"`
 	ItemSelector               string `json:"itemSelector,omitempty"`
 	NameOfItemSelector         string `json:"nameOfItemSelector,omitempty"`
+	LinkOfItemSelector         string `json:"linkOfItemSelector,omitempty"`
 	CityInCookieKey            string `json:"cityInCookieKey,omitempty"`
 	CityIDForCookie            string `json:"cityIdForCookie,omitempty"`
 	PriceOfItemSelector        string `json:"priceOfItemSelector,omitempty"`

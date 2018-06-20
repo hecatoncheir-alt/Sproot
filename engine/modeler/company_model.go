@@ -1,11 +1,17 @@
 package modeler
 
-import "github.com/hecatoncheir/Sproot/engine/storage"
+import (
+	"github.com/hecatoncheir/Sproot/engine/storage"
+	"log"
+)
 
 func setCompanyModel(store *storage.Storage) {
-	companyForCreate := storage.Company{}
+	companyForCreate := storage.Company{
+		IRI:  "http://www.mvideo.ru/",
+		Name: "М.Видео"}
 
-	store.Companies.ReadCompaniesByName()
-
-	store.Companies.CreateCompany()
+	_, err := store.Companies.CreateCompany(companyForCreate, "ru")
+	if err != nil {
+		log.Fatal(err)
+	}
 }

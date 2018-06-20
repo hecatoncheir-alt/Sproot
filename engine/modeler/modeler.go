@@ -12,4 +12,7 @@ func New(storage *storage.Storage) *Modeler {
 
 func (modeler *Modeler) SetUpAll() {
 	setCompanyModel(modeler.Storage)
+	setCategoryModel(modeler.Storage)
+	setCityModel(modeler.Storage)
+	setPageInstructionModel(modeler.Storage)
 }
