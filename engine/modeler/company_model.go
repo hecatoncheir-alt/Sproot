@@ -11,7 +11,7 @@ func setCompanyModel(store *storage.Storage) {
 		Name: "М.Видео"}
 
 	_, err := store.Companies.CreateCompany(companyForCreate, "ru")
-	if err != nil {
+	if err != nil && err != storage.ErrCompanyAlreadyExist {
 		log.Fatal(err)
 	}
 }

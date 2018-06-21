@@ -19,6 +19,6 @@ func setPageInstructionModel(store *storage.Storage) {
 
 	_, err := store.Instructions.CreatePageInstruction(pageInstructionForCreate)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 }

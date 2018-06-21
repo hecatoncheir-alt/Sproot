@@ -10,7 +10,7 @@ func setCategoryModel(store *storage.Storage) {
 		Name: "Смартфоны"}
 
 	_, err := store.Categories.CreateCategory(categoryForCreate, "ru")
-	if err != nil {
+	if err != nil && err != storage.ErrCategoryAlreadyExist {
 		log.Fatal(err)
 	}
 }

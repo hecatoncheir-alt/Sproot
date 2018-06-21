@@ -10,7 +10,7 @@ func setCityModel(store *storage.Storage) {
 		Name: "Москва"}
 
 	_, err := store.Cities.CreateCity(cityForCreate, "ru")
-	if err != nil {
+	if err != nil && err != storage.ErrCityAlreadyExist {
 		log.Fatal(err)
 	}
 }
