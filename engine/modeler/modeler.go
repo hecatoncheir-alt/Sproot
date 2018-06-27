@@ -13,7 +13,7 @@ func New(storage *storage.Storage) *Modeler {
 	return &Modeler{Storage: storage}
 }
 
-func (modeler *Modeler) SetUpAll() {
+func (modeler *Modeler) SetUpAll() error {
 	companyForCreate := storage.Company{
 		IRI:  "http://www.mvideo.ru/",
 		Name: "М.Видео"}
@@ -21,6 +21,7 @@ func (modeler *Modeler) SetUpAll() {
 	createdCompany, err := modeler.Storage.Companies.CreateCompany(companyForCreate, "ru")
 	if err != nil && err != storage.ErrCompanyAlreadyExist {
 		log.Fatal(err)
+		return err
 	}
 
 	categoryForCreate := storage.Category{
@@ -29,21 +30,25 @@ func (modeler *Modeler) SetUpAll() {
 	createdCategory, err := modeler.Storage.Categories.CreateCategory(categoryForCreate, "ru")
 	if err != nil && err != storage.ErrCategoryAlreadyExist {
 		log.Fatal(err)
+		return err
 	}
 
 	err = modeler.Storage.Categories.AddCompanyToCategory(createdCategory.ID, createdCompany.ID)
 	if err != nil {
 		log.Fatal(err)
+		return err
 	}
 
 	createdInstruction, err := modeler.Storage.Instructions.CreateInstructionForCompany(createdCompany.ID, "ru")
 	if err != nil {
 		log.Println(err)
+		return err
 	}
 
 	err = modeler.Storage.Instructions.AddCategoryToInstruction(createdInstruction.ID, createdCategory.ID)
 	if err != nil {
 		log.Println(err)
+		return err
 	}
 
 	cityForCreate := storage.City{
@@ -52,11 +57,13 @@ func (modeler *Modeler) SetUpAll() {
 	createdCity, err := modeler.Storage.Cities.CreateCity(cityForCreate, "ru")
 	if err != nil && err != storage.ErrCityAlreadyExist {
 		log.Fatal(err)
+		return err
 	}
 
 	err = modeler.Storage.Instructions.AddCityToInstruction(createdInstruction.ID, createdCity.ID)
 	if err != nil {
 		log.Println(err)
+		return err
 	}
 
 	pageInstructionForCreate := storage.PageInstruction{
@@ -73,11 +80,14 @@ func (modeler *Modeler) SetUpAll() {
 	createdPageInstruction, err := modeler.Storage.Instructions.CreatePageInstruction(pageInstructionForCreate)
 	if err != nil {
 		log.Println(err)
+		return err
 	}
 
 	err = modeler.Storage.Instructions.AddPageInstructionToInstruction(createdInstruction.ID, createdPageInstruction.ID)
 	if err != nil {
 		log.Println(err)
+		return err
 	}
 
+	return nil
 }

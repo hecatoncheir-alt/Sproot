@@ -36,8 +36,16 @@ func (engine *Engine) SetUpStorage(host string, port int) error {
 		return err
 	}
 
+	return nil
+}
+
+func (engine *Engine) SetUpModel() error {
+
 	engine.Modeler = modeler.New(engine.Storage)
-	engine.Modeler.SetUpAll()
+	err := engine.Modeler.SetUpAll()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -61,14 +69,9 @@ func (engine *Engine) SetUpBroker(host string, port int) error {
 
 func (engine *Engine) SubscribeOnEvents(inputTopic string) {
 
-	channel, err := engine.Broker.ListenTopic(inputTopic, engine.Configuration.APIVersion)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	fmt.Println("Subscribed on events")
 
-	for event := range channel {
+	for event := range engine.Broker.InputChannel {
 		log.Println(fmt.Sprintf("Received message: '%v' with data: %v", event.Message, event.Data))
 
 		if event.Message == "Need items by name" {
@@ -125,10 +128,7 @@ func (engine *Engine) productsByNameAndPaginationHandler(
 			APIVersion: APIVersion,
 			ClientID:   clientID}
 
-		err = engine.Broker.WriteToTopic(outputTopic, event)
-		if err != nil {
-			log.Println(err)
-		}
+		go engine.Broker.Write(event)
 	}
 
 	if err == nil {
@@ -148,10 +148,7 @@ func (engine *Engine) productsByNameAndPaginationHandler(
 		logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
 		go engine.Logger.Write(logEvent)
 
-		err = engine.Broker.WriteToTopic(outputTopic, event)
-		if err != nil {
-			log.Println(err)
-		}
+		go engine.Broker.Write(event)
 	}
 
 }
@@ -175,7 +172,15 @@ func (engine *Engine) productsOfCategoriesOfCompaniesMustBeParsedEventHandler(ou
 
 	logMessage := fmt.Sprintf("Input event for starting parse products of categories of companies")
 	logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
-	go engine.Logger.Write(logEvent)
+
+	if engine.Logger != nil {
+		go func() {
+			err := engine.Logger.Write(logEvent)
+			if err != nil {
+				fmt.Println("Error ", err)
+			}
+		}()
+	}
 
 	for _, language := range supportedLanguages {
 		allCompanies, err := engine.Storage.Companies.ReadAllCompanies(language)
@@ -226,7 +231,7 @@ func (engine *Engine) productsOfCategoriesOfCompaniesMustBeParsedEventHandler(ou
 							Message: "Need products of category of company",
 							Data:    string(data)}
 
-						err = engine.Broker.WriteToTopic(outputTopic, event)
+						fmt.Printf("Write: %v to %v", event.Message, outputTopic)
 
 						if err != nil {
 							log.Println(err)

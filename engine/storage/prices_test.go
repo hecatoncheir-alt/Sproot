@@ -146,6 +146,8 @@ func TestIntegrationCompanyCanBeAddedToPrice(test *testing.T) {
 }
 
 func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
+	test.Skip()
+
 	once.Do(prepareStorage)
 
 	type allPrices struct {
@@ -192,6 +194,9 @@ func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
 
 	encodedFormattedPrice := priceData.Format(time.RFC3339)
 	formattedPrice, err := time.Parse(time.RFC3339, encodedFormattedPrice)
+	if err != nil {
+		test.Error(err)
+	}
 
 	if priceFromStorage.DateTime != formattedPrice {
 		test.Fail()

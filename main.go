@@ -22,7 +22,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = puffer.SetUpBroker(config.Production.Broker.Host, config.Production.Broker.Port)
+	err = puffer.SetUpModel()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = puffer.SetUpBroker(config.Production.EventBus.Host, config.Production.EventBus.Port)
 	if err != nil {
 		log.Fatal(err)
 	}

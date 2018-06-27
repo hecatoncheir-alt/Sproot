@@ -9,7 +9,6 @@ import (
 )
 
 func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
-
 	config := configuration.New()
 	engine := New(config)
 

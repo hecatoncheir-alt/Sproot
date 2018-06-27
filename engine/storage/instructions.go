@@ -508,6 +508,11 @@ func (resource *Instructions) ReadAllInstructionsForCompany(companyID, language 
 	return foundedInstructions.Instructions, nil
 }
 
+// TODO
+//func (resource *Instructions) ReadInstructionsOfCompany(companyID, language string) ([]Instruction, error) {
+//
+//}
+
 //TODO
 //func (resource *Instructions) ReadInstructionOfCategoryForCompany(companyID, categoryID, language string) ([]Instruction, error) {
 //

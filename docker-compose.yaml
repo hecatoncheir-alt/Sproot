@@ -1,12 +1,5 @@
 version: '3.2'
 services:
-  nats:
-    image: nats
-    expose:
-      - "4222"
-    ports:
-      - "4222:4222"
-      - "8222:8222"
   zero:
     image: dgraph/dgraph:latest
     volumes:

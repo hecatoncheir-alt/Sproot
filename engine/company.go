@@ -58,10 +58,7 @@ func (entity *Company) ParseAll(instructions []InstructionOfCompany) error {
 			Message: "Need products of category of company",
 			Data:    string(data)}
 
-		err = entity.Broker.WriteToTopic(entity.Configuration.APIVersion, message)
-		if err != nil {
-			return err
-		}
+		go entity.Broker.Write(message)
 	}
 
 	return nil
