@@ -209,8 +209,6 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 
 func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 
-	test.Skip("Test it late")
-
 	config := configuration.New()
 	puffer := New(config)
 
@@ -271,10 +269,9 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 
 	go puffer.productsOfCategoriesOfCompaniesMustBeParsedEventHandler(config.Development.SprootTopic)
 
-	eventCount := 0
 	nameOfProduct := ""
 
-	for event := range puffer.Broker.InputChannel {
+	for event := range puffer.Broker.OutputChannel {
 		if event.Message == "Need products of category of company" {
 
 			request := InstructionOfCompany{}
@@ -307,11 +304,15 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 				Message: "Product of category of company ready",
 				Data:    string(productJSON)}
 
-			go puffer.Broker.Write(event)
+			go func() {
+				puffer.Broker.InputChannel <- event
+			}()
 
-			continue
+			break
 		}
+	}
 
+	for event := range puffer.Broker.InputChannel {
 		if event.Message != "Product of category of company ready" {
 			test.Fail()
 		}
@@ -325,10 +326,7 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 
 		go puffer.productsOfCategoriesOfCompaniesMustBeParsedEventHandler(config.Development.SprootTopic)
 
-		eventCount++
-		if eventCount == 2 {
-			break
-		}
+		break
 	}
 
 	category, err := puffer.Storage.Categories.ReadCategoryByID(createdCategory.ID, "ru")
@@ -363,11 +361,6 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 	}
 
 	_, err = puffer.Storage.Prices.DeletePrice(products[0].Prices[0])
-	if err != nil {
-		test.Fail()
-	}
-
-	_, err = puffer.Storage.Prices.DeletePrice(products[0].Prices[1])
 	if err != nil {
 		test.Fail()
 	}

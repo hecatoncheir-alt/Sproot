@@ -231,11 +231,9 @@ func (engine *Engine) productsOfCategoriesOfCompaniesMustBeParsedEventHandler(ou
 							Message: "Need products of category of company",
 							Data:    string(data)}
 
-						fmt.Printf("Write: %v to %v", event.Message, outputTopic)
+						println(fmt.Sprintf("Write: %v to %v", event.Message, outputTopic))
 
-						if err != nil {
-							log.Println(err)
-						}
+						engine.Broker.Write(event)
 					}
 
 				}
