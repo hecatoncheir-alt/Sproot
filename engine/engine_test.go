@@ -256,11 +256,7 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 
 	puffer.Storage.Instructions.AddPageInstructionToInstruction(instruction.ID, pageInstruction.ID)
 
-	//err = puffer.SetUpBroker(config.Development.EventBus.Host, config.Development.EventBus.Port)
-	err = puffer.SetUpBroker(config.Development.EventBus.Host, 8181)
-	if err != nil {
-		test.Error(err)
-	}
+	puffer.Broker = broker.New(config.APIVersion, config.ServiceName)
 
 	go puffer.productsOfCategoriesOfCompaniesMustBeParsedEventHandler(config.Development.SprootTopic)
 
