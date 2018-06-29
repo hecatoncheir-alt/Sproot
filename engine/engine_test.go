@@ -21,17 +21,11 @@ func TestIntegrationEngineCanBeSetUp(test *testing.T) {
 }
 
 func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
-	test.Skip("Test it late")
 
 	config := configuration.New()
 	puffer := New(config)
 
 	err := puffer.SetUpStorage(config.Development.Database.Host, config.Development.Database.Port)
-	if err != nil {
-		test.Error(err)
-	}
-
-	err = puffer.SetUpBroker(config.Development.EventBus.Host, config.Development.EventBus.Port)
 	if err != nil {
 		test.Error(err)
 	}
@@ -84,13 +78,9 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 
 	nameOfProduct := ""
 
-	otherBroker := broker.New(config.APIVersion, config.ServiceName)
-	err = otherBroker.Connect(config.Development.EventBus.Host, 8181)
-	if err != nil {
-		test.Error(err)
-	}
+	puffer.Broker = broker.New(config.APIVersion, config.ServiceName)
 
-	for event := range otherBroker.InputChannel {
+	for event := range puffer.Broker.OutputChannel {
 
 		if event.Message == "Need products of category of company" {
 
@@ -123,10 +113,15 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 				Message: "Product of category of company ready",
 				Data:    string(productJSON)}
 
-			go puffer.Broker.Write(event)
+			go func() {
+				puffer.Broker.InputChannel <- event
+			}()
 
-			continue
+			break
 		}
+	}
+
+	for event := range puffer.Broker.InputChannel {
 
 		if event.Message != "Product of category of company ready" {
 			test.Fail()

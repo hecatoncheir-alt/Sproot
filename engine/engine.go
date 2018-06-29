@@ -157,9 +157,17 @@ func (engine *Engine) productOfCategoryOfCompanyReadyEventHandler(productOfCateg
 	product := ProductOfCompany{}
 	json.Unmarshal([]byte(productOfCategoryOfCompanyData), &product)
 
-	logMessage := fmt.Sprintf("Input event with product: %v", product)
-	logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
-	go engine.Logger.Write(logEvent)
+	go func() {
+		if engine.Logger != nil {
+			logMessage := fmt.Sprintf("Input event with product: %v", product)
+			logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
+
+			err := engine.Logger.Write(logEvent)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}()
 
 	_, err := product.UpdateInStorage(engine.Storage)
 	if err != nil {
