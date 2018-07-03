@@ -44,7 +44,12 @@ func TestIntegrationPageInstructionCanBeReadById(test *testing.T) {
 		test.Fail()
 	}
 
-	defer storage.Instructions.DeletePageInstruction(createdPageInstruction)
+	defer func() {
+		_, err := storage.Instructions.DeletePageInstruction(createdPageInstruction)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	pageInstructionFromStore, err := storage.Instructions.ReadPageInstructionByID(createdPageInstruction.ID)
 	if err != nil {
@@ -95,10 +100,17 @@ func TestIntegrationInstructionCanBeCreated(test *testing.T) {
 	defer storage.Companies.DeleteCompany(company)
 
 	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
-	defer storage.Instructions.DeleteInstruction(instruction)
 	if err != nil {
 		test.Fail()
 	}
+
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(instruction)
+
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	if instruction.ID == "" {
 		test.Fail()
@@ -154,7 +166,12 @@ func TestIntegrationCityCanBeAddedToInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Instructions.DeleteInstruction(instruction)
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	city, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
 	defer storage.Cities.DeleteCity(city)
@@ -190,7 +207,12 @@ func TestIntegrationCityCanBeRemovedFromInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Instructions.DeleteInstruction(instruction)
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	city, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
 	defer storage.Cities.DeleteCity(city)
@@ -232,7 +254,12 @@ func TestIntegrationPageInstructionCanBeAddedToInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Instructions.DeleteInstruction(instruction)
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	mVideoPageInstruction := PageInstruction{
 		Path: "smartfony-i-svyaz/smartfony-205",
@@ -244,7 +271,12 @@ func TestIntegrationPageInstructionCanBeAddedToInstruction(test *testing.T) {
 		PriceOfItemSelector:      ".product-price-current"}
 
 	createdPageInstruction, _ := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
-	defer storage.Instructions.DeletePageInstruction(createdPageInstruction)
+	defer func() {
+		_, err := storage.Instructions.DeletePageInstruction(createdPageInstruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Instructions.AddPageInstructionToInstruction(instruction.ID, createdPageInstruction.ID)
 	if err != nil {
@@ -273,7 +305,12 @@ func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) 
 		test.Error(err)
 	}
 
-	defer storage.Instructions.DeleteInstruction(instruction)
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	mVideoPageInstruction := PageInstruction{
 		Path: "smartfony-i-svyaz/smartfony-205",
@@ -285,7 +322,12 @@ func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) 
 		PriceOfItemSelector:      ".product-price-current"}
 
 	createdPageInstruction, _ := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
-	defer storage.Instructions.DeletePageInstruction(createdPageInstruction)
+	defer func() {
+		_, err := storage.Instructions.DeletePageInstruction(createdPageInstruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Instructions.AddPageInstructionToInstruction(instruction.ID, createdPageInstruction.ID)
 	if err != nil {
@@ -325,10 +367,20 @@ func TestIntegrationCategoryCanBeAddedToInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Instructions.DeleteInstruction(instruction)
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	category, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
-	defer storage.Categories.DeleteCategory(category)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(category)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
 	if err != nil {
@@ -357,7 +409,12 @@ func TestIntegrationCategoryCanBeRemovedFromInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Instructions.DeleteInstruction(instruction)
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	category, err := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
 	if err != nil {
@@ -371,7 +428,10 @@ func TestIntegrationCategoryCanBeRemovedFromInstruction(test *testing.T) {
 		}
 	}()
 
-	storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
+	err = storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
 
@@ -448,7 +508,10 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 
 	storage.Companies.AddCategoryToCompany(company.ID, category.ID)
 
-	storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
+	err = storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	city, err := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
 	if err != nil {
@@ -462,7 +525,10 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 		}
 	}()
 
-	storage.Instructions.AddCityToInstruction(instruction.ID, city.ID)
+	err = storage.Instructions.AddCityToInstruction(instruction.ID, city.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	mVideoPageInstruction := PageInstruction{
 		Path: "smartfony-i-svyaz/smartfony-205",
@@ -474,7 +540,12 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 		PriceOfItemSelector:      ".product-price-current"}
 
 	createdPageInstruction, _ := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
-	defer storage.Instructions.DeletePageInstruction(createdPageInstruction)
+	defer func() {
+		_, err := storage.Instructions.DeletePageInstruction(createdPageInstruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Instructions.AddPageInstructionToInstruction(instruction.ID, createdPageInstruction.ID)
 	if err != nil {
