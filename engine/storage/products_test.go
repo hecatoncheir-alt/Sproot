@@ -213,20 +213,45 @@ func TestIntegrationCompanyCanBeAddedToProduct(test *testing.T) {
 func TestIntegrationPriceCanBeAddedToProduct(test *testing.T) {
 	once.Do(prepareStorage)
 
-	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
-	defer storage.Products.DeleteProduct(createdProduct)
-
-	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
-	dateTime, _ := time.Parse(time.RFC3339, exampleDateTime)
-	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
-	defer storage.Prices.DeletePrice(createdPrice)
-
-	err := storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
+	createdProduct, err := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
 	if err != nil {
 		test.Error(err)
 	}
 
-	updatedProduct, _ := storage.Products.ReadProductByID(createdProduct.ID, "en")
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
+	dateTime, err := time.Parse(time.RFC3339, exampleDateTime)
+	if err != nil {
+		test.Error(err)
+	}
+
+	createdPrice, err := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Prices.DeletePrice(createdPrice)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	err = storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedProduct, err := storage.Products.ReadProductByID(createdProduct.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(updatedProduct.Prices) < 1 || len(updatedProduct.Prices) > 1 {
 		test.Fatal()
@@ -243,13 +268,26 @@ func TestIntegrationPriceCanBeAddedToProduct(test *testing.T) {
 
 func TestIntegrationProductCanHasPrice(test *testing.T) {
 	once.Do(prepareStorage)
-	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 31.2})
-	defer storage.Prices.DeletePrice(createdPrice)
+	createdPrice, err := storage.Prices.CreatePrice(Price{Value: 31.2})
+	if err != nil {
+		test.Error(err)
+	}
 
-	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	defer func() {
+		_, err := storage.Prices.DeletePrice(createdPrice)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	createdCity, err := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
 	defer storage.Cities.DeleteCity(createdCity)
 
-	err := storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+	err = storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
 	if err != nil {
 		test.Error(err)
 	}

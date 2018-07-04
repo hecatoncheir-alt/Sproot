@@ -355,19 +355,40 @@ func TestIntegrationCityCanBeAddedToPrice(test *testing.T) {
 	once.Do(prepareStorage)
 
 	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
-	dateTime, _ := time.Parse(time.RFC3339, exampleDateTime)
-	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
-	defer storage.Prices.DeletePrice(createdPrice)
-
-	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
-	defer storage.Cities.DeleteCity(createdCity)
-
-	err := storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+	dateTime, err := time.Parse(time.RFC3339, exampleDateTime)
 	if err != nil {
 		test.Error(err)
 	}
 
-	updatedPrice, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+	createdPrice, err := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Prices.DeletePrice(createdPrice)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	defer func() {
+		_, err := storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	err = storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedPrice, err := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if updatedPrice.Cities[0].ID != createdCity.ID {
 		test.Fail()

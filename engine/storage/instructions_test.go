@@ -21,7 +21,12 @@ func TestIntegrationPageInstructionCanBeCreated(test *testing.T) {
 		test.Fail()
 	}
 
-	defer storage.Instructions.DeletePageInstruction(createdPageInstruction)
+	defer func() {
+		_, err := storage.Instructions.DeletePageInstruction(createdPageInstruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	if createdPageInstruction.ID == "" {
 		test.Fail()
@@ -499,7 +504,12 @@ func TestIntegrationCanGetAllInstructionsOfCompany(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Instructions.DeleteInstruction(anotherInstruction)
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(anotherInstruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	instructionsForCompany, err := storage.Instructions.ReadAllInstructionsForCompany(company.ID, "en")
 	if err != nil {
