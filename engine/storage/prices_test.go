@@ -21,7 +21,12 @@ func TestIntegrationPriceCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Prices.DeletePrice(createdPrice)
+	defer func() {
+		_, err := storage.Prices.DeletePrice(createdPrice)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	if createdPrice.ID == "" {
 		test.Fail()
@@ -105,7 +110,12 @@ func TestIntegrationProductCanBeAddedToPrice(test *testing.T) {
 	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
 	dateTime, _ := time.Parse(time.RFC3339, exampleDateTime)
 	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
-	defer storage.Prices.DeletePrice(createdPrice)
+	defer func() {
+		_, err := storage.Prices.DeletePrice(createdPrice)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
 	defer storage.Products.DeleteProduct(createdProduct)
@@ -126,19 +136,44 @@ func TestIntegrationCompanyCanBeAddedToPrice(test *testing.T) {
 	once.Do(prepareStorage)
 
 	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
-	dateTime, _ := time.Parse(time.RFC3339, exampleDateTime)
-	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
-	defer storage.Prices.DeletePrice(createdPrice)
-
-	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(createdCompany)
-
-	err := storage.Prices.AddCompanyToPrice(createdPrice.ID, createdCompany.ID)
+	dateTime, err := time.Parse(time.RFC3339, exampleDateTime)
 	if err != nil {
 		test.Error(err)
 	}
 
-	updatedPrice, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+	createdPrice, err := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Prices.DeletePrice(createdPrice)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	err = storage.Prices.AddCompanyToPrice(createdPrice.ID, createdCompany.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedPrice, err := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if updatedPrice.Companies[0].ID != createdCompany.ID {
 		test.Fail()
@@ -159,8 +194,15 @@ func TestIntegrationPriceCanBeAddedFromExportedJSON(test *testing.T) {
 	priceData := time.Now().UTC()
 	priceValue := 123.0
 
-	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: priceValue, DateTime: priceData, IsActive: true})
-	storage.Prices.DeletePrice(createdPrice)
+	createdPrice, err := storage.Prices.CreatePrice(Price{Value: priceValue, DateTime: priceData, IsActive: true})
+	if err != nil {
+		test.Error(err)
+	}
+
+	_, err = storage.Prices.DeletePrice(createdPrice)
+	if err != nil {
+		test.Error(err)
+	}
 
 	all.Prices = append(all.Prices, createdPrice)
 
@@ -207,14 +249,24 @@ func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
 	once.Do(prepareStorage)
 
 	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
-	priceData, _ := time.Parse(time.RFC3339, exampleDateTime)
+	priceData, err := time.Parse(time.RFC3339, exampleDateTime)
+	if err != nil {
+		test.Error(err)
+	}
+
 	priceValue := 123.0
 
-	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: priceValue, DateTime: priceData})
+	createdPrice, err := storage.Prices.CreatePrice(Price{Value: priceValue, DateTime: priceData})
+	if err != nil {
+		test.Error(err)
+	}
 
-	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	createdProduct, err := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	err := storage.Prices.AddProductToPrice(createdPrice.ID, createdProduct.ID)
+	err = storage.Prices.AddProductToPrice(createdPrice.ID, createdProduct.ID)
 	if err != nil {
 		test.Error(err)
 	}
@@ -234,9 +286,20 @@ func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
 		test.Error(err)
 	}
 
-	storage.Products.DeleteProduct(createdProduct)
-	storage.Prices.DeletePrice(createdPrice)
-	storage.Cities.DeleteCity(createdCity)
+	_, err = storage.Products.DeleteProduct(createdProduct)
+	if err != nil {
+		test.Error(err)
+	}
+
+	_, err = storage.Prices.DeletePrice(createdPrice)
+	if err != nil {
+		test.Error(err)
+	}
+
+	_, err = storage.Cities.DeleteCity(createdCity)
+	if err != nil {
+		test.Error(err)
+	}
 
 	_, err = storage.Prices.ReadPriceByID(createdPrice.ID, "en")
 	if err != ErrPriceDoesNotExist {
@@ -248,7 +311,10 @@ func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
 		test.Error(err)
 	}
 
-	priceFromStorage, _ := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+	priceFromStorage, err := storage.Prices.ReadPriceByID(createdPrice.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if priceFromStorage.ID != createdPrice.ID {
 		test.Fail()
@@ -267,13 +333,22 @@ func TestIntegrationPriceCanBeExportedToJSON(test *testing.T) {
 	}
 
 	createdPrice.ID = priceFromStorage.ID
-	storage.Prices.DeletePrice(createdPrice)
+	_, err = storage.Prices.DeletePrice(createdPrice)
+	if err != nil {
+		test.Error(err)
+	}
 
 	createdProduct.ID = priceFromStorage.Products[0].ID
-	storage.Products.DeleteProduct(createdProduct)
+	_, err = storage.Products.DeleteProduct(createdProduct)
+	if err != nil {
+		test.Error(err)
+	}
 
 	createdCity.ID = priceFromStorage.Cities[0].ID
-	storage.Cities.DeleteCity(createdCity)
+	_, err = storage.Cities.DeleteCity(createdCity)
+	if err != nil {
+		test.Error(err)
+	}
 }
 
 func TestIntegrationCityCanBeAddedToPrice(test *testing.T) {

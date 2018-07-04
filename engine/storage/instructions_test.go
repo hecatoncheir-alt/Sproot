@@ -458,17 +458,47 @@ func TestIntegrationCategoryCanBeRemovedFromInstruction(test *testing.T) {
 func TestIntegrationCanGetAllInstructionsOfCompany(test *testing.T) {
 	once.Do(prepareStorage)
 
-	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(company)
+	company, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	instruction, _ := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(company)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
-	defer storage.Instructions.DeleteInstruction(instruction)
+	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	anotherCompany, _ := storage.Companies.CreateCompany(Company{Name: "Another test company"}, "en")
-	defer storage.Companies.DeleteCompany(anotherCompany)
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
-	anotherInstruction, _ := storage.Instructions.CreateInstructionForCompany(anotherCompany.ID, "en")
+	anotherCompany, err := storage.Companies.CreateCompany(Company{Name: "Another test company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(anotherCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	anotherInstruction, err := storage.Instructions.CreateInstructionForCompany(anotherCompany.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
 	defer storage.Instructions.DeleteInstruction(anotherInstruction)
 
 	instructionsForCompany, err := storage.Instructions.ReadAllInstructionsForCompany(company.ID, "en")
@@ -488,11 +518,29 @@ func TestIntegrationCanGetAllInstructionsOfCompany(test *testing.T) {
 func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 	once.Do(prepareStorage)
 
-	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(company)
+	company, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	instruction, _ := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
-	defer storage.Instructions.DeleteInstruction(instruction)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(company)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	category, err := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
 	if err != nil {
@@ -566,11 +614,29 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 		test.Error(err)
 	}
 
-	secondInstruction, _ := storage.Instructions.CreateInstructionForCompany(company.ID, "ru")
-	defer storage.Instructions.DeleteInstruction(secondInstruction)
+	secondInstruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "ru")
+	if err != nil {
+		test.Error(err)
+	}
 
-	secondCity, _ := storage.Cities.CreateCity(City{Name: "Тестовый город"}, "ru")
-	defer storage.Cities.DeleteCity(secondCity)
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(secondInstruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	secondCity, err := storage.Cities.CreateCity(City{Name: "Тестовый город"}, "ru")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Cities.DeleteCity(secondCity)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Instructions.AddCityToInstruction(secondInstruction.ID, secondCity.ID)
 	if err != nil {
