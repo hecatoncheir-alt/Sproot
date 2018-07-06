@@ -401,7 +401,12 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 		test.Error(err)
 	}
 
-	defer engine.Storage.Products.DeleteProduct(otherCreatedProduct)
+	defer func() {
+		_, err := engine.Storage.Products.DeleteProduct(otherCreatedProduct)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	parseTime, err := time.Parse(time.RFC3339, "2018-02-10T08:34:35.6055814Z")
 	if err != nil {

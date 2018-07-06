@@ -39,7 +39,12 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer puffer.Storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := puffer.Storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	categoryForTest := storage.Category{Name: "Смартфоны"}
 	createdCategory, err := puffer.Storage.Categories.CreateCategory(categoryForTest, "ru")
@@ -47,7 +52,12 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer puffer.Storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := puffer.Storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = puffer.Storage.Categories.AddCompanyToCategory(createdCategory.ID, createdCompany.ID)
 	if err != nil {
@@ -59,23 +69,41 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer puffer.Storage.Cities.DeleteCity(createdCity)
+	defer func() {
+		_, err := puffer.Storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	pageInstruction, err := puffer.Storage.Instructions.CreatePageInstruction(storage.PageInstruction{Path: "/test/"})
 	if err != nil {
 		test.Error(err)
 	}
 
-	defer puffer.Storage.Instructions.DeletePageInstruction(pageInstruction)
+	defer func() {
+		_, err := puffer.Storage.Instructions.DeletePageInstruction(pageInstruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	instruction, err := puffer.Storage.Instructions.CreateInstructionForCompany(createdCompany.ID, "ru")
 	if err != nil {
 		test.Error(err)
 	}
 
-	defer puffer.Storage.Instructions.DeleteInstruction(instruction)
+	defer func() {
+		_, err := puffer.Storage.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
-	puffer.Storage.Instructions.AddPageInstructionToInstruction(instruction.ID, pageInstruction.ID)
+	err = puffer.Storage.Instructions.AddPageInstructionToInstruction(instruction.ID, pageInstruction.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	go puffer.productsOfCategoriesOfCompaniesMustBeParsedEventHandler(config.Development.SprootTopic)
 
@@ -88,7 +116,10 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 		if event.Message == "Need products of category of company" {
 
 			request := InstructionOfCompany{}
-			json.Unmarshal([]byte(event.Data), &request)
+			err := json.Unmarshal([]byte(event.Data), &request)
+			if err != nil {
+				test.Error(err)
+			}
 
 			product := ProductOfCompany{
 				Language: request.Language,
@@ -131,7 +162,10 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 		}
 
 		request := ProductOfCompany{}
-		json.Unmarshal([]byte(event.Data), &request)
+		err := json.Unmarshal([]byte(event.Data), &request)
+		if err != nil {
+			test.Error(err)
+		}
 
 		if request.Name == "" {
 			test.Fail()
@@ -221,7 +255,12 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer puffer.Storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := puffer.Storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	categoryForTest := storage.Category{Name: "Смартфоны"}
 	createdCategory, err := puffer.Storage.Categories.CreateCategory(categoryForTest, "ru")
@@ -229,7 +268,12 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer puffer.Storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := puffer.Storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = puffer.Storage.Categories.AddCompanyToCategory(createdCategory.ID, createdCompany.ID)
 	if err != nil {
@@ -241,23 +285,41 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer puffer.Storage.Cities.DeleteCity(createdCity)
+	defer func() {
+		_, err := puffer.Storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	pageInstruction, err := puffer.Storage.Instructions.CreatePageInstruction(storage.PageInstruction{Path: "/test/"})
 	if err != nil {
 		test.Error(err)
 	}
 
-	defer puffer.Storage.Instructions.DeletePageInstruction(pageInstruction)
+	defer func() {
+		_, err := puffer.Storage.Instructions.DeletePageInstruction(pageInstruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	instruction, err := puffer.Storage.Instructions.CreateInstructionForCompany(createdCompany.ID, "ru")
 	if err != nil {
 		test.Error(err)
 	}
 
-	defer puffer.Storage.Instructions.DeleteInstruction(instruction)
+	defer func() {
+		_, err := puffer.Storage.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
-	puffer.Storage.Instructions.AddPageInstructionToInstruction(instruction.ID, pageInstruction.ID)
+	err = puffer.Storage.Instructions.AddPageInstructionToInstruction(instruction.ID, pageInstruction.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	puffer.Broker = broker.New(config.APIVersion, config.ServiceName)
 
@@ -269,7 +331,10 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 		if event.Message == "Need products of category of company" {
 
 			request := InstructionOfCompany{}
-			json.Unmarshal([]byte(event.Data), &request)
+			err := json.Unmarshal([]byte(event.Data), &request)
+			if err != nil {
+				test.Error(err)
+			}
 
 			product := ProductOfCompany{
 				Language: request.Language,
@@ -312,7 +377,10 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 		}
 
 		request := ProductOfCompany{}
-		json.Unmarshal([]byte(event.Data), &request)
+		err = json.Unmarshal([]byte(event.Data), &request)
+		if err != nil {
+			test.Error(err)
+		}
 
 		nameOfProduct = request.Name
 

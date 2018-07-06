@@ -14,7 +14,12 @@ func TestIntegrationProductCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Products.DeleteProduct(createdProduct)
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	if createdProduct.ID == "" {
 		test.Fail()

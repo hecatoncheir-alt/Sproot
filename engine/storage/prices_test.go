@@ -108,8 +108,16 @@ func TestIntegrationProductCanBeAddedToPrice(test *testing.T) {
 	once.Do(prepareStorage)
 
 	exampleDateTime := "2017-05-01T16:27:18.543653798Z"
-	dateTime, _ := time.Parse(time.RFC3339, exampleDateTime)
-	createdPrice, _ := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
+	dateTime, err := time.Parse(time.RFC3339, exampleDateTime)
+	if err != nil {
+		test.Error(err)
+	}
+
+	createdPrice, err := storage.Prices.CreatePrice(Price{Value: 123, DateTime: dateTime})
+	if err != nil {
+		test.Error(err)
+	}
+
 	defer func() {
 		_, err := storage.Prices.DeletePrice(createdPrice)
 		if err != nil {
@@ -117,8 +125,17 @@ func TestIntegrationProductCanBeAddedToPrice(test *testing.T) {
 		}
 	}()
 
-	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
-	defer storage.Products.DeleteProduct(createdProduct)
+	createdProduct, err := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err := storage.Prices.AddProductToPrice(createdPrice.ID, createdProduct.ID)
 	if err != nil {

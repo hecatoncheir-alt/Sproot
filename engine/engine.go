@@ -76,7 +76,10 @@ func (engine *Engine) SubscribeOnEvents(inputTopic string) {
 
 		if event.Message == "Need items by name" {
 			details := storage.ProductsByNameForPage{}
-			json.Unmarshal([]byte(event.Data), &details)
+			err := json.Unmarshal([]byte(event.Data), &details)
+			if err != nil {
+				log.Println(err)
+			}
 
 			go engine.productsByNameAndPaginationHandler(
 				details, event.ClientID, event.APIVersion, engine.Configuration.Production.InitialTopic)
@@ -146,7 +149,12 @@ func (engine *Engine) productsByNameAndPaginationHandler(
 		logMessage := fmt.Sprintf("Output event found products: %v by name: %v",
 			len(productsForPage.Products), details.SearchedName)
 		logEvent := logger.LogData{Message: logMessage, Level: "info", Time: time.Now().UTC()}
-		go engine.Logger.Write(logEvent)
+		go func() {
+			err := engine.Logger.Write(logEvent)
+			if err != nil {
+				log.Println(err)
+			}
+		}()
 
 		go engine.Broker.Write(event)
 	}
@@ -155,7 +163,10 @@ func (engine *Engine) productsByNameAndPaginationHandler(
 
 func (engine *Engine) productOfCategoryOfCompanyReadyEventHandler(productOfCategoryOfCompanyData string) {
 	product := ProductOfCompany{}
-	json.Unmarshal([]byte(productOfCategoryOfCompanyData), &product)
+	err := json.Unmarshal([]byte(productOfCategoryOfCompanyData), &product)
+	if err != nil {
+		log.Println(err)
+	}
 
 	go func() {
 		if engine.Logger != nil {
@@ -169,7 +180,7 @@ func (engine *Engine) productOfCategoryOfCompanyReadyEventHandler(productOfCateg
 		}
 	}()
 
-	_, err := product.UpdateInStorage(engine.Storage)
+	_, err = product.UpdateInStorage(engine.Storage)
 	if err != nil {
 		log.Println(err)
 	}

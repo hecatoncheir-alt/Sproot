@@ -19,7 +19,7 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 
 	createdCompany, err := store.Companies.CreateCompany(storage.Company{Name: "Company test name"}, "en")
 	defer func() {
-		store.Companies.DeleteCompany(createdCompany)
+		_, err := store.Companies.DeleteCompany(createdCompany)
 		if err != nil {
 			test.Error(err)
 		}
@@ -27,7 +27,7 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 
 	instruction, err := store.Instructions.CreateInstructionForCompany(createdCompany.ID, "en")
 	defer func() {
-		store.Instructions.DeleteInstruction(instruction)
+		_, err := store.Instructions.DeleteInstruction(instruction)
 		if err != nil {
 			test.Error(err)
 		}
@@ -39,7 +39,7 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 
 	city, err := store.Cities.CreateCity(storage.City{Name: "Test city"}, "en")
 	defer func() {
-		store.Cities.DeleteCity(city)
+		_, err := store.Cities.DeleteCity(city)
 		if err != nil {
 			test.Error(err)
 		}
@@ -49,7 +49,10 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 		test.Error(err)
 	}
 
-	store.Instructions.AddCityToInstruction(instruction.ID, city.ID)
+	err = store.Instructions.AddCityToInstruction(instruction.ID, city.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	mVideoPageInstruction := storage.PageInstruction{
 		Path: "smartfony-i-svyaz/smartfony-205",
@@ -60,7 +63,11 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 		NameOfItemSelector:       ".product-tile-title",
 		PriceOfItemSelector:      ".product-price-current"}
 
-	page, _ := store.Instructions.CreatePageInstruction(mVideoPageInstruction)
+	page, err := store.Instructions.CreatePageInstruction(mVideoPageInstruction)
+	if err != nil {
+		test.Error(err)
+	}
+
 	defer func() {
 		_, err := store.Instructions.DeletePageInstruction(page)
 		if err != nil {
@@ -68,7 +75,10 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 		}
 	}()
 
-	store.Instructions.AddPageInstructionToInstruction(instruction.ID, page.ID)
+	err = store.Instructions.AddPageInstructionToInstruction(instruction.ID, page.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	company := Company{ID: createdCompany.ID, Storage: store}
 
@@ -87,7 +97,10 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 	}
 
 	var inst interface{}
-	json.Unmarshal(instructionsJSON, &inst)
+	err = json.Unmarshal(instructionsJSON, &inst)
+	if err != nil {
+		test.Error(err)
+	}
 
 	if inst.([]interface{})[0].(map[string]interface{})["Language"] != "en" {
 		test.Fail()
