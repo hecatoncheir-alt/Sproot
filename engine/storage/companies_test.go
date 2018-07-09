@@ -725,13 +725,24 @@ func TestIntegrationCompaniesCanBeAddedFromExportedJSON(test *testing.T) {
 func TestIntegrationCompaniesCanBeExportedToJSON(test *testing.T) {
 	once.Do(prepareStorage)
 
-	createdCategory, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	createdCategory, err := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
 	defer storage.Categories.DeleteCategory(createdCategory)
 
-	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
 	defer storage.Companies.DeleteCompany(createdCompany)
 
-	storage.Companies.AddCategoryToCompany(createdCompany.ID, createdCategory.ID)
+	err = storage.Companies.AddCategoryToCompany(createdCompany.ID, createdCategory.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	createdProduct, err := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
 	if err != nil {

@@ -564,7 +564,10 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 		}
 	}()
 
-	storage.Companies.AddCategoryToCompany(company.ID, category.ID)
+	err = storage.Companies.AddCategoryToCompany(company.ID, category.ID)
+	if err != nil {
+		test.Error(err)
+	}
 
 	err = storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
 	if err != nil {

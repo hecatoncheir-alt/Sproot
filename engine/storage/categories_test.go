@@ -183,7 +183,12 @@ func TestIntegrationCategoryCanBeDeactivate(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	categoryInStore, err := storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
 	if err != nil {
@@ -244,7 +249,12 @@ func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	createdFirstCompany, _ := storage.Companies.CreateCompany(Company{Name: "First test company for category"}, "en")
 
@@ -291,7 +301,10 @@ func TestIntegrationCompanyCanBeAddedToCategory(test *testing.T) {
 		test.Error(err)
 	}
 
-	updatedCategory, _ = storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
+	updatedCategory, err = storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(updatedCategory.Companies) != 2 {
 		test.Fatal()

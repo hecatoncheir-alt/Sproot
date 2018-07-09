@@ -149,21 +149,24 @@ func TestIntegrationCityCanBeDeleted(test *testing.T) {
 func TestIntegrationCityCanHasNameWithManyLanguages(test *testing.T) {
 	once.Do(prepareStorage)
 
-	createdCity, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	testCityName := "Test city"
+	testCityRuName := "Тестовый город"
+
+	createdCity, _ := storage.Cities.CreateCity(City{Name: testCityName}, "en")
 	defer storage.Cities.DeleteCity(createdCity)
 
-	err := storage.Cities.AddLanguageOfCityName(createdCity.ID, "Тестовый город", "ru")
+	err := storage.Cities.AddLanguageOfCityName(createdCity.ID, testCityRuName, "ru")
 	if err != nil {
 		test.Fail()
 	}
 
 	cityWithEnName, _ := storage.Cities.ReadCityByID(createdCity.ID, "en")
-	if cityWithEnName.Name != "Test city" {
+	if cityWithEnName.Name != testCityName {
 		test.Fail()
 	}
 
 	cityWithRuName, _ := storage.Cities.ReadCityByID(createdCity.ID, "ru")
-	if cityWithRuName.Name != "Тестовый город" {
+	if cityWithRuName.Name != testCityRuName {
 		test.Fail()
 	}
 }

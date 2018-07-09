@@ -137,7 +137,7 @@ func TestIntegrationProductCanBeAddedToPrice(test *testing.T) {
 		}
 	}()
 
-	err := storage.Prices.AddProductToPrice(createdPrice.ID, createdProduct.ID)
+	err = storage.Prices.AddProductToPrice(createdPrice.ID, createdProduct.ID)
 	if err != nil {
 		test.Error(err)
 	}

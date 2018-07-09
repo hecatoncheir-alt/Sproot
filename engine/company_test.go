@@ -18,6 +18,10 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 	}
 
 	createdCompany, err := store.Companies.CreateCompany(storage.Company{Name: "Company test name"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
 	defer func() {
 		_, err := store.Companies.DeleteCompany(createdCompany)
 		if err != nil {
@@ -26,6 +30,10 @@ func TestIntegrationCompanyCanGetInstructions(test *testing.T) {
 	}()
 
 	instruction, err := store.Instructions.CreateInstructionForCompany(createdCompany.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
 	defer func() {
 		_, err := store.Instructions.DeleteInstruction(instruction)
 		if err != nil {
