@@ -137,8 +137,17 @@ func TestIntegrationInstructionCanBeCreated(test *testing.T) {
 func TestIntegrationInstructionCanBeDeleted(test *testing.T) {
 	once.Do(prepareStorage)
 
-	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(company)
+	company, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func(){
+		_, err := storage.Companies.DeleteCompany(company)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
 	if err != nil {
@@ -178,15 +187,27 @@ func TestIntegrationCityCanBeAddedToInstruction(test *testing.T) {
 		}
 	}()
 
-	city, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
-	defer storage.Cities.DeleteCity(city)
+	city, err := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Cities.DeleteCity(city)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	err = storage.Instructions.AddCityToInstruction(instruction.ID, city.ID)
 	if err != nil {
 		test.Error(err)
 	}
 
-	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	updatedInstruction, err := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if err != nil {
+		test.Fail()
+	}
 
 	if len(updatedInstruction.Cities) != 1 {
 		test.Fatal()
@@ -204,8 +225,17 @@ func TestIntegrationCityCanBeAddedToInstruction(test *testing.T) {
 func TestIntegrationCityCanBeRemovedFromInstruction(test *testing.T) {
 	once.Do(prepareStorage)
 
-	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(company)
+	company, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(company)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
 	if err != nil {
@@ -219,15 +249,27 @@ func TestIntegrationCityCanBeRemovedFromInstruction(test *testing.T) {
 		}
 	}()
 
-	city, _ := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
-	defer storage.Cities.DeleteCity(city)
+	city, err := storage.Cities.CreateCity(City{Name: "Test city"}, "en")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Cities.DeleteCity(city)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	err = storage.Instructions.AddCityToInstruction(instruction.ID, city.ID)
 	if err != nil {
 		test.Error(err)
 	}
 
-	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	updatedInstruction, err := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if err != nil {
+		test.Fail()
+	}
 
 	if updatedInstruction.Cities[0].ID != city.ID {
 		test.Fail()
@@ -242,7 +284,11 @@ func TestIntegrationCityCanBeRemovedFromInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	updatedInstruction, _ = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	updatedInstruction, err = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if err != nil {
+		test.Fail()
+	}
+
 	if len(updatedInstruction.Cities) > 0 {
 		test.Fatal()
 	}
@@ -251,8 +297,17 @@ func TestIntegrationCityCanBeRemovedFromInstruction(test *testing.T) {
 func TestIntegrationPageInstructionCanBeAddedToInstruction(test *testing.T) {
 	once.Do(prepareStorage)
 
-	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(company)
+	company, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(company)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
 	if err != nil {
@@ -275,7 +330,11 @@ func TestIntegrationPageInstructionCanBeAddedToInstruction(test *testing.T) {
 		NameOfItemSelector:       ".product-tile-title",
 		PriceOfItemSelector:      ".product-price-current"}
 
-	createdPageInstruction, _ := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
+	createdPageInstruction, err := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
+	if err != nil {
+		test.Fail()
+	}
+
 	defer func() {
 		_, err := storage.Instructions.DeletePageInstruction(createdPageInstruction)
 		if err != nil {
@@ -288,7 +347,10 @@ func TestIntegrationPageInstructionCanBeAddedToInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	updatedInstruction, err := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if err != nil {
+		test.Fail()
+	}
 
 	if len(updatedInstruction.PagesInstruction) != 1 {
 		test.Fatal()

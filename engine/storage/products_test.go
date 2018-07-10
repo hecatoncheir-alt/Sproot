@@ -54,7 +54,12 @@ func TestIntegrationProductsCanBeReadByName(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Products.DeleteProduct(createdProduct)
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	productsFromStore, err = storage.Products.ReadProductsByName(createdProduct.Name, "en")
 	if err != nil {
@@ -128,21 +133,37 @@ func TestIntegrationProductCanHasNameWithManyLanguages(test *testing.T) {
 
 	var err error
 
-	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	createdProduct, err := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	if err != nil {
+		test.Fail()
+	}
 
-	defer storage.Products.DeleteProduct(createdProduct)
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	err = storage.Products.AddLanguageOfProductName(createdProduct.ID, "Тестовый продукт", "ru")
 	if err != nil {
 		test.Fail()
 	}
 
-	productWithEnName, _ := storage.Products.ReadProductByID(createdProduct.ID, "en")
+	productWithEnName, err := storage.Products.ReadProductByID(createdProduct.ID, "en")
+	if err != nil {
+		test.Fail()
+	}
+
 	if productWithEnName.Name != "Test product" {
 		test.Fail()
 	}
 
-	productWithRuName, _ := storage.Products.ReadProductByID(createdProduct.ID, "ru")
+	productWithRuName, err := storage.Products.ReadProductByID(createdProduct.ID, "ru")
+	if err != nil {
+		test.Fail()
+	}
+
 	if productWithRuName.Name != "Тестовый продукт" {
 		test.Fail()
 	}
@@ -175,13 +196,31 @@ func TestIntegrationProductCanBeDeleted(test *testing.T) {
 func TestIntegrationCategoryCanBeAddedToProduct(test *testing.T) {
 	once.Do(prepareStorage)
 
-	createdCategory, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
-	defer storage.Categories.DeleteCategory(createdCategory)
+	createdCategory, err := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	if err != nil {
+		test.Fail()
+	}
 
-	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
-	defer storage.Products.DeleteProduct(createdProduct)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
-	err := storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
+	createdProduct, err := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Fail()
+		}
+	}()
+
+	err = storage.Products.AddCategoryToProduct(createdProduct.ID, createdCategory.ID)
 	if err != nil {
 		test.Error(err)
 	}
@@ -199,18 +238,40 @@ func TestIntegrationCategoryCanBeAddedToProduct(test *testing.T) {
 func TestIntegrationCompanyCanBeAddedToProduct(test *testing.T) {
 	once.Do(prepareStorage)
 
-	createdCompany, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(createdCompany)
+	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Fail()
+	}
 
-	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
-	defer storage.Products.DeleteProduct(createdProduct)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
-	err := storage.Products.AddCompanyToProduct(createdProduct.ID, createdCompany.ID)
+	createdProduct, err := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Fail()
+		}
+	}()
+
+	err = storage.Products.AddCompanyToProduct(createdProduct.ID, createdCompany.ID)
 	if err != nil {
 		test.Error(err)
 	}
 
-	updatedProduct, _ := storage.Products.ReadProductByID(createdProduct.ID, "en")
+	updatedProduct, err := storage.Products.ReadProductByID(createdProduct.ID, "en")
+	if err != nil {
+		test.Fail()
+	}
+
 	if len(updatedProduct.Companies) < 1 || len(updatedProduct.Companies) > 1 {
 		test.Fatal()
 	}
@@ -295,22 +356,39 @@ func TestIntegrationProductCanHasPrice(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Cities.DeleteCity(createdCity)
+	defer func() {
+		_, err := storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	err = storage.Prices.AddCityToPrice(createdPrice.ID, createdCity.ID)
 	if err != nil {
 		test.Error(err)
 	}
 
-	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
-	defer storage.Products.DeleteProduct(createdProduct)
+	createdProduct, err := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	err = storage.Products.AddPriceToProduct(createdProduct.ID, createdPrice.ID)
 	if err != nil {
 		test.Error(err)
 	}
 
-	productInStore, _ := storage.Products.ReadProductByID(createdProduct.ID, "en")
+	productInStore, err := storage.Products.ReadProductByID(createdProduct.ID, "en")
+	if err != nil {
+		test.Fail()
+	}
 
 	if productInStore.Prices[0].ID != createdPrice.ID {
 		test.Fail()
@@ -324,20 +402,65 @@ func TestIntegrationProductCanHasPrice(test *testing.T) {
 func TestIntegrationProductsTotalCountCanBeReturned(test *testing.T) {
 	once.Do(prepareStorage)
 
-	createdProduct1, _ := storage.Products.CreateProduct(Product{Name: "Первый тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct1)
+	createdProduct1, err := storage.Products.CreateProduct(Product{Name: "Первый тестовый продукт"}, "ru")
+	if err != nil {
+		test.Fail()
+	}
 
-	createdProduct2, _ := storage.Products.CreateProduct(Product{Name: "Второй тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct2)
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct1)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
-	createdProduct3, _ := storage.Products.CreateProduct(Product{Name: "Третий тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct3)
+	createdProduct2, err := storage.Products.CreateProduct(Product{Name: "Второй тестовый продукт"}, "ru")
+	if err != nil {
+		test.Fail()
+	}
 
-	createdProduct4, _ := storage.Products.CreateProduct(Product{Name: "Четвёртый тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct4)
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct2)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
-	createdProduct5, _ := storage.Products.CreateProduct(Product{Name: "Пятый тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct5)
+	createdProduct3, err := storage.Products.CreateProduct(Product{Name: "Третий тестовый продукт"}, "ru")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct3)
+		if err != nil {
+			test.Fail()
+		}
+	}()
+
+	createdProduct4, err := storage.Products.CreateProduct(Product{Name: "Четвёртый тестовый продукт"}, "ru")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct4)
+		if err != nil {
+			test.Fail()
+		}
+	}()
+
+	createdProduct5, err := storage.Products.CreateProduct(Product{Name: "Пятый тестовый продукт"}, "ru")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct5)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	counterOfFoundedProducts, err := storage.Products.ReadTotalCountOfProductsByName("тестовый", "ru")
 	if err != nil {
@@ -352,20 +475,65 @@ func TestIntegrationProductsTotalCountCanBeReturned(test *testing.T) {
 func TestIntegrationProductCanBeSearchedByNameWithPaginationAndCounter(test *testing.T) {
 	once.Do(prepareStorage)
 
-	createdProduct1, _ := storage.Products.CreateProduct(Product{Name: "Первый тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct1)
+	createdProduct1, err := storage.Products.CreateProduct(Product{Name: "Первый тестовый продукт"}, "ru")
+	if err != nil {
+		test.Fail()
+	}
 
-	createdProduct2, _ := storage.Products.CreateProduct(Product{Name: "Второй тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct2)
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct1)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
-	createdProduct3, _ := storage.Products.CreateProduct(Product{Name: "Третий тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct3)
+	createdProduct2, err := storage.Products.CreateProduct(Product{Name: "Второй тестовый продукт"}, "ru")
+	if err != nil {
+		test.Fail()
+	}
 
-	createdProduct4, _ := storage.Products.CreateProduct(Product{Name: "Четвёртый тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct4)
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct2)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
-	createdProduct5, _ := storage.Products.CreateProduct(Product{Name: "Пятый тестовый продукт"}, "ru")
-	defer storage.Products.DeleteProduct(createdProduct5)
+	createdProduct3, err := storage.Products.CreateProduct(Product{Name: "Третий тестовый продукт"}, "ru")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct3)
+		if err != nil {
+			test.Fail()
+		}
+	}()
+
+	createdProduct4, err := storage.Products.CreateProduct(Product{Name: "Четвёртый тестовый продукт"}, "ru")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct4)
+		if err != nil {
+			test.Fail()
+		}
+	}()
+
+	createdProduct5, err := storage.Products.CreateProduct(Product{Name: "Пятый тестовый продукт"}, "ru")
+	if err != nil {
+		test.Fail()
+	}
+
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct5)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	foundedProductsForFirstPage, err := storage.Products.ReadProductsByNameWithPagination("тестовый", "ru", 1, 2)
 	if err != nil {
@@ -430,7 +598,11 @@ func TestIntegrationProductCanBeSearchedByNameWithPaginationAndCounter(test *tes
 func TestPricesOfProductMustBeSortedByDate(test *testing.T) {
 	once.Do(prepareStorage)
 
-	createdProduct1, _ := storage.Products.CreateProduct(Product{Name: "Первый тестовый продукт"}, "ru")
+	createdProduct1, err := storage.Products.CreateProduct(Product{Name: "Первый тестовый продукт"}, "ru")
+	if err != nil {
+		test.Fail()
+	}
+
 	defer func() {
 		_, err := storage.Products.DeleteProduct(createdProduct1)
 		if err != nil {

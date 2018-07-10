@@ -16,7 +16,12 @@ func TestIntegrationCompanyCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	if createdCompany.ID == "" {
 		test.Fail()
@@ -42,7 +47,12 @@ func TestIntegrationCompaniesAllCanBeRead(test *testing.T) {
 		test.Fail()
 	}
 
-	defer storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	otherCompanyForTest := Company{Name: "Other test company"}
 	otherCreatedCompany, err := storage.Companies.CreateCompany(otherCompanyForTest, "en")
@@ -50,7 +60,12 @@ func TestIntegrationCompaniesAllCanBeRead(test *testing.T) {
 		test.Fail()
 	}
 
-	defer storage.Companies.DeleteCompany(otherCreatedCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(otherCreatedCompany)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	companiesFromStore, err := storage.Companies.ReadAllCompanies("en")
 	if err != nil {
@@ -81,7 +96,12 @@ func TestIntegrationCompanyCanBeReadByName(test *testing.T) {
 		test.Fail()
 	}
 
-	defer storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	companiesFromStore, err = storage.Companies.ReadCompaniesByName(createdCompany.Name, "en")
 	if err != nil {
@@ -116,7 +136,12 @@ func TestIntegrationCompanyCanBeReadById(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	companyFromStore, err = storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
 	if err != nil {
@@ -148,7 +173,12 @@ func TestIntegrationCompanyCanBeUpdated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	companyForUpdate := Company{ID: createdCompany.ID, Name: "Updated test company", IsActive: createdCompany.IsActive}
 	updatedCompany, err = storage.Companies.UpdateCompany(companyForUpdate)
@@ -275,7 +305,10 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 		test.Error(err)
 	}
 
-	updatedCompany, _ := storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
+	updatedCompany, err := storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
+	if err != nil {
+		test.Fail()
+	}
 
 	if len(updatedCompany.Categories) < 1 || len(updatedCompany.Categories) > 1 {
 		test.Fatal()
@@ -295,14 +328,22 @@ func TestIntegrationCategoryCanBeAddedToCompany(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(createdSecondCategory)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdSecondCategory)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	err = storage.Companies.AddCategoryToCompany(createdCompany.ID, createdSecondCategory.ID)
 	if err != nil {
 		test.Error(err)
 	}
 
-	updatedCompany, _ = storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
+	updatedCompany, err = storage.Companies.ReadCompanyByID(createdCompany.ID, ".")
+	if err != nil {
+		test.Fail()
+	}
 
 	if updatedCompany.Categories[0].ID != createdFirstCategory.ID {
 		test.Fail()
@@ -583,7 +624,10 @@ func TestIntegrationCompaniesCanBeAddedFromExportedJSON(test *testing.T) {
 		}
 	}()
 
-	storage.Companies.AddCategoryToCompany(createdCompany.ID, createdCategory.ID)
+	err = storage.Companies.AddCategoryToCompany(createdCompany.ID, createdCategory.ID)
+	if err != nil {
+		test.Fail()
+	}
 
 	createdProduct, err := storage.Products.CreateProduct(Product{Name: "Test product"}, "en")
 	if err != nil {
@@ -730,7 +774,12 @@ func TestIntegrationCompaniesCanBeExportedToJSON(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
 	if err != nil {

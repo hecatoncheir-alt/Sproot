@@ -13,7 +13,12 @@ func TestIntegrationCityCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Cities.DeleteCity(createdCity)
+	defer func() {
+		_, err := storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	if createdCity.ID == "" {
 		test.Fail()
@@ -31,7 +36,12 @@ func TestIntegrationAllCitiesCanBeRead(test *testing.T) {
 		test.Fail()
 	}
 
-	defer storage.Cities.DeleteCity(createdCity)
+	defer func() {
+		_, err := storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	otherCityForTest := City{Name: "Other test city"}
 	otherCreatedCity, err := storage.Cities.CreateCity(otherCityForTest, "en")
@@ -39,7 +49,12 @@ func TestIntegrationAllCitiesCanBeRead(test *testing.T) {
 		test.Fail()
 	}
 
-	defer storage.Cities.DeleteCity(otherCreatedCity)
+	defer func() {
+		_, err := storage.Cities.DeleteCity(otherCreatedCity)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	citiesFromStore, err := storage.Cities.ReadAllCities("en")
 	if err != nil {
@@ -70,7 +85,12 @@ func TestIntegrationCitiesCanBeReadByName(test *testing.T) {
 		test.Fail()
 	}
 
-	defer storage.Cities.DeleteCity(createdCity)
+	defer func() {
+		_, err := storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	citiesFromStore, err = storage.Cities.ReadCitiesByName(createdCity.Name, "en")
 	if err != nil {
@@ -105,7 +125,12 @@ func TestIntegrationCityCanBeReadById(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Cities.DeleteCity(createdCity)
+	defer func() {
+		_, err := storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Fail()
+		}
+	}()
 
 	cityFromStore, err = storage.Cities.ReadCityByID(createdCity.ID, ".")
 	if err != nil {
