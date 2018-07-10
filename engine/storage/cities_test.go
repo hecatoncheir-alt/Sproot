@@ -152,20 +152,37 @@ func TestIntegrationCityCanHasNameWithManyLanguages(test *testing.T) {
 	testCityName := "Test city"
 	testCityRuName := "Тестовый город"
 
-	createdCity, _ := storage.Cities.CreateCity(City{Name: testCityName}, "en")
-	defer storage.Cities.DeleteCity(createdCity)
+	createdCity, err := storage.Cities.CreateCity(City{Name: testCityName}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	err := storage.Cities.AddLanguageOfCityName(createdCity.ID, testCityRuName, "ru")
+	defer func() {
+		_, err := storage.Cities.DeleteCity(createdCity)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	err = storage.Cities.AddLanguageOfCityName(createdCity.ID, testCityRuName, "ru")
 	if err != nil {
 		test.Fail()
 	}
 
-	cityWithEnName, _ := storage.Cities.ReadCityByID(createdCity.ID, "en")
+	cityWithEnName, err := storage.Cities.ReadCityByID(createdCity.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
 	if cityWithEnName.Name != testCityName {
 		test.Fail()
 	}
 
-	cityWithRuName, _ := storage.Cities.ReadCityByID(createdCity.ID, "ru")
+	cityWithRuName, err := storage.Cities.ReadCityByID(createdCity.ID, "ru")
+	if err != nil {
+		test.Error(err)
+	}
+
 	if cityWithRuName.Name != testCityRuName {
 		test.Fail()
 	}

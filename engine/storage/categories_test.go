@@ -332,12 +332,23 @@ func TestIntegrationCompanyCanBeRemovedFromCategory(test *testing.T) {
 
 	var err error
 
-	createdCategory, _ :=
+	createdCategory, err :=
 		storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	defer storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
-	createdFirstCompany, _ := storage.Companies.CreateCompany(Company{Name: "First test company for category"}, "en")
+	createdFirstCompany, err := storage.Companies.CreateCompany(Company{Name: "First test company for category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	defer func() {
 		_, err := storage.Companies.DeleteCompany(createdFirstCompany)
@@ -351,16 +362,27 @@ func TestIntegrationCompanyCanBeRemovedFromCategory(test *testing.T) {
 		test.Error(err)
 	}
 
-	createdSecondCompany, _ := storage.Companies.CreateCompany(Company{Name: "Second test company for category"}, "en")
+	createdSecondCompany, err := storage.Companies.CreateCompany(Company{Name: "Second test company for category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	defer storage.Companies.DeleteCompany(createdSecondCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdSecondCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Categories.AddCompanyToCategory(createdCategory.ID, createdSecondCompany.ID)
 	if err != nil {
 		test.Error(err)
 	}
 
-	updatedCategory, _ := storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
+	updatedCategory, err := storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(updatedCategory.Companies) != 2 {
 		test.Fail()
@@ -375,7 +397,10 @@ func TestIntegrationCompanyCanBeRemovedFromCategory(test *testing.T) {
 		test.Error(err)
 	}
 
-	updatedCategory, _ = storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
+	updatedCategory, err = storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(updatedCategory.Companies) != 1 {
 		test.Fatal()
@@ -391,20 +416,37 @@ func TestIntegrationCategoryCanHasNameWithManyLanguages(test *testing.T) {
 
 	var err error
 
-	createdCategory, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
-	defer storage.Categories.DeleteCategory(createdCategory)
+	createdCategory, err := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Categories.AddLanguageOfCategoryName(createdCategory.ID, "Тестовая категория", "ru")
 	if err != nil {
 		test.Fail()
 	}
 
-	categoryWithEnName, _ := storage.Categories.ReadCategoryByID(createdCategory.ID, "en")
+	categoryWithEnName, err := storage.Categories.ReadCategoryByID(createdCategory.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
 	if categoryWithEnName.Name != "Test category" {
 		test.Fail()
 	}
 
-	categoryWithRuName, _ := storage.Categories.ReadCategoryByID(createdCategory.ID, "ru")
+	categoryWithRuName, err := storage.Categories.ReadCategoryByID(createdCategory.ID, "ru")
+	if err != nil {
+		test.Error(err)
+	}
+
 	if categoryWithRuName.Name != "Тестовая категория" {
 		test.Fail()
 	}
@@ -419,18 +461,34 @@ func TestIntegrationProductCanBeAddedToCategory(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Categories.DeleteCategory(createdCategory)
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(createdCategory)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
-	createdProduct, _ := storage.Products.CreateProduct(Product{Name: "First test product for category"}, "en")
+	createdProduct, err := storage.Products.CreateProduct(Product{Name: "First test product for category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
-	defer storage.Products.DeleteProduct(createdProduct)
+	defer func() {
+		_, err := storage.Products.DeleteProduct(createdProduct)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Categories.AddProductToCategory(createdCategory.ID, createdProduct.ID)
 	if err != nil {
 		test.Error(err)
 	}
 
-	updatedCategory, _ := storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
+	updatedCategory, err := storage.Categories.ReadCategoryByID(createdCategory.ID, ".")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(updatedCategory.Products) < 1 || len(updatedCategory.Products) > 1 {
 		test.Fatal()

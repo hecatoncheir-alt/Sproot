@@ -737,7 +737,12 @@ func TestIntegrationCompaniesCanBeExportedToJSON(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Companies.DeleteCompany(createdCompany)
+	defer func() {
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	err = storage.Companies.AddCategoryToCompany(createdCompany.ID, createdCategory.ID)
 	if err != nil {
