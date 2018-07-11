@@ -217,7 +217,12 @@ func TestIntegrationCompanyCanBeDeactivate(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer storage.Companies.DeleteCompany(createdCompany)
+	defer func(){
+		_, err := storage.Companies.DeleteCompany(createdCompany)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	deactivatedCompanyID, err := storage.Companies.DeactivateCompany(createdCompany)
 	if err != nil {

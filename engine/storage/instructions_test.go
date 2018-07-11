@@ -101,8 +101,17 @@ func TestIntegrationPageInstructionCanBeDeleted(test *testing.T) {
 func TestIntegrationInstructionCanBeCreated(test *testing.T) {
 	once.Do(prepareStorage)
 
-	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(company)
+	company, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func(){
+		_, err := storage.Companies.DeleteCompany(company)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
 	if err != nil {
@@ -172,8 +181,17 @@ func TestIntegrationInstructionCanBeDeleted(test *testing.T) {
 func TestIntegrationCityCanBeAddedToInstruction(test *testing.T) {
 	once.Do(prepareStorage)
 
-	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(company)
+	company, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func(){
+		_, err := storage.Companies.DeleteCompany(company)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
 	if err != nil {
@@ -364,8 +382,17 @@ func TestIntegrationPageInstructionCanBeAddedToInstruction(test *testing.T) {
 func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) {
 	once.Do(prepareStorage)
 
-	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(company)
+	company, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func(){
+		_, err := storage.Companies.DeleteCompany(company)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
 
 	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
 	if err != nil {
@@ -401,7 +428,10 @@ func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) 
 		test.Error(err)
 	}
 
-	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	updatedInstruction, err := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(updatedInstruction.PagesInstruction) != 1 {
 		test.Fatal()
@@ -416,7 +446,10 @@ func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) 
 		test.Error(err)
 	}
 
-	updatedInstruction, _ = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	updatedInstruction, err = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(updatedInstruction.PagesInstruction) > 0 {
 		test.Fatal()
@@ -426,50 +459,17 @@ func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) 
 func TestIntegrationCategoryCanBeAddedToInstruction(test *testing.T) {
 	once.Do(prepareStorage)
 
-	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(company)
-
-	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	company, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
 	if err != nil {
 		test.Error(err)
 	}
 
-	defer func() {
-		_, err := storage.Instructions.DeleteInstruction(instruction)
+	defer func(){
+		_, err := storage.Companies.DeleteCompany(company)
 		if err != nil {
 			test.Error(err)
 		}
 	}()
-
-	category, _ := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
-	defer func() {
-		_, err := storage.Categories.DeleteCategory(category)
-		if err != nil {
-			test.Error(err)
-		}
-	}()
-
-	err = storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
-	if err != nil {
-		test.Error(err)
-	}
-
-	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
-
-	if len(updatedInstruction.Categories) != 1 {
-		test.Fatal()
-	}
-
-	if updatedInstruction.Categories[0].ID != category.ID {
-		test.Fail()
-	}
-}
-
-func TestIntegrationCategoryCanBeRemovedFromInstruction(test *testing.T) {
-	once.Do(prepareStorage)
-
-	company, _ := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
-	defer storage.Companies.DeleteCompany(company)
 
 	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
 	if err != nil {
@@ -500,7 +500,68 @@ func TestIntegrationCategoryCanBeRemovedFromInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	updatedInstruction, _ := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	updatedInstruction, err := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	if len(updatedInstruction.Categories) != 1 {
+		test.Fatal()
+	}
+
+	if updatedInstruction.Categories[0].ID != category.ID {
+		test.Fail()
+	}
+}
+
+func TestIntegrationCategoryCanBeRemovedFromInstruction(test *testing.T) {
+	once.Do(prepareStorage)
+
+	company, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func(){
+		_, err := storage.Companies.DeleteCompany(company)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	instruction, err := storage.Instructions.CreateInstructionForCompany(company.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Instructions.DeleteInstruction(instruction)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	category, err := storage.Categories.CreateCategory(Category{Name: "Test category"}, "en")
+	if err != nil {
+		test.Error(err)
+	}
+
+	defer func() {
+		_, err := storage.Categories.DeleteCategory(category)
+		if err != nil {
+			test.Error(err)
+		}
+	}()
+
+	err = storage.Instructions.AddCategoryToInstruction(instruction.ID, category.ID)
+	if err != nil {
+		test.Error(err)
+	}
+
+	updatedInstruction, err := storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(updatedInstruction.Categories) != 1 {
 		test.Fatal()
@@ -515,7 +576,10 @@ func TestIntegrationCategoryCanBeRemovedFromInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	updatedInstruction, _ = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	updatedInstruction, err = storage.Instructions.ReadInstructionByID(instruction.ID, "en")
+	if err != nil {
+		test.Error(err)
+	}
 
 	if len(updatedInstruction.Categories) > 0 {
 		test.Fatal()
@@ -662,7 +726,11 @@ func TestIntegrationCanGetFullInstructionForCompany(test *testing.T) {
 		NameOfItemSelector:       ".product-tile-title",
 		PriceOfItemSelector:      ".product-price-current"}
 
-	createdPageInstruction, _ := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
+	createdPageInstruction, err := storage.Instructions.CreatePageInstruction(mVideoPageInstruction)
+	if err != nil {
+		test.Error(err)
+	}
+
 	defer func() {
 		_, err := storage.Instructions.DeletePageInstruction(createdPageInstruction)
 		if err != nil {
