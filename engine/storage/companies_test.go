@@ -372,7 +372,7 @@ func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
 
 	var err error
 
-	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, ".")
+	createdCompany, err := storage.Companies.CreateCompany(Company{Name: "Test company"}, "en")
 	if err != nil {
 		test.Error(err)
 	}
@@ -385,7 +385,7 @@ func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
 	}()
 
 	createdFirstCategory, err :=
-		storage.Categories.CreateCategory(Category{Name: "First test category for company"}, ".")
+		storage.Categories.CreateCategory(Category{Name: "First test category for company"}, "en")
 	if err != nil {
 		test.Error(err)
 	}
@@ -403,7 +403,7 @@ func TestIntegrationCategoryCanBeRemovedFromCompany(test *testing.T) {
 	}
 
 	createdSecondCategory, err :=
-		storage.Categories.CreateCategory(Category{Name: "Second test category for company"}, ".")
+		storage.Categories.CreateCategory(Category{Name: "Second test category for company"}, "en")
 	if err != nil {
 		test.Error(err)
 	}
