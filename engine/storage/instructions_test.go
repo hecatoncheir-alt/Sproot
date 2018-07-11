@@ -106,7 +106,7 @@ func TestIntegrationInstructionCanBeCreated(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer func(){
+	defer func() {
 		_, err := storage.Companies.DeleteCompany(company)
 		if err != nil {
 			test.Error(err)
@@ -151,7 +151,7 @@ func TestIntegrationInstructionCanBeDeleted(test *testing.T) {
 		test.Fail()
 	}
 
-	defer func(){
+	defer func() {
 		_, err := storage.Companies.DeleteCompany(company)
 		if err != nil {
 			test.Fail()
@@ -186,7 +186,7 @@ func TestIntegrationCityCanBeAddedToInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer func(){
+	defer func() {
 		_, err := storage.Companies.DeleteCompany(company)
 		if err != nil {
 			test.Error(err)
@@ -387,7 +387,7 @@ func TestIntegrationPageInstructionCanBeRemovedFromInstruction(test *testing.T) 
 		test.Error(err)
 	}
 
-	defer func(){
+	defer func() {
 		_, err := storage.Companies.DeleteCompany(company)
 		if err != nil {
 			test.Error(err)
@@ -464,7 +464,7 @@ func TestIntegrationCategoryCanBeAddedToInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer func(){
+	defer func() {
 		_, err := storage.Companies.DeleteCompany(company)
 		if err != nil {
 			test.Error(err)
@@ -522,7 +522,7 @@ func TestIntegrationCategoryCanBeRemovedFromInstruction(test *testing.T) {
 		test.Error(err)
 	}
 
-	defer func(){
+	defer func() {
 		_, err := storage.Companies.DeleteCompany(company)
 		if err != nil {
 			test.Error(err)
