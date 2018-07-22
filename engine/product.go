@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/hecatoncheir/Sproot/engine/storage"
@@ -20,7 +19,7 @@ type ProductOfCompany struct {
 
 // PriceOfProduct part of structure of ProductOfCompany
 type PriceOfProduct struct {
-	Value    string
+	Value    float64
 	DateTime time.Time
 	City     CityData
 }
@@ -75,12 +74,12 @@ func (product *ProductOfCompany) UpdateInStorage(store *storage.Storage) (storag
 		}
 	}
 
-	priceValue, err := strconv.ParseFloat(product.Price.Value, 64)
-	if err != nil {
-		return productFromStorage, err
-	}
+	// priceValue, err := strconv.ParseFloat(product.Price.Value, 64)
+	// if err != nil {
+	// 	return productFromStorage, err
+	// }
 
-	priceForStorage := storage.Price{Value: priceValue, DateTime: product.Price.DateTime}
+	priceForStorage := storage.Price{Value: product.Price.Value, DateTime: product.Price.DateTime}
 
 	priceFromStorage, err := store.Prices.CreatePrice(priceForStorage)
 	if err != nil {

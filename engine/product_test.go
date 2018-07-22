@@ -75,7 +75,7 @@ func TestIntegrationNewPriceWithNewProductCanBeCreated(test *testing.T) {
 		IRI:              "http://www.mvideo.ru//products/smartfon-samsung-galaxy-s8-64gb-chernyi-brilliant-30027818",
 		PreviewImageLink: "img.mvideo.ru/Pdb/30027818m.jpg",
 		Price: PriceOfProduct{
-			Value:    "46990",
+			Value:    46990,
 			DateTime: parseTime,
 			City: CityData{
 				ID:   createdCity.ID,
@@ -241,7 +241,7 @@ func TestIntegrationNewPriceWithExistedProductCanBeCreated(test *testing.T) {
 		IRI:              "http://www.mvideo.ru//products/smartfon-samsung-galaxy-s8-64gb-chernyi-brilliant-30027818",
 		PreviewImageLink: "img.mvideo.ru/Pdb/30027818m.jpg",
 		Price: PriceOfProduct{
-			Value:    "49000",
+			Value:    49000,
 			DateTime: parseTime,
 			City: CityData{
 				ID:   createdCity.ID,
@@ -431,7 +431,7 @@ func TestIntegrationNewPriceWithExistedProductsCanBeCreatedForRightProduct(test 
 		IRI:              "http://www.mvideo.ru//products/smartfon-samsung-galaxy-s8-64gb-chernyi-brilliant-30027818",
 		PreviewImageLink: "img.mvideo.ru/Pdb/30027818m.jpg",
 		Price: PriceOfProduct{
-			Value:    "46990",
+			Value:    46990,
 			DateTime: parseTime,
 			City: CityData{
 				ID:   createdCity.ID,

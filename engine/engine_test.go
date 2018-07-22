@@ -130,7 +130,7 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 				Language: request.Language,
 				Name:     "Test product name",
 				Price: PriceOfProduct{
-					Value: "1200",
+					Value: 1200,
 					City: CityData{
 						ID:   request.City.ID,
 						Name: request.City.Name},
@@ -182,7 +182,7 @@ func TestIntegrationProductCanBeReturnFromParser(test *testing.T) {
 			test.Fail()
 		}
 
-		if request.Price.Value == "" {
+		if request.Price.Value == 0 {
 			test.Fail()
 		}
 
@@ -349,7 +349,7 @@ func TestIntegrationPriceCanBeReturnFromParser(test *testing.T) {
 				Language: request.Language,
 				Name:     "Exclusive main_test product name",
 				Price: PriceOfProduct{
-					Value: "1200",
+					Value: 1200,
 					City: CityData{
 						ID:   request.City.ID,
 						Name: request.City.Name},
